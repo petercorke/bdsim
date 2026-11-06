@@ -437,6 +437,20 @@ class LinearizeTest(unittest.TestCase):
         A, *_ = bd.linearize()
         self.assertAlmostEqual(A[0, 1], -G_OVER_L * np.cos(0.9), places=6)
 
+    def test_u_defaults_to_the_value_of_the_sources_at_t(self):
+        bd = new_diagram()
+        step = bd.STEP(T=1, name="demand")  # 0 before t = 1, 1 after
+        gain = bd.GAIN(2.0, name="gain")
+        bd.connect(step, gain)
+        bd.connect(gain, bd.NULL(1, name="y"))
+        bd.compile(verbose=False)
+        for t, u in ((0.0, 0.0), (0.5, 0.0), (1.0, 1.0), (2.0, 1.0)):
+            lin = bd.linearize(t=t, full=True)
+            np.testing.assert_array_equal(lin.u, [u], err_msg=f"t={t}")
+            np.testing.assert_allclose(lin.y0, [2.0 * u], err_msg=f"t={t}")
+        # a u that is given wins
+        np.testing.assert_array_equal(bd.linearize(u=[9.0], t=2.0, full=True).u, [9.0])
+
     def test_the_result_is_not_a_function_of_the_input_given_to_a_linear_system(self):
         bd, (A, B, C, D) = lti_diagram()
         a, b, c, d = bd.linearize(x=[5.0, -4.0], u=[100.0, -100.0])
