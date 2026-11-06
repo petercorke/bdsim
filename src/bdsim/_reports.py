@@ -54,8 +54,19 @@ class ReportMixin:
         plan: Any
 
     def ls(self) -> None:
-        for k, v in self.blocknames.items():
-            print(f"{k:12s}: ", ", ".join(v))
+        """
+        List the blocks in the diagram, grouped by block type
+
+        Each line is a block type followed by the names of the blocks of that
+        type, in the order they were added.  The types are in order of first use.
+
+        :seealso: :meth:`report_lists`
+        """
+        names_by_type: dict[str, list[str]] = {}
+        for name, block in self.blocknames.items():
+            names_by_type.setdefault(block.type, []).append(name)
+        for blocktype, names in names_by_type.items():
+            print(f"{blocktype:12s}: ", ", ".join(names))
 
     def report_summary(
         self, sortby: str = "name", depth: int | None = None, **kwargs: Any
