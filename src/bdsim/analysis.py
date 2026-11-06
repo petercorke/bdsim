@@ -23,7 +23,16 @@ from __future__ import annotations
 
 import warnings
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, Callable, Iterable, Iterator
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Iterable,
+    Iterator,
+    Literal,
+    Protocol,
+    overload,
+)
 
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
@@ -247,14 +256,26 @@ def _not_a_source(block: Block) -> str:
     return message + "Make the signal a single source block."
 
 
+class SystemFunction(Protocol):
+    """
+    A function of the state, the input and the time: the ``f`` or the ``g`` that
+    :meth:`~bdsim.BlockDiagram.functions` returns.
+    """
+
+    def __call__(self, x: ArrayLike, u: ArrayLike, t: float = 0.0) -> NDArray: ...
+
+
 class SystemFunctions:
     """
-    The functions :math:`f` and :math:`g` of a block diagram.
+    The functions :math:`f` and :math:`g` of a block diagram, with the sizes and the
+    maps that say what the vectors are made of.
 
-    Returned by :meth:`~bdsim.BlockDiagram.functions`.  It unpacks
-    as the two functions::
+    Returned by :meth:`~bdsim.BlockDiagram.functions` when it is called with
+    ``full=True``.  It unpacks as the two functions, which are the pair that
+    ``functions()`` returns by default::
 
-        f, g = bd.functions()
+        sysf = bd.functions(full=True)
+        f, g = sysf
         xdot = f(x, u, t)
         y = g(x, u, t)
 
@@ -500,17 +521,18 @@ class Linearization:
 
     .. math::
 
-        \frac{d}{dt}(\delta x) = A\,\delta x + B\,\delta u + f_0
+        \begin{aligned}
+        \frac{d}{dt}(\delta x) &= A\,\delta x + B\,\delta u + f_0 \\
+        y &= C\,\delta x + D\,\delta u + g_0
+        \end{aligned}
 
     where :math:`\delta x` and :math:`\delta u` are the deviations of the state and
-    the input from the operating point.  The matrices are attributes, as are the
-    operating point and the maps that say which signal each row and column is.
+    the input from the operating point, and :math:`f_0` and :math:`g_0` are the
+    functions :math:`f` and :math:`g` at the operating point.  The matrices are
+    attributes, as are the operating point and the maps that say which signal each
+    row and column is.
 
-    It unpacks as ``A, B, C, D``::
-
-        A, B, C, D = bd.linearize(...)
-
-    and ``print`` shows the model with each matrix labelled by the names of the
+    ``print`` shows the model with each matrix labelled by the names of the
     signals that are its rows and columns, see :meth:`__str__`.  :attr:`poles` are the
     eigenvalues of ``A``.
     """
@@ -520,7 +542,7 @@ class Linearization:
     C: NDArray  #: :math:`\partial g / \partial x`, shape ``(ny, nx)``
     D: NDArray  #: :math:`\partial g / \partial u`, shape ``(ny, nu)``
     f0: NDArray  #: :math:`f(x, u, t)` at the operating point, zero at an equilibrium
-    y0: NDArray  #: :math:`g(x, u, t)` at the operating point
+    g0: NDArray  #: :math:`g(x, u, t)` at the operating point
     x: NDArray  #: state of the operating point
     u: NDArray  #: input of the operating point
     t: float  #: time of the operating point
@@ -564,17 +586,20 @@ class Linearization:
         called: ``pip install control``, or install bdsim with the ``control`` extra.
         Version 0.10 or later is needed, for the signal names.
 
-        python-control cannot make a system that has no inputs and a single state
-        or a single output, because it mistakes a matrix of shape ``(1, 0)`` for an
-        empty one.  Use :attr:`poles` for an autonomous system like that.
+
 
         The system is linear and time invariant, which is the model
         :math:`\delta\dot{x} = A\,\delta x + B\,\delta u`.  The offset :math:`f_0` of an
-        operating point that is not an equilibrium, the output :math:`y_0`, and the
+        operating point that is not an equilibrium, the output :math:`g_0`, and the
         operating point itself are not part of it, and stay on this object.  The
         values of the matrices are those of the numerical derivative, so an element
         that is zero may be of the order of 1e-10, which can matter for tests of
         rank such as :func:`control.ctrb`.
+
+        .. note:: python-control cannot make a system that has no inputs and a single state
+            or a single output, because it mistakes a matrix of shape ``(1, 0)`` for an
+            empty one.  Use :attr:`poles` for an autonomous system like that.
+
 
         :seealso: :meth:`~bdsim.BlockDiagram.linearize`
             :class:`~bdsim.blocks.continuous.LTI_SS`
@@ -755,11 +780,40 @@ class AnalysisMixin:
             lambda b: b.nstates,
         )
 
+    @overload
+    def functions(
+        self,
+        inputs: list[Block | Plug | str] | None = ...,
+        outputs: list[Block | Plug | str] | None = ...,
+        *,
+        full: Literal[False] = ...,
+    ) -> tuple[SystemFunction, SystemFunction]: ...
+
+    @overload
+    def functions(
+        self,
+        inputs: list[Block | Plug | str] | None = ...,
+        outputs: list[Block | Plug | str] | None = ...,
+        *,
+        full: Literal[True],
+    ) -> SystemFunctions: ...
+
+    @overload
+    def functions(
+        self,
+        inputs: list[Block | Plug | str] | None = ...,
+        outputs: list[Block | Plug | str] | None = ...,
+        *,
+        full: bool,
+    ) -> tuple[SystemFunction, SystemFunction] | SystemFunctions: ...
+
     def functions(
         self,
         inputs: list[Block | Plug | str] | None = None,
         outputs: list[Block | Plug | str] | None = None,
-    ) -> SystemFunctions:
+        *,
+        full: bool = False,
+    ) -> tuple[SystemFunction, SystemFunction] | SystemFunctions:
         r"""
         The diagram as the functions :math:`f` and :math:`g` of a nonlinear system
 
@@ -769,7 +823,11 @@ class AnalysisMixin:
             expressions, which are parameters, not inputs.
         :param outputs: the signals that are the output :math:`y`, see below.
             Defaults to the signal into every sink input.
-        :return: the functions, which unpack as ``f, g``
+        :param full: return a :class:`~bdsim.analysis.SystemFunctions` object, which
+            also has the sizes of the vectors and the maps that say what they are made
+            of, instead of just the two functions
+        :return: the pair ``(f, g)``, or a :class:`~bdsim.analysis.SystemFunctions`
+            object if ``full``, which also unpacks as ``f, g``
         :raises NotImplementedError: the diagram has sampled (discrete-time) blocks
         :raises RuntimeError: the diagram has not been compiled
 
@@ -836,10 +894,19 @@ class AnalysisMixin:
             xdot = f(x, u, t)
             y = g(x, u, t)
 
-        The returned object also has ``nx``, ``nu`` and ``ny``, the initial
-        state ``x0``, ``u_at(t)`` for the natural input at a time, and
-        ``xindex``, ``uindex`` and ``yindex`` saying which elements belong to
-        which block.
+        To check what ``x``, ``u`` and ``y`` are made of, and how long they are, ask
+        for the full object, as ``linearize`` does with ``full=True``::
+
+            sysf = bd.functions(full=True)
+            sysf.xindex  # which states belong to which block
+            sysf.nu, sysf.ny  # the lengths of u and y
+            f, g = sysf  # the same two functions
+            xdot, y = sysf.fg(x, u, t)  # both, from one evaluation of the diagram
+
+        The object also has ``nx``, the initial state ``x0``, ``u_at(t)`` for the
+        natural input at a time, and ``uindex`` and ``yindex`` for the inputs and
+        outputs.  ``f`` and ``g`` each evaluate the diagram, so ``fg`` is half the
+        work when both are needed at the same point.
 
         The state of the blocks is as the last run left it.  After a run, for
         example, an integrator held at its limit is still held, so the model is
@@ -850,7 +917,53 @@ class AnalysisMixin:
         :seealso: :meth:`linearize` :class:`~bdsim.analysis.SystemFunctions`
             :class:`~bdsim.blocks.sources.State` :class:`~bdsim.blocks.sources.State_S`
         """
-        return SystemFunctions(self, inputs, outputs)
+        sysf = SystemFunctions(self, inputs, outputs)
+        return sysf if full else (sysf.f, sysf.g)
+
+    @overload
+    def linearize(
+        self,
+        x: ArrayLike | None = ...,
+        u: ArrayLike | None = ...,
+        t: float = ...,
+        *,
+        inputs: list[Block | Plug | str] | None = ...,
+        outputs: list[Block | Plug | str] | None = ...,
+        h: float | None = ...,
+        scale: ArrayLike | None = ...,
+        estimate_error: bool = ...,
+        full: Literal[False] = ...,
+    ) -> tuple[NDArray, NDArray, NDArray, NDArray]: ...
+
+    @overload
+    def linearize(
+        self,
+        x: ArrayLike | None = ...,
+        u: ArrayLike | None = ...,
+        t: float = ...,
+        *,
+        inputs: list[Block | Plug | str] | None = ...,
+        outputs: list[Block | Plug | str] | None = ...,
+        h: float | None = ...,
+        scale: ArrayLike | None = ...,
+        estimate_error: bool = ...,
+        full: Literal[True],
+    ) -> Linearization: ...
+
+    @overload
+    def linearize(
+        self,
+        x: ArrayLike | None = ...,
+        u: ArrayLike | None = ...,
+        t: float = ...,
+        *,
+        inputs: list[Block | Plug | str] | None = ...,
+        outputs: list[Block | Plug | str] | None = ...,
+        h: float | None = ...,
+        scale: ArrayLike | None = ...,
+        estimate_error: bool = ...,
+        full: bool,
+    ) -> tuple[NDArray, NDArray, NDArray, NDArray] | Linearization: ...
 
     def linearize(
         self,
@@ -908,7 +1021,7 @@ class AnalysisMixin:
         equilibrium, so :math:`f \neq 0` there and the model is
         :math:`\delta\dot{x} = A\,\delta x + B\,\delta u + f_0`.  The result
         does not include :math:`f_0`, but ``full=True`` returns it with
-        :math:`y_0`.
+        :math:`g_0`.
 
         The result has the form of the matrices of a linear time-invariant system
         and can be used directly to make a
@@ -938,7 +1051,7 @@ class AnalysisMixin:
         :seealso: :meth:`functions` :class:`~bdsim.blocks.continuous.LTI_SS`
             :class:`~bdsim.blocks.sources.State` :class:`~bdsim.blocks.sources.State_S`
         """
-        sysf = self.functions(inputs, outputs)
+        sysf = self.functions(inputs, outputs, full=True)
 
         x = sysf.x0.copy() if x is None else np.asarray(x, dtype=float).reshape(-1)
         u = sysf.u_at(t) if u is None else np.asarray(u, dtype=float).reshape(-1)
@@ -957,7 +1070,7 @@ class AnalysisMixin:
             raise ValueError("scale must be positive")
 
         v0 = np.r_[x, u]
-        f0, y0 = sysf.fg(x, u, t)
+        f0, g0 = sysf.fg(x, u, t)
 
         def jacobian(factor: float) -> NDArray:
             """Columns of d(f,g)/d(x,u) by central differences, step times factor."""
@@ -1021,7 +1134,7 @@ class AnalysisMixin:
                 C=C,
                 D=D,
                 f0=f0,
-                y0=y0,
+                g0=g0,
                 x=x,
                 u=u,
                 t=t,

@@ -101,7 +101,7 @@ class StateTest(unittest.TestCase):
         st = bd.STATE(name="st")
         bd.connect(st, bd.NULL(1, name="y"))
         bd.compile(verbose=False)
-        self.assertEqual(st.statenames, bd.functions().xindex.names)
+        self.assertEqual(st.statenames, bd.functions(full=True).xindex.names)
 
     def test_errors_name_the_block_and_the_problem(self):
         bd, vel, pos, plant = chain_diagram()
@@ -187,7 +187,7 @@ class StateFeedbackTest(unittest.TestCase):
 
     def test_the_state_is_not_an_input(self):
         bd = self.closed_loop()
-        sysf = bd.functions()
+        sysf = bd.functions(full=True)
         self.assertEqual(sysf.uindex.names, ["disturbance"])
         with self.assertRaisesRegex(ValueError, "STATE is not an input"):
             bd.functions(inputs=[bd["state"]])

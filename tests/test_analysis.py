@@ -9,7 +9,7 @@ import warnings
 import numpy as np
 
 import bdsim
-from bdsim.analysis import AnalysisMixin, Index, Linearization
+from bdsim.analysis import AnalysisMixin, Index, Linearization, SystemFunctions
 from bdsim.blockdiagram import BlockDiagram
 
 
@@ -71,7 +71,7 @@ class FunctionsTest(unittest.TestCase):
 
     def test_fg_equals_f_and_g(self):
         bd, _ = lti_diagram()
-        sysf = bd.functions()
+        sysf = bd.functions(full=True)
         x, u = np.array([0.3, -0.7]), np.array([1.5, 0.25])
         xdot, y = sysf.fg(x, u, 0.0)
         np.testing.assert_array_equal(xdot, sysf.f(x, u))
@@ -79,13 +79,13 @@ class FunctionsTest(unittest.TestCase):
 
     def test_sizes_and_initial_state(self):
         bd, _ = lti_diagram()
-        sysf = bd.functions()
+        sysf = bd.functions(full=True)
         self.assertEqual((sysf.nx, sysf.nu, sysf.ny), (2, 2, 1))
         np.testing.assert_array_equal(sysf.x0, [1, 2])
 
     def test_u_at_is_the_natural_input(self):
         bd, _ = lti_diagram()
-        np.testing.assert_array_equal(bd.functions().u_at(0.0), [1.0, 2.0])
+        np.testing.assert_array_equal(bd.functions(full=True).u_at(0.0), [1.0, 2.0])
 
     def test_the_sources_are_replaced_by_u(self):
         # the CONSTANTs are 1 and 2, but f and g follow the u given
@@ -102,7 +102,7 @@ class FunctionsTest(unittest.TestCase):
         bd.connect(time, integrator)
         bd.connect(integrator, bd.NULL(1, name="y"))
         bd.compile(verbose=False)
-        sysf = bd.functions()
+        sysf = bd.functions(full=True)
         self.assertEqual(sysf.nu, 0)
         self.assertEqual(sysf.f([0.0], [], t=3.5)[0], 3.5)
 
@@ -153,6 +153,94 @@ class FunctionsTest(unittest.TestCase):
             bd.functions(inputs=[])
 
 
+class FunctionsReturnTest(unittest.TestCase):
+    """functions() returns the pair (f, g), and with full=True the object, as linearize()
+    returns the matrices and with full=True the object."""
+
+    def test_the_default_is_the_pair_of_functions(self):
+        bd, _ = lti_diagram()
+        result = bd.functions()
+        self.assertIsInstance(result, tuple)
+        self.assertEqual(len(result), 2)
+        f, g = result
+        self.assertTrue(callable(f) and callable(g))
+        self.assertNotIsInstance(result, SystemFunctions)
+
+    def test_full_is_the_object(self):
+        bd, _ = lti_diagram()
+        sysf = bd.functions(full=True)
+        self.assertIsInstance(sysf, SystemFunctions)
+        self.assertEqual((sysf.nx, sysf.nu, sysf.ny), (2, 2, 1))
+
+    def test_full_false_is_the_default(self):
+        bd, _ = lti_diagram()
+        self.assertIsInstance(bd.functions(full=False), tuple)
+
+    def test_the_object_unpacks_as_the_same_pair(self):
+        bd, _ = lti_diagram()
+        f, g = bd.functions()
+        fo, go = bd.functions(full=True)
+        x, u = np.array([0.3, -0.7]), np.array([1.5, 0.25])
+        np.testing.assert_array_equal(f(x, u), fo(x, u))
+        np.testing.assert_array_equal(g(x, u), go(x, u))
+
+    def test_the_pair_takes_t_as_an_optional_argument(self):
+        bd = new_diagram()
+        time = bd.TIME(name="time")
+        integrator = bd.INTEGRATOR(x0=0, name="integrator")
+        bd.connect(time, integrator)
+        bd.connect(integrator, bd.NULL(1, name="y"))
+        bd.compile(verbose=False)
+        f, g = bd.functions()
+        self.assertEqual(f([0.0], []), [0.0])
+        self.assertEqual(f([0.0], [], 2.5), [2.5])
+        self.assertEqual(f([0.0], [], t=2.5), [2.5])
+
+    def test_full_is_keyword_only_and_the_selection_still_works(self):
+        bd, a, b = SelectionTest().two_source_diagram()
+        positional = (None, None, True)  # inputs, outputs and then full by position
+        with self.assertRaises(TypeError):
+            bd.functions(*positional)
+        f, g = bd.functions(inputs=[a])
+        np.testing.assert_allclose(g([], [10.0]), [5.0, 15.0])
+        sysf = bd.functions(inputs=[a], full=True)
+        self.assertEqual(sysf.uindex.names, ["a"])
+
+
+class LinearModelTest(unittest.TestCase):
+    """The model of Linearization: f ~ f0 + A dx + B du, and y ~ g0 + C dx + D du."""
+
+    def test_the_model_predicts_the_nonlinear_functions_near_the_point(self):
+        bd = pendulum_diagram()
+        f, g = bd.functions()
+        x0, u0 = np.array([-0.3, 0.7]), np.array([0.3])
+        lin = bd.linearize(x0, u0, full=True)
+        dx, du = np.array([2e-4, -4e-4]), np.array([1e-4])
+        # the error of a linear model is second order in the step, about 1e-7 here,
+        # where the first-order terms being tested are a thousand times larger
+        np.testing.assert_allclose(
+            f(x0 + dx, u0 + du), lin.f0 + lin.A @ dx + lin.B @ du, atol=1e-6
+        )
+        np.testing.assert_allclose(
+            g(x0 + dx, u0 + du), lin.g0 + lin.C @ dx + lin.D @ du, atol=1e-6
+        )
+        self.assertGreater(np.abs(lin.A @ dx).max(), 1e-4)
+
+    def test_g0_and_f0_are_the_functions_at_the_point(self):
+        bd = pendulum_diagram()
+        f, g = bd.functions()
+        x0, u0 = np.array([-0.3, 0.7]), np.array([0.3])
+        lin = bd.linearize(x0, u0, full=True)
+        np.testing.assert_allclose(lin.f0, f(x0, u0), atol=1e-12)
+        np.testing.assert_allclose(lin.g0, g(x0, u0), atol=1e-12)
+
+    def test_the_output_at_the_point_is_g0_not_y0(self):
+        bd, _ = lti_diagram()
+        lin = bd.linearize(full=True)
+        self.assertTrue(hasattr(lin, "g0"))
+        self.assertFalse(hasattr(lin, "y0"))
+
+
 class SelectionTest(unittest.TestCase):
     def two_source_diagram(self):
         bd = new_diagram()
@@ -168,7 +256,7 @@ class SelectionTest(unittest.TestCase):
 
     def test_default_is_every_source_and_the_signal_into_every_sink(self):
         bd, a, b = self.two_source_diagram()
-        sysf = bd.functions()
+        sysf = bd.functions(full=True)
         self.assertEqual((sysf.nu, sysf.ny), (2, 2))
         self.assertEqual(sysf.uindex.names, ["a", "b"])
         # y1 receives total and y2 receives b: named by the block that produces
@@ -178,14 +266,14 @@ class SelectionTest(unittest.TestCase):
 
     def test_inputs_select_sources_and_the_rest_keep_their_value(self):
         bd, a, b = self.two_source_diagram()
-        sysf = bd.functions(inputs=[a])
+        sysf = bd.functions(inputs=[a], full=True)
         self.assertEqual(sysf.nu, 1)
         # b is not an input: it still outputs its own 5
         np.testing.assert_allclose(sysf.g([], [10.0]), [5.0, 15.0])
 
     def test_a_plug_selects_a_sink_port(self):
         bd, a, b = self.two_source_diagram()
-        sysf = bd.functions(outputs=[bd["y2"]])
+        sysf = bd.functions(outputs=[bd["y2"]], full=True)
         self.assertEqual(sysf.ny, 1)
         np.testing.assert_allclose(sysf.g([], [10.0, 20.0]), [20.0])
 
@@ -197,13 +285,13 @@ class SelectionTest(unittest.TestCase):
         bd.connect(a, sink[0])
         bd.connect(b, sink[1])
         bd.compile(verbose=False)
-        both = bd.functions()
+        both = bd.functions(full=True)
         self.assertEqual(both.ny, 2)
         np.testing.assert_allclose(both.g([], [10.0, 20.0]), [10.0, 20.0])
-        second = bd.functions(outputs=[sink[1]])
+        second = bd.functions(outputs=[sink[1]], full=True)
         self.assertEqual(second.ny, 1)
         np.testing.assert_allclose(second.g([], [10.0, 20.0]), [20.0])
-        first = bd.functions(outputs=[sink[0]])
+        first = bd.functions(outputs=[sink[0]], full=True)
         np.testing.assert_allclose(first.g([], [10.0, 20.0]), [10.0])
 
     def test_a_number_in_an_expression_is_a_parameter_not_an_input(self):
@@ -216,12 +304,12 @@ class SelectionTest(unittest.TestCase):
         implicit = [b for b in bd.blocklist if b.type == "constant"]
         self.assertEqual(len(implicit), 1)
         self.assertTrue(implicit[0]._implicit)
-        sysf = bd.functions()
+        sysf = bd.functions(full=True)
         self.assertEqual(sysf.uindex.names, ["demand"])
         # y = u + 1 holds for any u: the 1 is not available to be changed
         np.testing.assert_allclose(sysf.g([], [5.0]), [6.0])
         # but it can still be chosen on purpose
-        both = bd.functions(inputs=[step, implicit[0].name])
+        both = bd.functions(inputs=[step, implicit[0].name], full=True)
         self.assertEqual(both.nu, 2)
 
     def test_a_constant_made_by_the_user_is_an_input(self):
@@ -230,7 +318,7 @@ class SelectionTest(unittest.TestCase):
         bd.connect(gain, bd.NULL(1, name="y"))
         bd.compile(verbose=False)
         self.assertFalse(bd["mine"]._implicit)
-        self.assertEqual(bd.functions().uindex.names, ["mine"])
+        self.assertEqual(bd.functions(full=True).uindex.names, ["mine"])
 
     def test_time_cannot_be_an_input(self):
         bd = new_diagram()
@@ -305,7 +393,7 @@ class SelectionTest(unittest.TestCase):
         v = bd.CONSTANT(np.array([1.0, 2.0, 3.0]), name="v")
         bd.connect(v, bd.NULL(1, name="y"))
         bd.compile(verbose=False)
-        sysf = bd.functions()
+        sysf = bd.functions(full=True)
         self.assertEqual((sysf.nu, sysf.ny), (3, 3))
         self.assertEqual(sysf.uindex.names, ["v[0]", "v[1]", "v[2]"])
         np.testing.assert_allclose(sysf.g([], [7, 8, 9]), [7, 8, 9])
@@ -333,13 +421,13 @@ class OutputSignalTest(unittest.TestCase):
 
     def test_the_default_is_the_signals_the_scope_receives(self):
         bd, demand, plant, scope = eg1_diagram()
-        sysf = bd.functions()
+        sysf = bd.functions(full=True)
         self.assertEqual((sysf.nu, sysf.ny), (1, 2))
         self.assertEqual(sysf.yindex.names, ["demand", "plant"])
 
     def test_a_block_is_its_output(self):
         bd, demand, plant, scope = eg1_diagram()
-        sysf = bd.functions(inputs=[demand], outputs=[plant])
+        sysf = bd.functions(inputs=[demand], outputs=[plant], full=True)
         self.assertEqual((sysf.nu, sysf.ny), (1, 1))
         self.assertEqual(sysf.yindex.names, ["plant"])
 
@@ -353,7 +441,7 @@ class OutputSignalTest(unittest.TestCase):
             [scope[0]],
             [plant, "plant", plant[0], scope[0]],
         ):
-            sysf = bd.functions(inputs=[demand], outputs=outputs)
+            sysf = bd.functions(inputs=[demand], outputs=outputs, full=True)
             self.assertEqual((sysf.ny, sysf.yindex.names), (1, ["plant"]), outputs)
             results.append(sysf.g([0.3], [1.0]))
         for r in results:
@@ -361,17 +449,19 @@ class OutputSignalTest(unittest.TestCase):
 
     def test_a_sink_means_the_signals_it_receives(self):
         bd, demand, plant, scope = eg1_diagram()
-        both = bd.functions(outputs=[scope])
+        both = bd.functions(outputs=[scope], full=True)
         self.assertEqual(both.yindex.names, ["demand", "plant"])
         # scope[1] receives the demand
-        one = bd.functions(outputs=[scope[1]])
+        one = bd.functions(outputs=[scope[1]], full=True)
         self.assertEqual(one.yindex.names, ["demand"])
         np.testing.assert_allclose(one.g([0.0], [4.0]), [4.0])
 
     def test_the_inputs_can_be_named_too(self):
         bd, demand, plant, scope = eg1_diagram()
         for inputs in ([demand], ["demand"], [demand[0]]):
-            self.assertEqual(bd.functions(inputs=inputs).uindex.names, ["demand"])
+            self.assertEqual(
+                bd.functions(inputs=inputs, full=True).uindex.names, ["demand"]
+            )
 
     def demux_diagram(self):
         bd = new_diagram()
@@ -387,7 +477,7 @@ class OutputSignalTest(unittest.TestCase):
         bd, demux = self.demux_diagram()
         u = [7.0, 8.0]
         for outputs in (None, [demux], ["demux"], [bd["y0"], bd["y1"]]):
-            sysf = bd.functions(outputs=outputs)
+            sysf = bd.functions(outputs=outputs, full=True)
             self.assertEqual(sysf.yindex.names, ["demux[0]", "demux[1]"], outputs)
             np.testing.assert_allclose(sysf.g([], u), [7.0, 8.0], err_msg=str(outputs))
 
@@ -395,13 +485,13 @@ class OutputSignalTest(unittest.TestCase):
         bd, demux = self.demux_diagram()
         u = [7.0, 8.0]
         for outputs in ([demux[1]], [bd["y1"]], ["y1"]):
-            sysf = bd.functions(outputs=outputs)
+            sysf = bd.functions(outputs=outputs, full=True)
             self.assertEqual(sysf.ny, 1, outputs)
             np.testing.assert_allclose(sysf.g([], u), [8.0], err_msg=str(outputs))
 
     def test_the_ports_are_ordered_whatever_the_order_asked_for(self):
         bd, demux = self.demux_diagram()
-        sysf = bd.functions(outputs=[demux[1], demux[0]])
+        sysf = bd.functions(outputs=[demux[1], demux[0]], full=True)
         self.assertEqual(sysf.yindex.names, ["demux[0]", "demux[1]"])
         np.testing.assert_allclose(sysf.g([], [7.0, 8.0]), [7.0, 8.0])
 
@@ -410,7 +500,7 @@ class OutputSignalTest(unittest.TestCase):
         source = bd.CONSTANT(2.0, name="source")
         bd.connect(source, bd.NULL(1, name="first"), bd.NULL(1, name="second"))
         bd.compile(verbose=False)
-        sysf = bd.functions()
+        sysf = bd.functions(full=True)
         self.assertEqual((sysf.ny, sysf.yindex.names), (1, ["source"]))
 
     def test_the_input_can_be_seen_in_the_output(self):
@@ -439,7 +529,7 @@ class OutputSignalTest(unittest.TestCase):
 class IndexTest(unittest.TestCase):
     def test_slices_labels_and_lookup_by_name(self):
         bd = pendulum_diagram()
-        sysf = bd.functions()
+        sysf = bd.functions(full=True)
         # integrators in creation order: omega, then theta
         self.assertEqual(sysf.xindex.names, ["omega", "theta"])
         self.assertEqual(sysf.xindex["omega"], slice(0, 1))
@@ -451,13 +541,13 @@ class IndexTest(unittest.TestCase):
 
     def test_a_block_with_several_elements_gets_one_slice(self):
         bd, _ = lti_diagram()
-        sysf = bd.functions()
+        sysf = bd.functions(full=True)
         self.assertEqual(sysf.xindex["system"], slice(0, 2))
         self.assertEqual(sysf.xindex.names, ["system[0]", "system[1]"])
 
     def test_missing_blocks(self):
         bd, _ = lti_diagram()
-        sysf = bd.functions()
+        sysf = bd.functions(full=True)
         with self.assertRaisesRegex(KeyError, "no block named"):
             sysf.xindex["nothing"]
         with self.assertRaisesRegex(KeyError, "no elements"):
@@ -470,7 +560,7 @@ class IndexTest(unittest.TestCase):
         bd.connect(a, bd.NULL(1, name="ya"))
         bd.connect(b, bd.NULL(1, name="yb"))
         bd.compile(verbose=False)
-        sysf = bd.functions(inputs=[b, a], outputs=[bd["yb"], bd["ya"]])
+        sysf = bd.functions(inputs=[b, a], outputs=[bd["yb"], bd["ya"]], full=True)
         self.assertEqual(sysf.uindex.names, ["a", "b"])
         # ya and yb receive a and b
         self.assertEqual(sysf.yindex.names, ["a", "b"])
@@ -478,7 +568,9 @@ class IndexTest(unittest.TestCase):
 
     def test_repr(self):
         bd = pendulum_diagram()
-        self.assertEqual(repr(bd.functions().xindex), "Index(2 elements: omega, theta)")
+        self.assertEqual(
+            repr(bd.functions(full=True).xindex), "Index(2 elements: omega, theta)"
+        )
 
 
 class LinearizeTest(unittest.TestCase):
@@ -522,7 +614,7 @@ class LinearizeTest(unittest.TestCase):
         for t, u in ((0.0, 0.0), (0.5, 0.0), (1.0, 1.0), (2.0, 1.0)):
             lin = bd.linearize(t=t, full=True)
             np.testing.assert_array_equal(lin.u, [u], err_msg=f"t={t}")
-            np.testing.assert_allclose(lin.y0, [2.0 * u], err_msg=f"t={t}")
+            np.testing.assert_allclose(lin.g0, [2.0 * u], err_msg=f"t={t}")
         # a u that is given wins
         np.testing.assert_array_equal(bd.linearize(u=[9.0], t=2.0, full=True).u, [9.0])
 
@@ -537,7 +629,7 @@ class LinearizeTest(unittest.TestCase):
         lin = bd.linearize(x=[1.0, 2.0], u=[1.0, 2.0], full=True)
         self.assertIsInstance(lin, Linearization)
         np.testing.assert_allclose(lin.f0, A @ [1.0, 2.0] + B @ [1.0, 2.0], atol=1e-12)
-        np.testing.assert_allclose(lin.y0, C @ [1.0, 2.0] + D @ [1.0, 2.0], atol=1e-12)
+        np.testing.assert_allclose(lin.g0, C @ [1.0, 2.0] + D @ [1.0, 2.0], atol=1e-12)
         np.testing.assert_array_equal(lin.x, [1.0, 2.0])
         np.testing.assert_array_equal(lin.u, [1.0, 2.0])
         self.assertEqual(lin.t, 0.0)
@@ -761,7 +853,7 @@ class StateLayoutTest(unittest.TestCase):
         st = bd.STATE(name="state")
         bd.connect(st, bd.NULL(1, name="y2"))
         bd.compile(verbose=False)
-        self.assertEqual(bd.functions().xindex.names, bd.xindex.names)
+        self.assertEqual(bd.functions(full=True).xindex.names, bd.xindex.names)
         self.assertEqual(st.statenames, bd.xindex.names)
         self.assertEqual(st.index.slices, bd.xindex.slices)
 
