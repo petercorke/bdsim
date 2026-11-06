@@ -501,16 +501,13 @@ class Linearization:
     .. math::
 
         \frac{d}{dt}(\delta x) = A\,\delta x + B\,\delta u + f_0
+        \delta y = C\,\delta x + D\,\delta u + g_0
 
     where :math:`\delta x` and :math:`\delta u` are the deviations of the state and
     the input from the operating point.  The matrices are attributes, as are the
     operating point and the maps that say which signal each row and column is.
 
-    It unpacks as ``A, B, C, D``::
-
-        A, B, C, D = bd.linearize(...)
-
-    and ``print`` shows the model with each matrix labelled by the names of the
+    ``print`` shows the model with each matrix labelled by the names of the
     signals that are its rows and columns, see :meth:`__str__`.  :attr:`poles` are the
     eigenvalues of ``A``.
     """
@@ -564,9 +561,7 @@ class Linearization:
         called: ``pip install control``, or install bdsim with the ``control`` extra.
         Version 0.10 or later is needed, for the signal names.
 
-        python-control cannot make a system that has no inputs and a single state
-        or a single output, because it mistakes a matrix of shape ``(1, 0)`` for an
-        empty one.  Use :attr:`poles` for an autonomous system like that.
+
 
         The system is linear and time invariant, which is the model
         :math:`\delta\dot{x} = A\,\delta x + B\,\delta u`.  The offset :math:`f_0` of an
@@ -575,6 +570,11 @@ class Linearization:
         values of the matrices are those of the numerical derivative, so an element
         that is zero may be of the order of 1e-10, which can matter for tests of
         rank such as :func:`control.ctrb`.
+
+        .. note:: python-control cannot make a system that has no inputs and a single state
+            or a single output, because it mistakes a matrix of shape ``(1, 0)`` for an
+            empty one.  Use :attr:`poles` for an autonomous system like that.
+
 
         :seealso: :meth:`~bdsim.BlockDiagram.linearize`
             :class:`~bdsim.blocks.continuous.LTI_SS`
