@@ -1,6 +1,9 @@
 """Tests for BlockDiagram.functions() and linearize() (src/bdsim/analysis.py)."""
 
+import subprocess  # nosec B404
+import sys
 import unittest
+import unittest.mock
 import warnings
 
 import numpy as np
@@ -782,6 +785,131 @@ class StateLayoutTest(unittest.TestCase):
         self.assertEqual(index.names, ["a", "pair[0]", "c"])
         with self.assertRaisesRegex(ValueError, "2 names for 3 elements"):
             Index(entries, ["a", "b"])
+
+
+try:
+    import control
+
+    HAVE_CONTROL = True
+except ImportError:  # python-control is an optional dependency
+    HAVE_CONTROL = False
+
+
+def double_integrator(feedback_gain=None):
+    """x'' = u, the states are (vel, pos); with a gain K the force is -K state."""
+    bd = new_diagram()
+    force = bd.CONSTANT(0.0, name="force")
+    vel = bd.INTEGRATOR(x0=0.0, name="vel")
+    pos = bd.INTEGRATOR(x0=1.0, name="pos")
+    total = force
+    if feedback_gain is not None:
+        total = force + (-feedback_gain) * bd.STATE(name="state")
+    bd.connect(total, vel)
+    bd.connect(vel, pos)
+    bd.connect(pos, bd.NULL(1, name="y"))
+    bd.compile(verbose=False)
+    return bd
+
+
+@unittest.skipUnless(HAVE_CONTROL, "python-control is not installed")
+class LinearizationSSTest(unittest.TestCase):
+    def test_it_is_a_state_space_system_with_the_same_matrices(self):
+        bd, (A, B, C, D) = lti_diagram()
+        lin = bd.linearize(full=True)
+        sys = lin.ss()
+        self.assertIsInstance(sys, control.StateSpace)
+        np.testing.assert_array_equal(sys.A, lin.A)
+        np.testing.assert_array_equal(sys.B, lin.B)
+        np.testing.assert_array_equal(sys.C, lin.C)
+        np.testing.assert_array_equal(sys.D, lin.D)
+        np.testing.assert_allclose(sys.A, A, atol=1e-8)
+        np.testing.assert_allclose(sys.D, D, atol=1e-8)
+
+    def test_it_is_continuous_time(self):
+        bd, _ = lti_diagram()
+        self.assertEqual(bd.linearize(full=True).ss().dt, 0)
+
+    def test_the_signals_carry_the_names_of_the_diagram(self):
+        bd, _ = lti_diagram()
+        lin = bd.linearize(full=True)
+        sys = lin.ss()
+        self.assertEqual(sys.state_labels, lin.xindex.names)
+        self.assertEqual(sys.input_labels, ["u1", "u2"])
+        self.assertEqual(sys.output_labels, ["system"])
+        self.assertEqual((sys.nstates, sys.ninputs, sys.noutputs), (2, 2, 1))
+
+    def test_the_name_is_passed_on(self):
+        bd, _ = lti_diagram()
+        self.assertEqual(bd.linearize(full=True).ss(name="plant").name, "plant")
+
+    def test_the_poles_agree(self):
+        bd, _ = lti_diagram()
+        lin = bd.linearize(full=True)
+        np.testing.assert_allclose(
+            np.sort_complex(control.poles(lin.ss())), lin.poles, atol=1e-9
+        )
+
+    def test_a_system_without_outputs(self):
+        bd = new_diagram()
+        integrator = bd.INTEGRATOR(x0=0.0, name="integrator")
+        bd.connect(bd.CONSTANT(1.0, name="u"), integrator)
+        bd.compile(verbose=False)
+        sys = bd.linearize(outputs=[], full=True).ss()
+        self.assertEqual((sys.ninputs, sys.noutputs, sys.nstates), (1, 0, 1))
+
+    def test_an_autonomous_system_with_two_states(self):
+        # no inputs and no outputs: python-control takes this from two states up
+        bd = new_diagram()
+        vel = bd.INTEGRATOR(x0=1.0, name="vel")
+        pos = bd.INTEGRATOR(x0=0.0, name="pos")
+        bd.connect(bd.CONSTANT(0.0, name="u"), vel)
+        bd.connect(vel, pos)
+        bd.compile(verbose=False)
+        lin = bd.linearize(inputs=[], outputs=[], full=True)
+        sys = lin.ss()
+        self.assertEqual((sys.ninputs, sys.noutputs, sys.nstates), (0, 0, 2))
+        np.testing.assert_allclose(sys.A, lin.A)
+
+    def test_a_design_made_with_it_closes_the_loop(self):
+        # linearize the open loop, design an LQR with python-control, and apply the
+        # gain with a STATE block: the closed loop has the poles the design gave
+        sys = double_integrator().linearize(full=True).ss()
+        K, _, poles = control.lqr(sys.A, sys.B, np.diag([1.0, 10.0]), np.array([[1.0]]))
+        closed = double_integrator(feedback_gain=K)
+        np.testing.assert_allclose(
+            closed.linearize(full=True).poles, np.sort_complex(poles), atol=1e-6
+        )
+        self.assertTrue(np.all(closed.linearize(full=True).poles.real < 0))
+
+    def test_the_closed_loop_state_names_match_the_design(self):
+        sys = double_integrator().linearize(full=True).ss()
+        self.assertEqual(sys.state_labels, ["vel", "pos"])
+
+
+class LinearizationSSWithoutControlTest(unittest.TestCase):
+    def test_a_missing_package_is_a_clear_error(self):
+        bd, _ = lti_diagram()
+        lin = bd.linearize(full=True)
+        with unittest.mock.patch.dict(sys.modules, {"control": None}):
+            with self.assertRaisesRegex(ImportError, "pip install control"):
+                lin.ss()
+
+    def test_control_is_not_imported_until_it_is_needed(self):
+        # not by importing bdsim, and not by linearizing: only by calling ss()
+        code = (
+            "import sys, bdsim, bdsim.analysis\n"
+            "bd = bdsim.BDSim(sysargs=False, graphics=False).blockdiagram()\n"
+            "integrator = bd.INTEGRATOR(x0=0.0)\n"
+            "bd.connect(bd.CONSTANT(1.0), integrator)\n"
+            "bd.connect(integrator, bd.NULL(1))\n"
+            "bd.compile(verbose=False)\n"
+            "bd.linearize(full=True)\n"
+            "assert 'control' not in sys.modules, 'imported too early'\n"
+        )
+        result = subprocess.run(  # nosec B603  # nosemgrep: python.lang.security.audit.dangerous-subprocess-use-audit.dangerous-subprocess-use-audit
+            [sys.executable, "-I", "-c", code], capture_output=True, text=True
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
 
 
 class AfterARunTest(unittest.TestCase):

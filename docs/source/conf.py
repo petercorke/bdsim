@@ -244,4 +244,5 @@ intersphinx_mapping = {
     "matplotlib": ("https://matplotlib.org/stable/", None),
     "smtb": ("https://spatialmath-python.rai-inst.com/", None),
     "ansitable": ("https://petercorke.github.io/ansitable/", None),
+    "control": ("https://python-control.readthedocs.io/en/stable/", None),
 }

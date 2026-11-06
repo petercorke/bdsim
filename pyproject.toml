@@ -44,6 +44,7 @@ dev = [
     "coverage",
     "ruff>=0.17,<0.18",
     "ipython",
+    "control>=0.10",
 ]
 
 docs = [
@@ -60,10 +61,12 @@ bdedit = ["PySide6", "Pillow"]
 
 jupyter = ["ipywidgets", "ipympl"]
 
+control = ["control>=0.10"]
+
 
 bdweb = ["fastapi>=0.111", "uvicorn[standard]>=0.29"]
 
-all = ["PySide6", "Pillow", "ipywidgets", "ipympl"]
+all = ["PySide6", "Pillow", "ipywidgets", "ipympl", "control>=0.10"]
 
 [project.scripts]
 
