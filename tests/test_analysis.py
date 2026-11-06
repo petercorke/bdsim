@@ -198,8 +198,9 @@ class FunctionsReturnTest(unittest.TestCase):
 
     def test_full_is_keyword_only_and_the_selection_still_works(self):
         bd, a, b = SelectionTest().two_source_diagram()
+        positional = (None, None, True)  # inputs, outputs and then full by position
         with self.assertRaises(TypeError):
-            bd.functions(None, None, True)
+            bd.functions(*positional)
         f, g = bd.functions(inputs=[a])
         np.testing.assert_allclose(g([], [10.0]), [5.0, 15.0])
         sysf = bd.functions(inputs=[a], full=True)
