@@ -5,115 +5,49 @@ from __future__ import annotations
 from math import inf
 from typing import TYPE_CHECKING, Any, Callable, Literal, TextIO
 import numpy as np
+from matplotlib.axes import Axes
 from numpy.typing import ArrayLike
-from spatialmath import SE3, Twist3
+from spatialmath import SE2, SE3, SO2, SO3, Twist3
+from spatialmath.base.types import ArrayLike3
 
 if TYPE_CHECKING:
     from bdsim.components import Clock
     from bdsim.blockdiagram import BlockDiagram
+    from roboticstoolbox import mobile  # optional dependency
 
 Vector1D = int | float | tuple[float, ...] | list[float] | np.ndarray
 
-class BlockDiagramMixin:
+
+class BlockFactoryStubs:
     """
-    Mixin that declares stub signatures for all block factory methods.
+    Declares stub signatures for all block factory methods.
 
     ``BlockDiagram`` inherits from this class so that static type checkers
     (Pylance, mypy) can resolve calls like ``bd.STEP()``, ``bd.SCOPE()``, etc.
 
-    At runtime the ``@block`` decorator replaces every stub with the real
-    factory function, so these bodies are never executed.
+    At runtime each block is bound to the diagram instance, shadowing these
+    class attributes, so these bodies are never executed.
     """
-
-    # roboticstoolbox.blocks.arm.ArmPlot
-    def ARMPLOT(self, robot: Any = None, q0: Any = None, backend: Any = None, **blockargs: Any) -> Any:
-        """
-        :param robot: Robot model
-        :type robot: Robot subclass
-        :param q0: initial joint angles, defaults to None
-        :type q0: ndarray(N)
-        :param backend: RTB backend name, defaults to 'pyplot'
-        :type backend: str, optional
-        :param blockargs: |BlockOptions|
-        :type blockargs: dict
-        """
-        raise NotImplementedError(  # pragma: no cover
-            "stub signature -- the real implementation is injected "
-            "onto BlockDiagram at import time by the @block decorator"
-        )
-
-    # roboticstoolbox.blocks.mobile.Bicycle
-    def BICYCLE(self, L: Any = 1, speed_max: Any = inf, accel_max: Any = inf, steer_max: Any = 1.413716694115407, x0: Any = None, **blockargs: Any) -> Any:
-        """
-        :param L: Wheelbase, defaults to 1
-        :type L: float, optional
-        :param speed_max: Velocity limit, defaults to math.inf
-        :type speed_max: float, optional
-        :param accel_max: maximum acceleration, defaults to math.inf
-        :type accel_max: float, optional
-        :param steer_max: maximum steered wheel angle, defaults to math.pi*0.45
-        :type steer_max: float, optional
-        :param x0: Initial state, defaults to [0,0,0]
-        :type x0: array_like(3), optional
-        :param blockargs: |BlockOptions|
-        :type blockargs: dict
-        """
-        raise NotImplementedError(  # pragma: no cover
-            "stub signature -- the real implementation is injected "
-            "onto BlockDiagram at import time by the @block decorator"
-        )
-
-    # machinevisiontoolbox.blocks.camera.Camera
-    def CAMERA(self, camera: Any = None, args: Any = {}, **blockargs: Any) -> Any:
-        """
-        :param camera: Camera model, defaults to None
-        :type camera: Camera subclass, optional
-        :param blockargs: Additional options for the block, passed as a dictionary
-        :type blockargs: dict
-        :return: a CAMERA block
-        :rtype: Camera instance
-
-        Camera projection model.
-
-        **Block ports**
-
-            :input pose: Camera pose as an SE3 object.
-            :input P: world points as ndarray(3,N)
-
-            :output p: image plane points as ndarray(2,N)
-        """
-        raise NotImplementedError(  # pragma: no cover
-            "stub signature -- the real implementation is injected "
-            "onto BlockDiagram at import time by the @block decorator"
-        )
-
-    # roboticstoolbox.blocks.arm.CirclePath
-    def CIRCLEPATH(self, radius: Any = 1, centre: Any = (0, 0, 0), pose: Any = None, frequency: Any = 1, unit: Any = 'rps', phase: Any = 0, **blockargs: Any) -> Any:
-        """
-        :param radius: radius of circle, defaults to 1
-        :type radius: float
-        :param centre: center of circle, defaults to [0,0,0]
-        :type centre: array_like(3)
-        :param pose: SE3 pose of output, defaults to None
-        :type pose: SE3
-        :param frequency: rotational frequency, defaults to 1
-        :type frequency: float
-        :param unit: unit for frequency, one of: 'rps' [default], 'rad'
-        :type unit: str
-        :param phase: phase
-        :type phase: float
-        :param blockargs: |BlockOptions|
-        :type blockargs: dict
-        """
-        raise NotImplementedError(  # pragma: no cover
-            "stub signature -- the real implementation is injected "
-            "onto BlockDiagram at import time by the @block decorator"
-        )
 
     # bdsim.blocks.functions.Abs
     def ABS(self, **blockargs: Any) -> Any:
         """
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
+        :type blockargs: dict
+        """
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
+
+    # bdsim.blocks.displays.Animation
+    def ANIMATION(self, init: Callable, update: Callable, **blockargs: Any) -> Any:
+        """
+        :param init: initialization function with signature init(fig, ax)
+        :type init: callable
+        :param update: update function with signature update(frame, fig, ax)
+        :type update: callable
+        :param blockargs: |GraphicsBlockOptions|
         :type blockargs: dict
         """
         raise NotImplementedError(  # pragma: no cover
@@ -122,16 +56,21 @@ class BlockDiagramMixin:
         )
 
     # bdsim.blocks.sampled.Anoise_S
-    def ANOISE_S(self, clock: Clock, sigma: Vector1D = 1, seed: int | None = None, x0: Vector1D | None = None, **blockargs: Any) -> Any:
+    def ANOISE_S(
+        self,
+        clock: Clock,
+        sigma: Vector1D = 1,
+        seed: int | None = None,
+        x0: Vector1D | None = None,
+        **blockargs: Any,
+    ) -> Any:
         """
         :param clock: clock source
-        :type clock: Clock
         :param sigma: standard deviation of the noise, defaults to 1
         :param seed: seed for the random number generator, defaults to None
         :param x0: noise during the first sample period, defaults to zero with the
             length of ``sigma``
-        :param blockargs: |BlockOptions|
-        :type blockargs: dict
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         """
         raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
@@ -145,7 +84,7 @@ class BlockDiagramMixin:
         :type min: scalar or array_like, optional
         :param max: Maximum value, defaults to math.inf
         :type max: float or array_like, optional
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
         raise NotImplementedError(  # pragma: no cover
@@ -156,7 +95,7 @@ class BlockDiagramMixin:
     # bdsim.blocks.linalg.Cond
     def COND(self, **blockargs: Any) -> Any:
         """
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
         raise NotImplementedError(  # pragma: no cover
@@ -165,41 +104,14 @@ class BlockDiagramMixin:
         )
 
     # bdsim.blocks.sources.Constant
-    def CONSTANT(self, value: Any = 0, **blockargs: Any) -> Any:
+    def CONSTANT(self, value: Any = 0, asarray: bool = True, **blockargs: Any) -> Any:
         """
         :param value: the constant, defaults to 0
         :type value: any, optional
-        :param blockargs: |BlockOptions|
-        :type blockargs: dict
-        """
-        raise NotImplementedError(  # pragma: no cover
-            "stub signature -- the real implementation is injected "
-            "onto BlockDiagram at import time by the @block decorator"
-        )
-
-    # roboticstoolbox.blocks.arm.CTraj
-    def CTRAJ(self, T1: Any, T2: Any, T: Any, trapezoidal: Any = True, **blockargs: Any) -> Any:
-        """
-        :param T1: initial pose
-        :type T1: SE3
-        :param T2: final pose
-        :type T2: SE3
-        :param T: motion time
-        :type T: float
-        :param trapezoidal: Use LSPB motion profile along the path
-        :type trapezoidal: bool
-        :param blockargs: |BlockOptions|
-        :type blockargs: dict
-        """
-        raise NotImplementedError(  # pragma: no cover
-            "stub signature -- the real implementation is injected "
-            "onto BlockDiagram at import time by the @block decorator"
-        )
-
-    # roboticstoolbox.blocks.spatial.Delta2Tr
-    def DELTA2TR(self, **blockargs: Any) -> Any:
-        """
-        :param blockargs: |BlockOptions|
+        :param asarray: convert a list or tuple of numbers to an ``ndarray``
+            of ``int64`` or ``float64``, defaults to True
+        :type asarray: bool, optional
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
         raise NotImplementedError(  # pragma: no cover
@@ -213,8 +125,10 @@ class BlockDiagramMixin:
         :param d: Half-width of a symmetric band, or the lower and upper edges
             of the band, defaults to 1
         :type d: float or array_like(2)
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
+        :raises ValueError: ``d`` is not a scalar or 2-element array_like, or
+            the band is empty (lower edge above upper edge)
         """
         raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
@@ -226,7 +140,7 @@ class BlockDiagramMixin:
         """
         :param nout: number of outputs, defaults to 1
         :type nout: int, optional
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
         raise NotImplementedError(  # pragma: no cover
@@ -235,7 +149,14 @@ class BlockDiagramMixin:
         )
 
     # bdsim.blocks.continuous.Deriv
-    def DERIV(self, alpha: float, x0: Vector1D = 0, y0: Vector1D | None = None, gain: float = 1.0, **blockargs: Any) -> Any:
+    def DERIV(
+        self,
+        alpha: float,
+        x0: Vector1D = 0,
+        y0: Vector1D | None = None,
+        gain: float = 1.0,
+        **blockargs: Any,
+    ) -> Any:
         """
         :param alpha: filter pole in units of rad/s
         :type alpha: float
@@ -245,7 +166,7 @@ class BlockDiagramMixin:
         :type y0: array_like
         :param gain: gain or scaling factor, defaults to 1
         :type gain: float, optional
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
         raise NotImplementedError(  # pragma: no cover
@@ -254,7 +175,15 @@ class BlockDiagramMixin:
         )
 
     # bdsim.blocks.continuous.Deriv2
-    def DERIV2(self, wn: float, unit: str = 'rad/s', zeta: float = 1, x0: Vector1D = (0, 0), gain: float = 1.0, **blockargs: Any) -> Any:
+    def DERIV2(
+        self,
+        wn: float,
+        unit: str = "rad/s",
+        zeta: float = 1,
+        x0: Vector1D = (0, 0),
+        gain: float = 1.0,
+        **blockargs: Any,
+    ) -> Any:
         """
         :param wn: natural frequency in units of rad/s
         :type wn: float
@@ -266,7 +195,7 @@ class BlockDiagramMixin:
         :type x0: array_like, optional
         :param gain: gain or scaling factor, defaults to 1
         :type gain: float, optional
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
 
         Damping factor defaults to critical damping, which results in the fastest response without overshoot.
@@ -279,7 +208,9 @@ class BlockDiagramMixin:
         )
 
     # bdsim.blocks.sampled.Deriv_S
-    def DERIV_S(self, clock: Clock, x0: Vector1D = 0, gain: float = 1.0, **blockargs: Any) -> Any:
+    def DERIV_S(
+        self, clock: Clock, x0: Vector1D = 0, gain: float = 1.0, **blockargs: Any
+    ) -> Any:
         """
         :param clock: clock source
         :type clock: Clock
@@ -287,7 +218,7 @@ class BlockDiagramMixin:
         :type x0: array_like, optional
         :param gain: gain or scaling factor, defaults to 1
         :type gain: float
-        :param kwargs: |BlockOptions|
+        :param kwargs: :meth:`common block options <bdsim.Block.__init__>`
         :type kwargs: dict
         """
         raise NotImplementedError(  # pragma: no cover
@@ -298,7 +229,7 @@ class BlockDiagramMixin:
     # bdsim.blocks.linalg.Det
     def DET(self, **blockargs: Any) -> Any:
         """
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
         raise NotImplementedError(  # pragma: no cover
@@ -311,52 +242,8 @@ class BlockDiagramMixin:
         """
         :param keys: list of dictionary keys
         :type keys: list
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
-        """
-        raise NotImplementedError(  # pragma: no cover
-            "stub signature -- the real implementation is injected "
-            "onto BlockDiagram at import time by the @block decorator"
-        )
-
-    # roboticstoolbox.blocks.mobile.DiffSteer
-    def DIFFSTEER(self, w: Any = 1, R: Any = 1, speed_max: Any = inf, accel_max: Any = inf, steer_max: Any = None, a: Any = 0, x0: Any = None, **blockargs: Any) -> Any:
-        """
-        :param w: vehicle width, defaults to 1
-        :type w: float, optional
-        :param R: Wheel radius, defaults to 1
-        :type R: float, optional
-        :param speed_max: Velocity limit, defaults to 1
-        :type speed_max: float, optional
-        :param accel_max: maximum acceleration, defaults to math.inf
-        :type accel_max: float, optional
-        :param steer_max: maximum steering rate, defaults to 1
-        :type steer_max: float, optional
-        :param x0: Inital state, defaults to None
-        :type x0: array_like, optional
-        :param blockargs: |BlockOptions|
-        :type blockargs: dict
-        """
-        raise NotImplementedError(  # pragma: no cover
-            "stub signature -- the real implementation is injected "
-            "onto BlockDiagram at import time by the @block decorator"
-        )
-
-    # machinevisiontoolbox.blocks.camera.EstPose_p
-    def ESTPOSE_P(self, camera: Any, P: Any, frame: Any = 'world', method: Any = 'iterative', **blockargs: Any) -> Any:
-        """
-        :param camera: Camera model, defaults to None
-        :type camera: Camera subclass, optional
-        :param P: World point coordinates
-        :type P: ndarray(2,N)
-        :param frame: return pose of points with respect to reference frame which is one of: 'world' [default] or 'camera'
-        :type frame: str, optional
-        :param method: pose estimation algorithm one of: 'iterative' [default], 'epnp', 'p3p', 'ap3p', 'ippe', 'ippe-square'
-        :type method: str, optional
-        :param blockargs: Additional options for the block, passed as a dictionary
-        :type blockargs: dict
-        :return: a ESTPOSE_P block
-        :rtype: EstPose_p instance
         """
         raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
@@ -364,7 +251,14 @@ class BlockDiagramMixin:
         )
 
     # bdsim.blocks.sinks.Event
-    def EVENT(self, direction: str, func: Callable[..., Any], fargs: list[Any] | tuple[Any, ...] | None = None, fkwargs: dict[str, Any] | None = None, **blockargs: Any) -> Any:
+    def EVENT(
+        self,
+        direction: str,
+        func: Callable[..., Any],
+        fargs: list[Any] | tuple[Any, ...] | None = None,
+        fkwargs: dict[str, Any] | None = None,
+        **blockargs: Any,
+    ) -> Any:
         """
         :param direction: event crossing direction, one of ``'^'``, ``'v'``, ``'+'``, ``'-'``
         :type direction: str
@@ -374,61 +268,7 @@ class BlockDiagramMixin:
         :type fargs: list or tuple, optional
         :param fkwargs: extra keyword args passed to callback
         :type fkwargs: dict, optional
-        :param blockargs: |BlockOptions|
-        :type blockargs: dict
-        """
-        raise NotImplementedError(  # pragma: no cover
-            "stub signature -- the real implementation is injected "
-            "onto BlockDiagram at import time by the @block decorator"
-        )
-
-    # roboticstoolbox.blocks.arm.FDyn
-    def FDYN(self, robot: Any, q0: Any = None, **blockargs: Any) -> Any:
-        """
-        :param robot: Robot model
-        :type robot: Robot subclass
-        :param q0: Initial joint configuration
-        :type q0: array_like(n)
-        :param blockargs: |BlockOptions|
-        :type blockargs: dict
-        """
-        raise NotImplementedError(  # pragma: no cover
-            "stub signature -- the real implementation is injected "
-            "onto BlockDiagram at import time by the @block decorator"
-        )
-
-    # roboticstoolbox.blocks.arm.FDyn_X
-    def FDYN_X(self, robot: Any, q0: Any = None, gravcomp: Any = False, velcomp: Any = False, representation: Any = 'rpy/xyz', **blockargs: Any) -> Any:
-        """
-        :param robot: Robot model
-        :type robot: Robot subclass
-        :param q0: Initial joint configuration
-        :type q0: array_like(n)
-        :param gravcomp: perform gravity compensation
-        :type gravcomp: bool
-        :param velcomp: perform velocity term compensation
-        :type velcomp: bool
-        :param representation: task-space representation, defaults to "rpy/xyz"
-        :type representation: str
-
-        :param blockargs: |BlockOptions|
-        :type blockargs: dict
-        """
-        raise NotImplementedError(  # pragma: no cover
-            "stub signature -- the real implementation is injected "
-            "onto BlockDiagram at import time by the @block decorator"
-        )
-
-    # roboticstoolbox.blocks.arm.FKine
-    def FKINE(self, robot: Any = None, args: Any = {}, **blockargs: Any) -> Any:
-        """
-        :param ``*inputs``: Optional incoming connections
-        :type ``*inputs``: Block or Plug
-        :param robot: Robot model, defaults to None
-        :type robot: Robot subclass, optional
-        :param args: Options for fkine, defaults to {}
-        :type args: dict, optional
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
         raise NotImplementedError(  # pragma: no cover
@@ -437,11 +277,11 @@ class BlockDiagramMixin:
         )
 
     # bdsim.blocks.linalg.Flatten
-    def FLATTEN(self, order: str = 'C', **blockargs: Any) -> Any:
+    def FLATTEN(self, order: str = "C", **blockargs: Any) -> Any:
         """
         :param order: flattening order, either "C" or "F", defaults to "C"
         :type order: str
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
         raise NotImplementedError(  # pragma: no cover
@@ -450,7 +290,19 @@ class BlockDiagramMixin:
         )
 
     # bdsim.blocks.functions.Function
-    def FUNCTION(self, func: Callable[..., Any] | list[Callable[..., Any]] | tuple[Callable[..., Any], ...] | None = None, nin: int = 1, nout: int = 1, persistent: bool = False, fargs: list[Any] | None = None, fkwargs: dict[str, Any] | None = None, **blockargs: Any) -> Any:
+    def FUNCTION(
+        self,
+        func: Callable[..., Any]
+        | list[Callable[..., Any]]
+        | tuple[Callable[..., Any], ...]
+        | None = None,
+        nin: int = 1,
+        nout: int = 1,
+        persistent: bool = False,
+        fargs: list[Any] | None = None,
+        fkwargs: dict[str, Any] | None = None,
+        **blockargs: Any,
+    ) -> Any:
         """
         :param func: function or lambda, or list thereof, defaults to None
         :type func: callable or sequence of callables, optional
@@ -464,7 +316,7 @@ class BlockDiagramMixin:
         :type fargs: list, optional
         :param fkwargs: extra keyword arguments passed to the function, defaults to {}
         :type fkwargs: dict, optional
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict, optional
         """
         raise NotImplementedError(  # pragma: no cover
@@ -473,123 +325,16 @@ class BlockDiagramMixin:
         )
 
     # bdsim.blocks.functions.Gain
-    def GAIN(self, K: int | float | np.ndarray = 1, premul: bool = False, **blockargs: Any) -> Any:
+    def GAIN(
+        self, K: int | float | np.ndarray = 1, premul: bool = False, **blockargs: Any
+    ) -> Any:
         """
         :param K: The gain value, defaults to 1
         :type K: scalar, array_like
         :param premul: premultiply by constant, default is postmultiply, defaults to False
         :type premul: bool, optional
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
-        """
-        raise NotImplementedError(  # pragma: no cover
-            "stub signature -- the real implementation is injected "
-            "onto BlockDiagram at import time by the @block decorator"
-        )
-
-    # roboticstoolbox.blocks.arm.Gravload
-    def GRAVLOAD(self, robot: Any, gravity: Any = None, **blockargs: Any) -> Any:
-        """
-        :param robot: Robot model
-        :type robot: Robot subclass
-        :param gravity: gravitational acceleration
-        :type gravity: float
-        :param blockargs: |BlockOptions|
-        :type blockargs: dict
-        """
-        raise NotImplementedError(  # pragma: no cover
-            "stub signature -- the real implementation is injected "
-            "onto BlockDiagram at import time by the @block decorator"
-        )
-
-    # roboticstoolbox.blocks.arm.Gravload_X
-    def GRAVLOAD_X(self, robot: Any, representation: Any = 'rpy/xyz', gravity: Any = None, **blockargs: Any) -> Any:
-        """
-        :param robot: Robot model
-        :type robot: Robot subclass
-        :param representation: task-space representation, defaults to "rpy/xyz"
-        :type representation: str
-        :param gravity: gravitational acceleration
-        :type gravity: float
-        :param blockargs: |BlockOptions|
-        :type blockargs: dict
-        """
-        raise NotImplementedError(  # pragma: no cover
-            "stub signature -- the real implementation is injected "
-            "onto BlockDiagram at import time by the @block decorator"
-        )
-
-    # roboticstoolbox.blocks.arm.IDyn
-    def IDYN(self, robot: Any, gravity: Any = None, **blockargs: Any) -> Any:
-        """
-        :param robot: Robot model
-        :type robot: Robot subclass
-        :param gravity: gravitational acceleration
-        :type gravity: float
-        :param blockargs: |BlockOptions|
-        :type blockargs: dict
-        """
-        raise NotImplementedError(  # pragma: no cover
-            "stub signature -- the real implementation is injected "
-            "onto BlockDiagram at import time by the @block decorator"
-        )
-
-    # roboticstoolbox.blocks.arm.IKine
-    def IKINE(self, robot: Any = None, q0: Any = None, useprevious: Any = True, ik: Any = None, args: Any = {}, seed: Any = None, **blockargs: Any) -> Any:
-        """
-        :param robot: Robot model, defaults to None
-        :type robot: Robot subclass, optional
-        :param q0: Initial joint angles, defaults to None
-        :type q0: array_like(n), optional
-        :param useprevious: Use previous IK solution as q0, defaults to True
-        :type useprevious: bool, optional
-        :param ik: Specify an IK function, defaults to "LM"
-        :type ik: str
-        :param args: Options passed to IK function
-        :type args: dict
-        :param seed: random seed for solution
-        :type seed: int
-        :param blockargs: |BlockOptions|
-        :type blockargs: dict
-        """
-        raise NotImplementedError(  # pragma: no cover
-            "stub signature -- the real implementation is injected "
-            "onto BlockDiagram at import time by the @block decorator"
-        )
-
-    # machinevisiontoolbox.blocks.camera.ImagePlane
-    def IMAGEPLANE(self, camera: Any, style: Any = None, labels: Any = None, grid: Any = True, retain: Any = False, watch: Any = False, init: Any = None, **blockargs: Any) -> Any:
-        """
-        Create a block that plots image plane coordinates.
-
-        :param camera: a camera model
-        :type camera: Camera instance
-        :param style: styles for each point to be plotted
-        :type style: str or dict, list of strings or dicts; one per line, optional
-        :param grid: draw a grid, defaults to True. Can be boolean or a tuple of
-                     options for grid()
-        :type grid: bool or sequence
-        :param retain: keep previous image plane points, defaults to False
-        :type retain: bool, optional
-        :param watch: add these signals to the watchlist, defaults to False
-        :type watch: bool, optional
-        :param init: function to initialize the graphics, defaults to None
-        :type init: callable, optional
-        :param blockargs: Additional options for the block, passed as a dictionary
-        :type blockargs: dict
-        :return: An IMAGEPLANE block
-        :rtype: ImagePlane instance
-
-        Create a block that plots points on a camera object's virtual image plane.
-
-        Examples::
-
-            SCOPE()
-            SCOPE(nin=2)
-            SCOPE(nin=2, scale=[-1,2])
-            SCOPE(styles='k--')
-            SCOPE(styles=[{'color': 'blue'}, {'color': 'red', 'linestyle': '--'}])
-            SCOPE(styles=['k', 'r--'])
         """
         raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
@@ -597,7 +342,16 @@ class BlockDiagramMixin:
         )
 
     # bdsim.blocks.sampled.Hysteresis_S
-    def HYSTERESIS_S(self, clock: Clock, switch_on: Vector1D = 0.5, switch_off: Vector1D = -0.5, output_on: Vector1D = 1.0, output_off: Vector1D = 0.0, x0: Vector1D | None = None, **blockargs: Any) -> Any:
+    def HYSTERESIS_S(
+        self,
+        clock: Clock,
+        switch_on: Vector1D = 0.5,
+        switch_off: Vector1D = -0.5,
+        output_on: Vector1D = 1.0,
+        output_off: Vector1D = 0.0,
+        x0: Vector1D | None = None,
+        **blockargs: Any,
+    ) -> Any:
         """
         :param clock: clock source
         :type clock: Clock
@@ -612,8 +366,10 @@ class BlockDiagramMixin:
         :param x0: initial output, which must be ``output_on`` or ``output_off``,
             defaults to ``output_off``
         :type x0: float or array_like, optional
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
+        :raises ValueError: ``switch_off`` is above ``switch_on``, the two output levels
+            are equal, or ``x0`` is not one of them
         """
         raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
@@ -621,41 +377,15 @@ class BlockDiagramMixin:
         )
 
     # bdsim.blocks.connections.Index
-    def INDEX(self, index: list[int] | slice | str | None = None, **blockargs: Any) -> Any:
+    def INDEX(
+        self, index: list[int] | slice | str | None = None, **blockargs: Any
+    ) -> Any:
         """
         Index an iterable signal.
 
         :param index: elements of input array, defaults to []
         :type index: list, slice or str, optional
-        :param blockargs: |BlockOptions|
-        :type blockargs: dict
-        """
-        raise NotImplementedError(  # pragma: no cover
-            "stub signature -- the real implementation is injected "
-            "onto BlockDiagram at import time by the @block decorator"
-        )
-
-    # roboticstoolbox.blocks.arm.Inertia
-    def INERTIA(self, robot: Any, **blockargs: Any) -> Any:
-        """
-        :param robot: Robot model
-        :type robot: Robot subclass
-        :param blockargs: |BlockOptions|
-        :type blockargs: dict
-        """
-        raise NotImplementedError(  # pragma: no cover
-            "stub signature -- the real implementation is injected "
-            "onto BlockDiagram at import time by the @block decorator"
-        )
-
-    # roboticstoolbox.blocks.arm.Inertia_X
-    def INERTIA_X(self, robot: Any, representation: Any = 'rpy/xyz', pinv: Any = False, **blockargs: Any) -> Any:
-        """
-        :param robot: Robot model
-        :type robot: Robot subclass
-        :param representation: task-space representation, defaults to "rpy/xyz"
-        :type representation: str
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
         raise NotImplementedError(  # pragma: no cover
@@ -668,7 +398,7 @@ class BlockDiagramMixin:
         """
         :param nout: Number of output ports, defaults to 1
         :type nout: int, optional
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
         raise NotImplementedError(  # pragma: no cover
@@ -677,7 +407,15 @@ class BlockDiagramMixin:
         )
 
     # bdsim.blocks.continuous.Integrator
-    def INTEGRATOR(self, x0: Vector1D = 0, gain: float = 1.0, min: Vector1D | None = None, max: Vector1D | None = None, enable: bool = False, **blockargs: Any) -> Any:
+    def INTEGRATOR(
+        self,
+        x0: Vector1D = 0,
+        gain: float = 1.0,
+        min: Vector1D | None = None,
+        max: Vector1D | None = None,
+        enable: bool = False,
+        **blockargs: Any,
+    ) -> Any:
         """
         :param x0: Initial state, defaults to 0
         :type x0: array_like, optional
@@ -689,7 +427,7 @@ class BlockDiagramMixin:
         :type max: float or array_like, optional
         :param enable: add a second input port that enables integration, defaults to False
         :type enable: bool
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
         raise NotImplementedError(  # pragma: no cover
@@ -698,7 +436,16 @@ class BlockDiagramMixin:
         )
 
     # bdsim.blocks.sampled.Integrator_S
-    def INTEGRATOR_S(self, clock: Clock, x0: Vector1D = 0, gain: float = 1.0, min: Vector1D | None = None, max: Vector1D | None = None, enable: Callable[[float, list[Any], np.ndarray], bool] | None = None, **blockargs: Any) -> Any:
+    def INTEGRATOR_S(
+        self,
+        clock: Clock,
+        x0: Vector1D = 0,
+        gain: float = 1.0,
+        min: Vector1D | None = None,
+        max: Vector1D | None = None,
+        enable: Callable[[float, list[Any], np.ndarray], bool] | None = None,
+        **blockargs: Any,
+    ) -> Any:
         """
         :param clock: clock source
         :type clock: Clock
@@ -712,7 +459,7 @@ class BlockDiagramMixin:
         :type max: float or array_like, optional
         :param enable: function to enable or disable integration
         :type enable: callable
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
         raise NotImplementedError(  # pragma: no cover
@@ -721,7 +468,15 @@ class BlockDiagramMixin:
         )
 
     # bdsim.blocks.functions.Interpolate
-    def INTERPOLATE(self, x: list[Any] | tuple[Any, ...] | np.ndarray | None = None, y: list[Any] | tuple[Any, ...] | np.ndarray | None = None, xy: np.ndarray | None = None, time: bool = False, kind: str = 'linear', **blockargs: Any) -> Any:
+    def INTERPOLATE(
+        self,
+        x: list[Any] | tuple[Any, ...] | np.ndarray | None = None,
+        y: list[Any] | tuple[Any, ...] | np.ndarray | None = None,
+        xy: np.ndarray | None = None,
+        time: bool = False,
+        kind: str = "linear",
+        **blockargs: Any,
+    ) -> Any:
         """
         :param x: x-values of function, defaults to None
         :type x: array_like, shape (N,) optional
@@ -733,7 +488,7 @@ class BlockDiagramMixin:
         :type time: bool, optional
         :param kind: interpolation method, defaults to 'linear'
         :type kind: str, optional
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
         raise NotImplementedError(  # pragma: no cover
@@ -746,7 +501,7 @@ class BlockDiagramMixin:
         """
         :param pinv: force pseudo inverse, defaults to False
         :type pinv: bool, optional
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
         raise NotImplementedError(  # pragma: no cover
@@ -759,65 +514,7 @@ class BlockDiagramMixin:
         """
         :param item: name of dictionary item
         :type item: str
-        :param blockargs: |BlockOptions|
-        :type blockargs: dict
-        """
-        raise NotImplementedError(  # pragma: no cover
-            "stub signature -- the real implementation is injected "
-            "onto BlockDiagram at import time by the @block decorator"
-        )
-
-    # roboticstoolbox.blocks.arm.Jacobian
-    def JACOBIAN(self, robot: Any, frame: Any = '0', representation: Any = None, inverse: Any = False, pinv: Any = False, damping: Any = None, transpose: Any = False, **blockargs: Any) -> Any:
-        """
-        :param robot: Robot model
-        :type robot: Robot subclass
-        :param frame: Frame to compute Jacobian for, one of: "0" [default], "e"
-        :type frame: str, optional
-        :param representation: representation for analytical Jacobian
-        :type representation: str, optional
-        :param inverse: output inverse of Jacobian, defaults to False
-        :type inverse: bool, optional
-        :param pinv: output pseudo-inverse of Jacobian, defaults to False
-        :type pinv: bool, optional
-        :param damping: damping term for inverse, defaults to None
-        :type damping: float or array_like(N)
-        :param transpose: output transpose of Jacobian, defaults to False
-        :type transpose: bool, optional
-        :param blockargs: |BlockOptions|
-        :type blockargs: dict
-
-        If an inverse is requested and ``damping`` is not None it is added to the
-        diagonal of the Jacobian prior to the inversion.  If a scalar is provided it is
-        added to each element of the diagonal, otherwise an N-vector is assumed.
-
-        .. note::
-            - Only one of ``inverse`` or ``pinv`` can be True
-            - ``inverse`` or ``pinv`` can be used in conjunction with ``transpose``
-            - ``inverse`` requires that the Jacobian is square
-            - If ``inverse`` is True and the Jacobian is singular a runtime
-              error will occur.
-        """
-        raise NotImplementedError(  # pragma: no cover
-            "stub signature -- the real implementation is injected "
-            "onto BlockDiagram at import time by the @block decorator"
-        )
-
-    # roboticstoolbox.blocks.arm.JTraj
-    def JTRAJ(self, q0: Any, qf: Any, qd0: Any = None, qdf: Any = None, T: Any = None, **blockargs: Any) -> Any:
-        """
-
-        :param q0: initial joint coordinate
-        :type q0: array_like(n)
-        :param qf: final joint coordinate
-        :type qf: array_like(n)
-        :param T: time vector or number of steps, defaults to None
-        :type T: array_like or int, optional
-        :param qd0: initial velocity, defaults to None
-        :type qd0: array_like(n), optional
-        :param qdf: final velocity, defaults to None
-        :type qdf: array_like(n), optional
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
         raise NotImplementedError(  # pragma: no cover
@@ -826,13 +523,22 @@ class BlockDiagramMixin:
         )
 
     # bdsim.blocks.continuous.LTI_SISO
-    def LTI_SISO(self, N: Vector1D = 1, D: Vector1D = [1, 1], x0: np.ndarray | None = None, form: str = 'ccf', order: str = 'backward', verbose: bool = False, **blockargs: Any) -> Any:
+    def LTI_SISO(
+        self,
+        num: Vector1D = 1,
+        den: Vector1D = [1, 1],
+        x0: np.ndarray | None = None,
+        form: str = "ccf",
+        order: str = "backward",
+        verbose: bool = False,
+        **blockargs: Any,
+    ) -> Any:
         """
-        :param N: Numerator coefficients in descending powers of :math:`s`.
-        :type N: array_like
-        :param D: Denominator coefficients in descending powers of :math:`s`.
+        :param num: Numerator coefficients in descending powers of :math:`s`.
+        :type num: array_like
+        :param den: Denominator coefficients in descending powers of :math:`s`.
             Does not have to be normalized.
-        :type D: array_like
+        :type den: array_like
         :param form: The canonical form of the realization, defaults to 'ccf'.
         :type form: str, optional
         :param order: The state ordering convention
@@ -842,7 +548,7 @@ class BlockDiagramMixin:
         :return: LTI_SISO block
         :rtype: ``LTI_SISO`` instance
 
-        Coefficients ``N`` and ``D`` can be specified in the form of an array of coefficients, or an array of factors.
+        Coefficients ``num`` and ``den`` can be specified in the form of an array of coefficients, or an array of factors.
         The coefficients and factors are arrays of coefficients in decreasing powers of :math:`s`.
         For example:
 
@@ -869,10 +575,19 @@ class BlockDiagramMixin:
         .. note::
             - The transfer function is assumed to be strictly proper (:math:`deg(N) < deg(D)`).
             - The default ``form='ccf', order='backward'`` corresponds to the state-space realization returned by ``scipy.signal.tf2ss`` and MATLAB's ``tf2ss``.
+            - ``num`` and ``den`` are attributes holding the numerator and denominator coefficients (expanded
+              if they were given as factors), and can be changed after the block is created (they are
+              parameters).  The state-space matrices are rebuilt from them.  The order of the system, the
+              length of ``den`` minus one, cannot change.
             - The state-space matrices are available in the ``A``, ``B``, ``C``, and ``D`` attributes of the block.
-            - If D is zero, then the block has no feedthrough and the D matrix is set to None. If D is nonzero, then the block has feedthrough and the D matrix is stored in the D attribute.
-            - The ``feedthrough`` attribute of the block is set to True if D is nonzero. This can be used to check for feedthrough without having to check the D matrix directly, and is used
+            - If the numerator degree is less than the denominator degree, the block has no feedthrough and ``D`` is None.
+              The ``feedthrough`` attribute of the block is set to True otherwise. It is used
               by the scheduler to ensure correct block evaluation order.
+
+        .. versionchanged:: next
+            The arguments ``N`` and ``D`` are renamed ``num`` and ``den``, because ``D`` is also the feedthrough
+            matrix of the state-space realisation.  The old keywords still work, with a ``DeprecationWarning``,
+            and will be removed in a later release.
         """
         raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
@@ -880,15 +595,25 @@ class BlockDiagramMixin:
         )
 
     # bdsim.blocks.sampled.LTI_SISO_S
-    def LTI_SISO_S(self, clock: Clock, N: Vector1D = 1, D: Vector1D = [1, 1], x0: np.ndarray | None = None, form: str = 'ccf', order: str = 'backward', verbose: bool = False, **blockargs: Any) -> Any:
+    def LTI_SISO_S(
+        self,
+        clock: Clock,
+        num: Vector1D = 1,
+        den: Vector1D = [1, 1],
+        x0: np.ndarray | None = None,
+        form: str = "ccf",
+        order: str = "backward",
+        verbose: bool = False,
+        **blockargs: Any,
+    ) -> Any:
         """
         :param clock: clock source
         :type clock: Clock
-        :param N: Numerator coefficients in descending powers of :math:`s`.
-        :type N: array_like
-        :param D: Denominator coefficients in descending powers of :math:`s`.
+        :param num: Numerator coefficients in descending powers of :math:`z`.
+        :type num: array_like
+        :param den: Denominator coefficients in descending powers of :math:`z`.
             Does not have to be normalized.
-        :type D: array_like
+        :type den: array_like
         :param form: The canonical form of the realization, defaults to 'ccf'.
         :type form: str, optional
         :param order: The state ordering convention
@@ -898,7 +623,7 @@ class BlockDiagramMixin:
         :return: LTI_SISO_S block
         :rtype: ``LTI_SISO_S`` instance
 
-        Coefficients ``N`` and ``D``can be specified in the form of an array of
+        Coefficients ``num`` and ``den`` can be specified in the form of an array of
         coefficients, or an array of factors. The coefficients and factors are arrays of
         coefficients in decreasing powers of :math:`z`, this could be :math:`z^2 + 0.8z
         + 0.15` or :math:`1 + 0.8z^{-1} + 0.15z^{-2}`, both represented as ``[1, 0.8, 0.15]``.
@@ -931,13 +656,13 @@ class BlockDiagramMixin:
             1. **Control Perspective (z-domain):**
             If coefficients represent descending powers of :math:`z`, the states 
             represent forward shifts. 
-            
+    
             Example: :math:`G(z) = \\\\frac{b_1 z + b_2}{z^2 + a_1 z + a_2}`
 
             2. **DSP Perspective (z⁻¹-domain):**
             If coefficients represent ascending powers of :math:`z^{-1}`, the 
             states represent physical unit delays. 
-            
+    
             Example: :math:`H(z^{-1}) = \\\\frac{b_0 + b_1 z^{-1}}{1 + a_1 z^{-1} + a_2 z^{-2}}`
 
             In both cases, this function treats the input arrays as ordered 
@@ -950,15 +675,24 @@ class BlockDiagramMixin:
             If ``form='ccf'`` and ``order='forward'``, the state :math:`x_i[k]` 
             corresponds to the output of the :math:`i`-th delay element in a 
             tapped delay line.
-  
+
 
         .. note::
-            - The transfer function is assumed to be strictly proper (:math:`deg(N) < deg(D)`).
+            - The transfer function is assumed to be strictly proper (:math:`deg(num) < deg(den)`).
             - The default ``form='ccf', order='backward'`` corresponds to the state-space realization returned by ``scipy.signal.tf2ss`` and MATLAB's ``tf2ss``.
+            - ``num`` and ``den`` are attributes holding the numerator and denominator coefficients (expanded
+              if they were given as factors), and can be changed after the block is created (they are
+              parameters).  The state-space matrices are rebuilt from them.  The order of the system, the
+              length of ``den`` minus one, cannot change.
             - The state-space matrices are available in the ``A``, ``B``, ``C``, and ``D`` attributes of the block.
-            - If D is zero, then the block has no feedthrough and the D matrix is set to None. If D is nonzero, then the block has feedthrough and the D matrix is stored in the D attribute.
-            - The ``feedthrough`` attribute of the block is set to True if D is nonzero. This can be used to check for feedthrough without having to check the D matrix directly, and is used
+            - If the numerator degree is less than the denominator degree, the block has no feedthrough and ``D`` is None.
+              The ``feedthrough`` attribute of the block is set to True otherwise. It is used
               by the scheduler to ensure correct block evaluation order.
+
+        .. versionchanged:: next
+            The arguments ``N`` and ``D`` are renamed ``num`` and ``den``, because ``D`` is also the feedthrough
+            matrix of the state-space realization.  The old keywords still work, with a ``DeprecationWarning``,
+            and will be removed in a later release.
         """
         raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
@@ -966,21 +700,27 @@ class BlockDiagramMixin:
         )
 
     # bdsim.blocks.continuous.LTI_SS
-    def LTI_SS(self, A: np.ndarray, B: np.ndarray, C: np.ndarray, D: np.ndarray | None = None, x0: np.ndarray | None = None, **blockargs: Any) -> Any:
+    def LTI_SS(
+        self,
+        A: np.ndarray,
+        B: np.ndarray,
+        C: np.ndarray,
+        D: np.ndarray | None = None,
+        x0: Vector1D | None = None,
+        **blockargs: Any,
+    ) -> Any:
         """
-        :param N: numerator coefficients, defaults to 1
-        :type N: array_like, optional
-        :param A: system matrix, defaults to [1,1]
-        :type A: array_like, optional
-        :param B: input matrix, defaults to [1]
-        :type B: array_like, optional
-        :param C: output matrix, defaults to [1]
-        :type C: array_like, optional
-        :param D: feedthrough matrix, defaults to None
-        :type D: array_like, optional
+        :param A: system matrix
+        :type A: ndarray(n,n)
+        :param B: input matrix; a 1D array is a column vector
+        :type B: ndarray(n,m)
+        :param C: output matrix; a 1D array is a row vector
+        :type C: ndarray(p,n)
+        :param D: feedthrough matrix, defaults to zero
+        :type D: ndarray(p,m), optional
         :param x0: initial states, defaults to None
         :type x0: array_like, optional
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
         raise NotImplementedError(  # pragma: no cover
@@ -989,78 +729,31 @@ class BlockDiagramMixin:
         )
 
     # bdsim.blocks.sampled.LTI_SS_S
-    def LTI_SS_S(self, clock: Clock, A: np.ndarray, B: np.ndarray, C: np.ndarray, D: np.ndarray | None = None, x0: np.ndarray | None = None, **blockargs: Any) -> Any:
+    def LTI_SS_S(
+        self,
+        clock: Clock,
+        A: np.ndarray,
+        B: np.ndarray,
+        C: np.ndarray,
+        D: np.ndarray | None = None,
+        x0: np.ndarray | None = None,
+        **blockargs: Any,
+    ) -> Any:
         """
         :param clock: clock source
         :type clock: Clock
-        :param A: system matrix, defaults to [1,1]
-        :type A: array_like, optional
-        :param B: input matrix, defaults to [1]
-        :type B: array_like, optional
-        :param C: output matrix, defaults to [1]
-        :type C: array_like, optional
-        :param D: feedthrough matrix, defaults to None
-        :type D: array_like, optional
+        :param A: system matrix :math:`\\Phi`, also available as the attribute ``Phi``
+        :type A: ndarray(n,n)
+        :param B: input matrix :math:`\\Gamma`, also available as the attribute ``Gamma``;
+            a 1D array is a column vector
+        :type B: ndarray(n,m)
+        :param C: output matrix; a 1D array is a row vector
+        :type C: ndarray(p,n)
+        :param D: feedthrough matrix, defaults to zero
+        :type D: ndarray(p,m), optional
         :param x0: initial states, defaults to None
         :type x0: array_like, optional
-        :param blockargs: |BlockOptions|
-        :type blockargs: dict
-        """
-        raise NotImplementedError(  # pragma: no cover
-            "stub signature -- the real implementation is injected "
-            "onto BlockDiagram at import time by the @block decorator"
-        )
-
-    # roboticstoolbox.blocks.uav.MultiRotor
-    def MULTIROTOR(self, model: Any, groundcheck: Any = True, speedcheck: Any = True, x0: Any = None, **blockargs: Any) -> Any:
-        """
-        Create a multi-rotor dynamic model block.
-
-        :param model: A dictionary of vehicle geometric and inertial properties
-        :type model: dict
-        :param groundcheck: Prevent vehicle moving below ground :math:`z>0`, defaults to True
-        :type groundcheck: bool
-        :param speedcheck: Check for non-positive rotor speed, defaults to True
-        :type speedcheck: bool
-        :param x0: Initial state, defaults to None
-        :type x0: array_like(6) or array_like(12), optional
-        :param blockargs: |BlockOptions|
-        :type blockargs: dict
-        """
-        raise NotImplementedError(  # pragma: no cover
-            "stub signature -- the real implementation is injected "
-            "onto BlockDiagram at import time by the @block decorator"
-        )
-
-    # roboticstoolbox.blocks.uav.MultiRotorMixer
-    def MULTIROTORMIXER(self, model: Any = None, wmax: Any = 1000, wmin: Any = 5, **blockargs: Any) -> Any:
-        """
-        :param model: A dictionary of vehicle geometric and inertial properties
-        :type model: dict
-        :param maxw: maximum rotor speed in rad/s, defaults to 1000
-        :type maxw: float
-        :param minw: minimum rotor speed in rad/s, defaults to 5
-        :type minw: float
-        :param blockargs: |BlockOptions|
-        :type blockargs: dict
-        """
-        raise NotImplementedError(  # pragma: no cover
-            "stub signature -- the real implementation is injected "
-            "onto BlockDiagram at import time by the @block decorator"
-        )
-
-    # roboticstoolbox.blocks.uav.MultiRotorPlot
-    def MULTIROTORPLOT(self, model: Any, scale: Any = [-2, 2, -2, 2, 10], flapscale: Any = 1, projection: Any = 'ortho', **blockargs: Any) -> Any:
-        """
-        :param model: A dictionary of vehicle geometric and inertial properties
-        :type model: dict
-        :param scale: dimensions of workspace: xmin, xmax, ymin, ymax, zmin, zmax, defaults to [-2,2,-2,2,10]
-        :type scale: array_like, optional
-        :param flapscale: exagerate flapping angle by this factor, defaults to 1
-        :type flapscale: float
-        :param projection: 3D projection, one of: 'ortho' [default], 'perspective'
-        :type projection: str
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
         raise NotImplementedError(  # pragma: no cover
@@ -1069,16 +762,21 @@ class BlockDiagramMixin:
         )
 
     # bdsim.blocks.sampled.Mnoise_S
-    def MNOISE_S(self, clock: Clock, sigma: Vector1D = 1, seed: int | None = None, x0: Vector1D | None = None, **blockargs: Any) -> Any:
+    def MNOISE_S(
+        self,
+        clock: Clock,
+        sigma: Vector1D = 1,
+        seed: int | None = None,
+        x0: Vector1D | None = None,
+        **blockargs: Any,
+    ) -> Any:
         """
         :param clock: clock source
-        :type clock: Clock
         :param sigma: standard deviation of the noise, defaults to 1
         :param seed: seed for the random number generator, defaults to None
         :param x0: noise during the first sample period, defaults to one with the
             length of ``sigma``
-        :param blockargs: |BlockOptions|
-        :type blockargs: dict
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         """
         raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
@@ -1090,7 +788,7 @@ class BlockDiagramMixin:
         """
         :param nin: Number of input ports, defaults to 1
         :type nin: int, optional
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
         raise NotImplementedError(  # pragma: no cover
@@ -1105,7 +803,7 @@ class BlockDiagramMixin:
         :type axis: int, optional
         :param ord: Order of the norm, default to None.
         :type ord: int or str
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
         raise NotImplementedError(  # pragma: no cover
@@ -1118,7 +816,7 @@ class BlockDiagramMixin:
         """
         :param nin: number of input ports, defaults to 1
         :type nin: int, optional
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
         raise NotImplementedError(  # pragma: no cover
@@ -1131,7 +829,7 @@ class BlockDiagramMixin:
         """
         :param nin: Number of input ports, defaults to 1
         :type nin: int, optional
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
         raise NotImplementedError(  # pragma: no cover
@@ -1140,7 +838,17 @@ class BlockDiagramMixin:
         )
 
     # bdsim.blocks.continuous.PID
-    def PID(self, P: float = 0.0, I: float = 0.0, D: float = 0.0, D_pole: float = 1, I_limit: float | tuple[float, ...] | list[float] | None = None, structure: str = 'parallel', **blockargs: Any) -> Any:
+    def PID(
+        self,
+        P: float = 0.0,
+        I: float = 0.0,
+        D: float = 0.0,
+        D_pole: float = 1,
+        I_limit: float | tuple[float, ...] | list[float] | None = None,
+        structure: str = "parallel",
+        terms: str | None = None,
+        **blockargs: Any,
+    ) -> Any:
         """
         :param type: the controller type, defaults to "PID"
         :type type: str, optional
@@ -1155,7 +863,10 @@ class BlockDiagramMixin:
         :param I_limit: integral limit
         :type I_limit: float or 2-tuple
         :param structure: the structure of the PID implementation, "parallel" (default), "series", "standard|ideal"
-        :param blockargs: |BlockOptions|
+        :param terms: the terms to build, one of "P", "PI", "PD" or "PID", even if a gain is zero; the default is P, plus I and D if their gain is not zero
+        :type terms: str, optional
+        :raises ValueError: ``terms`` is not one of those, or a gain is non-zero for a term that is not built
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
         raise NotImplementedError(  # pragma: no cover
@@ -1164,7 +875,18 @@ class BlockDiagramMixin:
         )
 
     # bdsim.blocks.sampled.PID_S
-    def PID_S(self, clock: Clock, P: float = 0.0, I: float = 0.0, D: float = 0.0, I_limit: float | tuple[float, ...] | list[float] | None = None, I_band: float | None = None, structure: str = 'parallel', **blockargs: Any) -> Any:
+    def PID_S(
+        self,
+        clock: Clock,
+        P: float = 0.0,
+        I: float = 0.0,
+        D: float = 0.0,
+        I_limit: float | tuple[float, ...] | list[float] | None = None,
+        I_band: float | None = None,
+        structure: str = "parallel",
+        terms: str | None = None,
+        **blockargs: Any,
+    ) -> Any:
         """
         :param clock: clock source
         :type clock: Clock
@@ -1181,7 +903,10 @@ class BlockDiagramMixin:
         :param I_band: band within which integral action is active
         :type I_band: float
         :param structure: the structure of the PID implementation, "parallel" (default), "series", "standard|ideal"
-        :param blockargs: |BlockOptions|
+        :param terms: the terms to build, one of "P", "PI", "PD" or "PID", even if a gain is zero; the default is P, plus I and D if their gain is not zero
+        :type terms: str, optional
+        :raises ValueError: ``terms`` is not one of those, or a gain is non-zero for a term that is not built
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
         raise NotImplementedError(  # pragma: no cover
@@ -1190,11 +915,20 @@ class BlockDiagramMixin:
         )
 
     # bdsim.blocks.sources.Piecewise
-    def PIECEWISE(self, *args: tuple[float, float], seq: list[tuple[float, float]] | None = None, **blockargs: Any) -> Any:
+    def PIECEWISE(
+        self,
+        *args: tuple[float, float],
+        seq: list[tuple[float, float]] | None = None,
+        asarray: bool = True,
+        **blockargs: Any,
+    ) -> Any:
         """
         :param seq: sequence of time, value pairs
         :type seq: list of 2-element iterables
-        :param blockargs: |BlockOptions|
+        :param asarray: convert a list or tuple of numbers used as a value to an
+            ``ndarray`` of ``int64`` or ``float64``, defaults to True
+        :type asarray: bool, optional
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
         raise NotImplementedError(  # pragma: no cover
@@ -1202,27 +936,12 @@ class BlockDiagramMixin:
             "onto BlockDiagram at import time by the @block decorator"
         )
 
-    # roboticstoolbox.blocks.spatial.Point2Tr
-    def POINT2TR(self, T: Any = None, **blockargs: Any) -> Any:
-        """
-        :param T: the transform
-        :type T: SE3
-        :param blockargs: |BlockOptions|
-        :type blockargs: dict
-
-        If ``T`` is None then it defaults to the identity matrix.
-        """
-        raise NotImplementedError(  # pragma: no cover
-            "stub signature -- the real implementation is injected "
-            "onto BlockDiagram at import time by the @block decorator"
-        )
-
-    # bdsim.blocks.continuous.PoseIntegrator
+    # bdsim.blocks.spatial.PoseIntegrator
     def POSEINTEGRATOR(self, x0: SE3 | Twist3 | None = None, **blockargs: Any) -> Any:
         """
         :param x0: Initial pose, defaults to null
         :type x0: SE3, Twist3, optional
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
         raise NotImplementedError(  # pragma: no cover
@@ -1230,14 +949,60 @@ class BlockDiagramMixin:
             "onto BlockDiagram at import time by the @block decorator"
         )
 
-    # bdsim.blocks.sampled.PoseIntegrator_S
-    def POSEINTEGRATOR_S(self, clock: Clock, x0: SE3 | Twist3 | np.ndarray | None = None, **blockargs: Any) -> Any:
+    # bdsim.blocks.spatial.PoseIntegrator_S
+    def POSEINTEGRATOR_S(
+        self,
+        clock: Clock,
+        x0: SE3 | Twist3 | np.ndarray | None = None,
+        **blockargs: Any,
+    ) -> Any:
         """
         :param clock: clock source
         :type clock: Clock
         :param x0: Initial pose, defaults to null
         :type x0: SE3, optional
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
+        :type blockargs: dict
+        """
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
+
+    # bdsim.blocks.spatial.Pose_inverse
+    def POSE_INVERSE(self, **blockargs: Any) -> Any:
+        """
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
+        :type blockargs: dict
+        """
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
+
+    # bdsim.blocks.spatial.Pose_postmul
+    def POSE_POSTMUL(
+        self, pose: SO2 | SO3 | SE2 | SE3 | None = None, **blockargs: Any
+    ) -> Any:
+        """
+        :param pose: pose to apply
+        :type pose: SO2, SE2, SO3 or SE3
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
+        :type blockargs: dict
+        """
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
+
+    # bdsim.blocks.spatial.Pose_premul
+    def POSE_PREMUL(
+        self, pose: SO2 | SO3 | SE2 | SE3 | None = None, **blockargs: Any
+    ) -> Any:
+        """
+        :param pose: pose to apply
+        :type pose: SO2, SE2, SO3 or SE3
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
         raise NotImplementedError(  # pragma: no cover
@@ -1250,9 +1015,9 @@ class BlockDiagramMixin:
         """
         :param p: The exponent value, defaults to 1
         :type p: scalar
-        :param matrix: premultiply by constant, default is postmultiply, defaults to False
+        :param matrix: matrix power, not elementwise exponentiation, defaults to False
         :type matrix: bool, optional
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
         raise NotImplementedError(  # pragma: no cover
@@ -1261,13 +1026,15 @@ class BlockDiagramMixin:
         )
 
     # bdsim.blocks.sinks.Print
-    def PRINT(self, fmt: str | None = None, file: TextIO | None = None, **blockargs: Any) -> Any:
+    def PRINT(
+        self, fmt: str | None = None, file: TextIO | None = None, **blockargs: Any
+    ) -> Any:
         """
         :param fmt: Format string, defaults to None
         :type fmt: str, optional
         :param file: file to write data to, defaults to None
         :type file: file object, optional
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         :return: A PRINT block
         :rtype: Print instance
@@ -1278,15 +1045,18 @@ class BlockDiagramMixin:
         )
 
     # bdsim.blocks.functions.Prod
-    def PROD(self, ops: str = '**', matrix: bool = False, **blockargs: Any) -> Any:
+    def PROD(
+        self, ops: str = "**", matrix: bool | None = None, **blockargs: Any
+    ) -> Any:
         """
         :param ops: operations associated with input ports, accepted characters: * or /, defaults to '**'
         :type ops: str, optional
         :param inputs: Optional incoming connections
         :type inputs: Block or Plug
-        :param matrix: Arguments are matrices, defaults to False
+        :param matrix: deprecated, matrix vs elementwise operation is now auto-detected
+            from the input type and this argument has no effect
         :type matrix: bool, optional
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
         raise NotImplementedError(  # pragma: no cover
@@ -1295,7 +1065,9 @@ class BlockDiagramMixin:
         )
 
     # bdsim.blocks.sources.Ramp
-    def RAMP(self, T: float = 1, off: float = 0, slope: float = 1, **blockargs: Any) -> Any:
+    def RAMP(
+        self, T: float = 1, off: float = 0, slope: float = 1, **blockargs: Any
+    ) -> Any:
         """
         :param T: time of ramp start, defaults to 1
         :type T: float, optional
@@ -1303,7 +1075,7 @@ class BlockDiagramMixin:
         :type off: float, optional
         :param slope: gradient of slope, defaults to 1
         :type slope: float, optional
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
         raise NotImplementedError(  # pragma: no cover
@@ -1312,7 +1084,19 @@ class BlockDiagramMixin:
         )
 
     # bdsim.blocks.displays.Scope
-    def SCOPE(self, nin: int = 1, vector: int | list[int] | None = None, styles: str | dict | list[str | dict] | None = None, stairs: bool = False, scale: Literal['auto'] | float = 'auto', labels: list[str] | None = None, grid: bool | list | tuple = True, watch: bool = False, title: str | None = None, loc: str = 'best', **blockargs: Any) -> Any:
+    def SCOPE(
+        self,
+        nin: int = 1,
+        vector: int | list[int] | None = None,
+        styles: str | dict | list[str | dict] | None = None,
+        stairs: bool = False,
+        scale: Literal["auto"] | float = "auto",
+        labels: list[str] | None = None,
+        grid: bool | list | tuple = True,
+        title: str | None = None,
+        loc: str = "best",
+        **blockargs: Any,
+    ) -> Any:
         """
         :param nin: number of inputs, defaults to 1 or if given, the length of
                     style vector
@@ -1323,7 +1107,7 @@ class BlockDiagramMixin:
         :type styles: str or dict, list of strings or dicts; one per line, optional
         :param stairs: force staircase style plot for all lines, defaults to False
         :type stairs: bool, optional
-        :param scale: fixed y-axis scale or defaults to 'auto'
+        :param scale: fixed y-axis scale, or 'auto', defaults to 'auto'
         :type scale: str or array_like(2)
         :param labels: labels for the plotted signals, defaults to block name and port of the source of each signal if not given. Used
             for vertical axis label, legend and cursor readout.
@@ -1331,13 +1115,11 @@ class BlockDiagramMixin:
         :param grid: draw a grid, defaults to True. Can be boolean or a tuple of
                      options for grid()
         :type grid: bool or sequence
-        :param watch: add these signals to the watchlist, defaults to False
-        :type watch: bool, optional
         :param title: title of plot
         :type title: str
         :param loc: location of legend, see :meth:`matplotlib.pyplot.legend`, defaults to "best"
         :type loc: str
-        :param blockargs: |BlockOptions|
+        :param blockargs: |GraphicsBlockOptions|
         :type blockargs: dict
         """
         raise NotImplementedError(  # pragma: no cover
@@ -1346,17 +1128,27 @@ class BlockDiagramMixin:
         )
 
     # bdsim.blocks.displays.ScopeXY
-    def SCOPEXY(self, style: str | dict | None = None, scale: Literal['auto'] | list | tuple = 'auto', aspect: str = 'equal', labels: list[str] = ['X', 'Y'], init: Callable | None = None, nin: int = 2, **blockargs: Any) -> Any:
+    def SCOPEXY(
+        self,
+        style: str | dict | None = None,
+        scale: Literal["auto"] | list | tuple = "auto",
+        aspect: str = "equal",
+        labels: list[str] = ["X", "Y"],
+        init: Callable | None = None,
+        **blockargs: Any,
+    ) -> Any:
         """
         :param style: line style, defaults to None
         :type style: optional str or dict
-        :param scale: fixed y-axis scale or defaults to 'auto'
+        :param scale: fixed y-axis scale, or 'auto', defaults to 'auto'
         :type scale: str or array_like(2) or array_like(4)
+        :param aspect: aspect ratio, defaults to "equal"
+        :type aspect: str
         :param labels: axis labels (xlabel, ylabel), defaults to ["X","Y"]
         :type labels: 2-element tuple or list
         :param init: function to initialize the graphics, defaults to None
         :type init: callable
-        :param blockargs: |BlockOptions|
+        :param blockargs: |GraphicsBlockOptions|
         :type blockargs: dict
         """
         raise NotImplementedError(  # pragma: no cover
@@ -1365,19 +1157,21 @@ class BlockDiagramMixin:
         )
 
     # bdsim.blocks.displays.ScopeXY1
-    def SCOPEXY1(self, indices: list[int] = [0, 1], **blockargs: Any) -> Any:
+    def SCOPEXY1(
+        self, indices: list[int] = [0, 1], labels: Any = ("x", "y"), **blockargs: Any
+    ) -> Any:
         """
         :param indices: indices of elements to select from block input vector, defaults to [0,1]
         :type indices: array_like(2)
         :param style: line style
         :type style: optional str or dict
-        :param scale: fixed y-axis scale or defaults to 'auto'
+        :param scale: fixed y-axis scale, or 'auto', defaults to 'auto'
         :type scale: str or array_like(2) or array_like(4)
         :param labels: axis labels (xlabel, ylabel)
         :type labels: 2-element tuple or list
         :param init: function to initialize the graphics, defaults to None
         :type init: callable
-        :param blockargs: |BlockOptions|
+        :param blockargs: |GraphicsBlockOptions|
         :type blockargs: dict
         """
         raise NotImplementedError(  # pragma: no cover
@@ -1388,7 +1182,7 @@ class BlockDiagramMixin:
     # bdsim.blocks.functions.Sign
     def SIGN(self, **blockargs: Any) -> Any:
         """
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
         raise NotImplementedError(  # pragma: no cover
@@ -1401,7 +1195,7 @@ class BlockDiagramMixin:
         """
         :param index: slice, defaults to None
         :type index: tuple(3)
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
         raise NotImplementedError(  # pragma: no cover
@@ -1416,7 +1210,7 @@ class BlockDiagramMixin:
         :type rows: tuple(3) or list
         :param cols: column selection, defaults to None
         :type cols: tuple(3) or list
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
         raise NotImplementedError(  # pragma: no cover
@@ -1427,7 +1221,7 @@ class BlockDiagramMixin:
     # bdsim.blocks.functions.Sqrt
     def SQRT(self, **blockargs: Any) -> Any:
         """
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
         raise NotImplementedError(  # pragma: no cover
@@ -1436,16 +1230,35 @@ class BlockDiagramMixin:
         )
 
     # bdsim.blocks.sources.Step
-    def STEP(self, T: float = 1, off: float = 0, on: float = 1, **blockargs: Any) -> Any:
+    def STEP(
+        self,
+        T: float = 1,
+        off: Any = 0,
+        on: Any = 1,
+        asarray: bool = True,
+        **blockargs: Any,
+    ) -> Any:
         """
         :param T: time of step, defaults to 1
         :type T: float, optional
         :param off: initial value, defaults to 0
-        :type off: float, optional
+        :type off: any, optional
         :param on: final value, defaults to 1
-        :type on: float, optional
-        :param blockargs: |BlockOptions|
+        :type on: any, optional
+        :param asarray: convert a list or tuple of numbers to an ``ndarray`` of
+            ``int64`` or ``float64``, defaults to True
+        :type asarray: bool, optional
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
+        :raises TypeError: ``off`` and ``on`` are of different types
+        :raises ValueError: ``off`` and ``on`` are arrays with different shape or dtype
+
+        The output is always of one type.  ``off`` and ``on`` can be any Python
+        object, but must be the same type, for example two arrays or two
+        strings.  **A list or tuple of numbers is first converted to an**
+        ``ndarray`` **of** ``int64`` **or** ``float64`` (see ``asarray``).  Numbers are promoted to a common type, so
+        ``off=0, on=1.0`` gives ``0.0`` and ``1.0``.  A bool cannot be mixed
+        with a number.
         """
         raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
@@ -1453,11 +1266,13 @@ class BlockDiagramMixin:
         )
 
     # bdsim.blocks.sinks.Stop
-    def STOP(self, func: Callable[[Any], object] | None = None, **blockargs: Any) -> Any:
+    def STOP(
+        self, func: Callable[[Any], object] | None = None, **blockargs: Any
+    ) -> Any:
         """
         :param func: evaluate stop condition, defaults to None
         :type func: callable, optional
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
         raise NotImplementedError(  # pragma: no cover
@@ -1466,7 +1281,16 @@ class BlockDiagramMixin:
         )
 
     # bdsim.blocks.connections.SubSystem
-    def SUBSYSTEM(self, subsys: str | BlockDiagram, nin: int = 1, nout: int = 1, allow_eval: bool | None = None, trace_eval: bool = False, globalvars: dict[str, Any] | None = None, **blockargs: Any) -> Any:
+    def SUBSYSTEM(
+        self,
+        subsys: str | BlockDiagram,
+        nin: int = 1,
+        nout: int = 1,
+        allow_eval: bool | None = None,
+        trace_eval: bool = False,
+        globalvars: dict[str, Any] | None = None,
+        **blockargs: Any,
+    ) -> Any:
         """
         :param subsys: Subsystem as a ``.bd`` filepath, module name, or ``BlockDiagram`` instance
         :type subsys: str or BlockDiagram
@@ -1482,7 +1306,7 @@ class BlockDiagramMixin:
         :param globalvars: (``.bd`` mode only) extra names available when evaluating
             ``"=..."`` parameter expressions.
         :type globalvars: dict, optional
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         :raises ImportError: module not found or no BlockDiagram in it
         :raises ValueError: invalid argument type or .bd load constraints not met
@@ -1493,14 +1317,16 @@ class BlockDiagramMixin:
         )
 
     # bdsim.blocks.functions.Sum
-    def SUM(self, signs: str = '++', mode: str | None = None, **blockargs: Any) -> Any:
+    def SUM(self, signs: str = "++", mode: str | None = None, **blockargs: Any) -> Any:
         """
-        :param signs: signs associated with input ports, accepted characters: + or -, defaults to "++"
+        :param signs: a string comprising ``+`` or ``-`` characters, defaults to ``++``
         :type signs: str, optional
         :param mode: controls addition mode, per element, string comprises ``r`` or ``c`` or ``C`` or ``L``, defaults to None
         :type mode: str, optional
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
+
+        For example the string ``+-`` creates a 2-port block where the second input is subtracted from the first.
 
         ``mode`` controls how elements of the input vectors are added/subtracted.
         Elements which are angles must be treated specially, and this is indicated by
@@ -1529,8 +1355,9 @@ class BlockDiagramMixin:
         """
         :param threshold: ``S`` selects ``X`` when ``S >= threshold``; ``None`` (the
             default) uses the rule for the type of ``S`` in the table above
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
+        :raises ValueError: ``threshold`` is not a real number
         """
         raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
@@ -1540,7 +1367,7 @@ class BlockDiagramMixin:
     # bdsim.blocks.sources.Time
     def TIME(self, value: Any | None = None, **blockargs: Any) -> Any:
         """
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
         raise NotImplementedError(  # pragma: no cover
@@ -1548,42 +1375,10 @@ class BlockDiagramMixin:
             "onto BlockDiagram at import time by the @block decorator"
         )
 
-    # roboticstoolbox.blocks.spatial.Tr2Delta
-    def TR2DELTA(self, **blockargs: Any) -> Any:
+    # bdsim.blocks.spatial.Transform_vector
+    def TRANSFORM_VECTOR(self, **blockargs: Any) -> Any:
         """
-        :param blockargs: |BlockOptions|
-        :type blockargs: dict
-        """
-        raise NotImplementedError(  # pragma: no cover
-            "stub signature -- the real implementation is injected "
-            "onto BlockDiagram at import time by the @block decorator"
-        )
-
-    # roboticstoolbox.blocks.spatial.TR2T
-    def TR2T(self, **blockargs: Any) -> Any:
-        """
-        :param blockargs: |BlockOptions|
-        :type blockargs: dict
-        """
-        raise NotImplementedError(  # pragma: no cover
-            "stub signature -- the real implementation is injected "
-            "onto BlockDiagram at import time by the @block decorator"
-        )
-
-    # roboticstoolbox.blocks.arm.Traj
-    def TRAJ(self, y0: Any = 0, yf: Any = 1, T: Any = None, time: Any = False, traj: Any = 'trapezoidal', **blockargs: Any) -> Any:
-        """
-        :param y0: initial value, defaults to 0
-        :type y0: array_like(m), optional
-        :param yf: final value, defaults to 1
-        :type yf: array_like(m), optional
-        :param T: maximum time, defaults to None
-        :type T: float, optional
-        :param time: x is simulation time, defaults to False
-        :type time: bool, optional
-        :param traj: trajectory type, one of: 'trapezoidal' [default], 'quintic'
-        :type traj: str, optional
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
         raise NotImplementedError(  # pragma: no cover
@@ -1594,106 +1389,8 @@ class BlockDiagramMixin:
     # bdsim.blocks.linalg.Transpose
     def TRANSPOSE(self, **blockargs: Any) -> Any:
         """
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
-        """
-        raise NotImplementedError(  # pragma: no cover
-            "stub signature -- the real implementation is injected "
-            "onto BlockDiagram at import time by the @block decorator"
-        )
-
-    # roboticstoolbox.blocks.arm.Trapezoidal
-    def TRAPEZOIDAL(self, q0: Any, qf: Any, V: Any = None, T: Any = None, **blockargs: Any) -> Any:
-        """
-        Compute a joint-space trajectory
-
-        :param q0: initial joint coordinate
-        :type q0: float
-        :param qf: final joint coordinate
-        :type qf: float
-        :param T: maximum time, defaults to None
-        :type T: float, optional
-        :param blockargs: |BlockOptions|
-        :type blockargs: dict
-
-        If ``T`` is given the value ``qf`` is reached at this time.  This can be
-        less or greater than the simulation time.
-        """
-        raise NotImplementedError(  # pragma: no cover
-            "stub signature -- the real implementation is injected "
-            "onto BlockDiagram at import time by the @block decorator"
-        )
-
-    # roboticstoolbox.blocks.mobile.Unicycle
-    def UNICYCLE(self, w: Any = 1, speed_max: Any = inf, accel_max: Any = inf, steer_max: Any = inf, x0: Any = None, **blockargs: Any) -> Any:
-        """
-
-        :param w: vehicle width, defaults to 1
-        :type w: float, optional
-        :param speed_max: Velocity limit, defaults to math.inf
-        :type speed_max: float, optional
-        :param accel_max: maximum acceleration, defaults to math.inf
-        :type accel_max: float, optional
-        :param steer_max: maximum turn rate :math:`\\omega`, defaults to math.inf
-        :type steer_max: float, optional
-        :param x0: Inital state, defaults to [0,0,0]
-        :type x0: array_like(3), optional
-        :param blockargs: |BlockOptions|
-        :type blockargs: dict
-        """
-        raise NotImplementedError(  # pragma: no cover
-            "stub signature -- the real implementation is injected "
-            "onto BlockDiagram at import time by the @block decorator"
-        )
-
-    # roboticstoolbox.blocks.mobile.VehiclePlot
-    def VEHICLEPLOT(self, animation: Any = None, path: Any = None, labels: Any = ['X', 'Y'], square: Any = True, init: Any = None, scale: Any = 'auto', polyargs: Any = {}, **blockargs: Any) -> Any:
-        """
-        :param animation: Graphical animation of vehicle, defaults to None
-        :type animation: VehicleAnimation subclass, optional
-        :param path: linestyle to plot path taken by vehicle, defaults to None
-        :type path: str or dict, optional
-        :param labels: axis labels (xlabel, ylabel), defaults to ["X","Y"]
-        :type labels: array_like(2) or list
-        :param square: Set aspect ratio to 1, defaults to True
-        :type square: bool, optional
-        :param init: function to initialize graphics, defaults to None
-        :type init: callable, optional
-        :param scale: scale of plot, defaults to "auto"
-        :type scale: list or str, optional
-        :param polyargs: arguments passed to :meth:`Animation.Polygon`
-        :type polyargs: dict
-        :param blockargs: |BlockOptions|
-        :type blockargs: dict
-
-        .. note::
-
-            - The ``init`` function is called after the axes are initialized
-              and can be used to draw application specific detail on the
-              plot. In the example below, this is the dot and star.
-            - A dynamic trail, showing path to date can be animated if
-              the option ``path`` is set to a linestyle.
-        """
-        raise NotImplementedError(  # pragma: no cover
-            "stub signature -- the real implementation is injected "
-            "onto BlockDiagram at import time by the @block decorator"
-        )
-
-    # machinevisiontoolbox.blocks.camera.Visjac_p
-    def VISJAC_P(self, camera: Any, depth: Any = 1, depthest: Any = False, **blockargs: Any) -> Any:
-        """
-        :param camera: Camera model, defaults to None
-        :type camera: Camera subclass, optional
-        :param depth: Point depth
-        :type depth: float or ndarray
-        :param depthest: Use depth estimation, defaults to True
-        :type depthest: bool, optional
-        :param blockargs: Additional options for the block, passed as a dictionary
-        :type blockargs: dict
-        :return: a VISJAC_P block
-        :rtype: Visjac_p instance
-
-        If the Jacobian
         """
         raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
@@ -1701,11 +1398,11 @@ class BlockDiagramMixin:
         )
 
     # bdsim.blocks.sinks.Watch
-    def WATCH(self, **blockargs: Any) -> Any:
+    def WATCH(self, nin: int = 1, **blockargs: Any) -> Any:
         """
         :param nin: number of input ports, defaults to 1
         :type nin: int, optional
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
         raise NotImplementedError(  # pragma: no cover
@@ -1714,7 +1411,19 @@ class BlockDiagramMixin:
         )
 
     # bdsim.blocks.sources.WaveForm
-    def WAVEFORM(self, wave: str = 'square', freq: float = 1, unit: str = 'Hz', phase: float = 0, amplitude: float = 1, offset: float = 0, min: float | None = None, max: float | None = None, duty: float = 0.5, **blockargs: Any) -> Any:
+    def WAVEFORM(
+        self,
+        wave: str = "square",
+        freq: float = 1,
+        unit: str = "Hz",
+        phase: float = 0,
+        amplitude: float = 1,
+        offset: float = 0,
+        min: float | None = None,
+        max: float | None = None,
+        duty: float = 0.5,
+        **blockargs: Any,
+    ) -> Any:
         """
         :param wave: type of waveform to generate, one of: 'sine', 'square' [default], 'triangle'
         :type wave: str, optional
@@ -1734,7 +1443,7 @@ class BlockDiagramMixin:
         :type max: float, optional
         :param duty: duty cycle for square wave in range [0,1], defaults to 0.5
         :type duty: float, optional
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
         raise NotImplementedError(  # pragma: no cover
@@ -1749,7 +1458,7 @@ class BlockDiagramMixin:
         :type clock: Clock
         :param x0: Initial value of the hold, defaults to 0
         :type x0: array_like, optional
-        :param blockargs: |BlockOptions|
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
         raise NotImplementedError(  # pragma: no cover

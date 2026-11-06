@@ -26,14 +26,33 @@ from bdsim.exceptions import BlockRuntimeError
 from bdsim.signature import Signature
 from bdsim.literals import NOT_A_LITERAL, parse_literal
 
+# Typing-only stubs for the block factory methods: bdsim's own, then generated
+# snapshots of the toolboxes' (see bin/stubgen.py).  Blocks are bound per instance
+# by BDSim.blockdiagram(), so a missing or broken stub file costs only editor help.
 if TYPE_CHECKING:
-    from bdsim._blockdiagram_mixin import BlockDiagramMixin
+    from bdsim._blockfactory_stubs import BlockFactoryStubs
+    from bdsim._stubs_mvtb import MVTBStubs
+    from bdsim._stubs_rtb import RTBStubs
 else:
     try:
-        from bdsim._blockdiagram_mixin import BlockDiagramMixin
+        from bdsim._blockfactory_stubs import BlockFactoryStubs
     except (ImportError, SyntaxError, NameError):
-        # if the mixin file is missing or has syntax errors, create a dummy one so that the rest of the code can be imported without errors.  The real mixin will be generated at runtime by the @block decorator when the blocks are imported.
-        class BlockDiagramMixin:  # type: ignore[no-redef]
+
+        class BlockFactoryStubs:
+            pass
+
+    try:
+        from bdsim._stubs_rtb import RTBStubs
+    except (ImportError, SyntaxError, NameError):
+
+        class RTBStubs:
+            pass
+
+    try:
+        from bdsim._stubs_mvtb import MVTBStubs
+    except (ImportError, SyntaxError, NameError):
+
+        class MVTBStubs:
             pass
 
 
@@ -85,8 +104,7 @@ def _signature_str(signature: Signature | None) -> str:
     return "?" if signature is None else str(signature)
 
 
-# class BlockDiagram(BlockDiagramMixin):
-class BlockDiagram(BlockDiagramMixin):
+class BlockDiagram(BlockFactoryStubs, RTBStubs, MVTBStubs):
     r"""
     Block diagram class.  This object is the parent of all blocks and wires in
     the system.

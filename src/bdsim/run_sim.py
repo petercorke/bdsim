@@ -2339,7 +2339,7 @@ class BDSim(Runner):
         """
 
         # instantiate a new blockdiagram
-        #  it includes stubs for factory methods defined in the BlockDiagramMixin class
+        #  it includes stubs for factory methods defined in the BlockFactoryStubs class
         bd = BlockDiagram(name=name)
         bd.runtime = self
 

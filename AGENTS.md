@@ -33,6 +33,15 @@ Part of the RVC ecosystem. **Read [rvc-ecosystem/AGENTS.md](https://github.com/p
   scaffolds it (optional-dependency group, console script, Hatch wheel target `src/bdweb`),
   but the source is not on `main`. Tracked in
   [#118](https://github.com/petercorke/bdsim/issues/118).
+- **Block factory methods are typing-only stubs.** `bd.GAIN(...)` etc. are bound per instance
+  by `BDSim.blockdiagram()` from the block library; the class attributes in the generated
+  `src/bdsim/_blockfactory_stubs.py` (`BlockFactoryStubs`, a base of `BlockDiagram`) exist only so
+  Pylance and mypy can see them. After adding or changing a bdsim block's constructor run
+  `python src/bdsim/bin/stubgen.py`; CI fails (`stubgen --check`, in the lint job) if you forget.
+  Toolbox blocks are typed by committed snapshots, `_stubs_rtb.py` and `_stubs_mvtb.py`, because a
+  toolbox cannot add methods to `BlockDiagram` for a type checker. They need the toolbox installed
+  to regenerate (the command is in each file's header) and are not checked in bdsim's CI, so a
+  stale one is only a false editor error. Never edit these files by hand.
 - The current Qt-based editor is a vendored student project — kept working for now, but the
   long-term aim is to make it redundant once the web editor lands, not to invest further in it.
 - **Block discovery is AST-based, not import-based.** `BDSim` builds its block registry
