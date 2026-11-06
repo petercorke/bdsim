@@ -807,6 +807,13 @@ BLOCKS = Path(bdsim.__file__).parent / "blocks"
 # be removed from it.
 PENDING: set[str] = set()
 
+# Arguments that are not parameters, because they say which parts of the diagram
+# a block reads, as a connection does, and so cannot be set by value later.
+NOT_PARAMETERS: set[str] = {
+    "State.blocks",
+    "State_S.blocks",
+}
+
 
 def block_parameters():
     """{Class.param: registered or not} from the source of every block module."""
@@ -854,7 +861,7 @@ class EveryParameterIsAccountedForTest(unittest.TestCase):
         left_out = sorted(
             k
             for k, how in block_parameters().items()
-            if how == "none" and k not in PENDING
+            if how == "none" and k not in PENDING and k not in NOT_PARAMETERS
         )
         self.assertEqual(
             left_out,
@@ -867,6 +874,15 @@ class EveryParameterIsAccountedForTest(unittest.TestCase):
             k: how for k, how in block_parameters().items() if "not an __init__" in how
         }
         self.assertEqual(wrong, {})
+
+    def test_not_parameters_are_real_arguments_that_are_not_registered(self):
+        found = block_parameters()
+        gone = sorted(k for k in NOT_PARAMETERS if k not in found)
+        self.assertEqual(
+            gone, [], "not an __init__ argument, remove from NOT_PARAMETERS"
+        )
+        registered = sorted(k for k in NOT_PARAMETERS if found.get(k) == "registered")
+        self.assertEqual(registered, [], "registered, so remove from NOT_PARAMETERS")
 
     def test_pending_only_lists_parameters_that_still_need_doing(self):
         done = sorted(k for k in PENDING if block_parameters().get(k) == "registered")

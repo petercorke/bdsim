@@ -11,7 +11,7 @@ from spatialmath import SE2, SE3, SO2, SO3, Twist3
 from spatialmath.base.types import ArrayLike3
 
 if TYPE_CHECKING:
-    from bdsim.components import Clock
+    from bdsim.components import Block, Clock
     from bdsim.blockdiagram import BlockDiagram
     from roboticstoolbox import mobile  # optional dependency
 
@@ -1221,6 +1221,43 @@ class BlockFactoryStubs:
     # bdsim.blocks.functions.Sqrt
     def SQRT(self, **blockargs: Any) -> Any:
         """
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
+        :type blockargs: dict
+        """
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
+
+    # bdsim.blocks.sources.State
+    def STATE(
+        self, blocks: Block | str | list[Block | str] | None = None, **blockargs: Any
+    ) -> Any:
+        """
+        :param blocks: blocks, or their names, whose state to output, in this
+            order, defaults to the continuous states of every block
+        :type blocks: block, str, or list of block or str, optional
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
+        :type blockargs: dict
+        """
+        raise NotImplementedError(  # pragma: no cover
+            "stub signature -- the real implementation is injected "
+            "onto BlockDiagram at import time by the @block decorator"
+        )
+
+    # bdsim.blocks.sampled.State_S
+    def STATE_S(
+        self,
+        clock: Clock,
+        blocks: Block | str | list[Block | str] | None = None,
+        **blockargs: Any,
+    ) -> Any:
+        """
+        :param clock: the clock whose blocks' state is output
+        :type clock: Clock
+        :param blocks: blocks on the clock, or their names, whose state to output,
+            in this order, defaults to every block on the clock
+        :type blocks: block, str, or list of block or str, optional
         :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """

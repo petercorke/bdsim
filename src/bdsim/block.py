@@ -2144,6 +2144,14 @@ class SourceBlock(Block):
     but no inputs.  Its output is a function of parameters and time.
     """
 
+    # A source whose output is determined by the simulation, not chosen by the
+    # user, gives the reason here.  bd.functions() and bd.linearize() do not offer
+    # it as an input, because it is an argument of f and g (TIME, STATE).
+    _not_an_input: str | None = None
+    # The output is a function of the state, so a signal made from it cannot
+    # itself be an input.
+    _reads_state: bool = False
+
     def __init__(self, **blockargs: Any) -> None:
         """
         Create a source block.
