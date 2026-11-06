@@ -117,19 +117,19 @@ class StateTest(unittest.TestCase):
         ):
             st = bd.STATE(blocks, name=f"bad{i}")
             with self.assertRaisesRegex(ValueError, message):
-                st.index
+                _ = st.index
 
     def test_a_diagram_without_state_is_an_error(self):
         bd = new_sim().blockdiagram()
         st = bd.STATE(name="st")
         bd.connect(bd.CONSTANT(1.0), bd.GAIN(2.0))
         with self.assertRaisesRegex(ValueError, "no continuous state"):
-            st.index
+            _ = st.index
 
     def test_a_cached_choice_is_forgotten_at_reset(self):
         bd, vel, pos, plant = chain_diagram()
         st = bd.STATE(name="st")
-        st.index
+        _ = st.index
         self.assertIsNotNone(st._selected)
         bd.reset()
         self.assertIsNone(st._selected)
@@ -249,16 +249,16 @@ class StateSTest(unittest.TestCase):
         with self.assertRaisesRegex(
             ValueError, "'other' has no discrete state on clock"
         ):
-            X.index
+            _ = X.index
         # a continuous block is not on a clock either
         integrator = bd.INTEGRATOR(name="integrator")
         with self.assertRaisesRegex(ValueError, "'integrator' has no discrete state"):
-            bd.STATE_S(clock, [integrator], name="Y").index
+            _ = bd.STATE_S(clock, [integrator], name="Y").index
 
     def test_a_clock_with_no_blocks_is_an_error(self):
         bd = new_sim().blockdiagram()
         with self.assertRaisesRegex(ValueError, "no discrete state on clock"):
-            bd.STATE_S(bd.clock(0.1), name="X").index
+            _ = bd.STATE_S(bd.clock(0.1), name="X").index
 
     def test_the_clock_is_a_fixed_parameter(self):
         bd, clock, first, second = self.sampled_diagram()
