@@ -59,6 +59,12 @@ Part of the RVC ecosystem. **Read [rvc-ecosystem/AGENTS.md](https://github.com/p
   under (`:meth:`~bdsim.BlockDiagram.linearize``), not `bdsim.blockdiagram.BlockDiagram`. Sphinx
   drops an unresolved reference without a warning, so a wrong path is a dead link nobody sees:
   check the built HTML for the `href` when a `:seealso:` matters.
+- **`bd.xindex` is the one definition of the continuous state layout**, the blocks that have
+  continuous state in the order they were added (an `Index`, with the names blocks gave their
+  states). `functions()`, `linearize()`, the `STATE` block and `getstate0()` use it; use it
+  rather than filtering `blocklist` for `blockclass == "continuous"` again. `bd.statenames` and
+  `out.xnames` are the same elements in the same order with `name:x_k` strings, which are public
+  and tested, so their format does not change.
 - The current Qt-based editor is a vendored student project — kept working for now, but the
   long-term aim is to make it redundant once the web editor lands, not to invest further in it.
 - **Block discovery is AST-based, not import-based.** `BDSim` builds its block registry
