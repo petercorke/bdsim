@@ -45,7 +45,8 @@ Part of the RVC ecosystem. **Read [rvc-ecosystem/AGENTS.md](https://github.com/p
 - **`BlockDiagram` is being split into mixins.** `blockdiagram.py` is large, so groups of methods
   that read only a few attributes move to private mixin modules that `BlockDiagram` inherits:
   `_graph.py` (`GraphMixin`: `graph`, `dotfile`, `schedule_dotfile`, `showgraph`) and
-  `_reports.py` (`ReportMixin`: `report*`, `ls`, `blockvalues`) so far.
+  `_reports.py` (`ReportMixin`: `report*`, `ls`, `blockvalues`) so far. `analysis.py`
+  (`AnalysisMixin`: `functions()`, `linearize()`) is new code, written as a mixin from the start.
   Callers are unchanged (`bd.graph()`). A mixin declares the attributes it reads under
   `if TYPE_CHECKING:` in its class body, because mypy rejects annotating `self` with the subclass.
   The split is a pure move: compare output before and after, and keep the tests.

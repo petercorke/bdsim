@@ -15,10 +15,29 @@ and plugs <https://github.com/petercorke/bdsim/wiki/Blocks%2C-Wires-and-Plugs>`_
 fits together conceptually.
 
 .. autoclass:: bdsim.BlockDiagram
-   :members: compile, connect, report_summary, report_lists, dotfile, showgraph
+   :members: compile, connect, functions, linearize, report_summary, report_lists, dotfile, showgraph
    :undoc-members:
    :show-inheritance:
 
+
+Functions and linearization
+---------------------------
+
+:meth:`BlockDiagram.functions` returns a compiled diagram as the functions :math:`f` and :math:`g`
+of a nonlinear system :math:`\dot{x} = f(x, u, t),\ y = g(x, u, t)`, and
+:meth:`BlockDiagram.linearize` estimates its local linear model :math:`(A, B, C, D)`.
+
+.. autoclass:: bdsim.analysis.SystemFunctions
+   :members: fg, f, g, u_at
+   :show-inheritance:
+
+.. autoclass:: bdsim.analysis.Linearization
+   :members: poles
+   :show-inheritance:
+
+.. autoclass:: bdsim.analysis.Index
+   :members: name, names
+   :show-inheritance:
 
 BDSim class
 -----------
@@ -88,7 +107,7 @@ Full member listing for ``BlockDiagram`` — see its description and wiki links 
 `Simulation-user API`_ above.
 
 .. autoclass:: bdsim.BlockDiagram
-   :members: compile, connect, report_summary, report_lists, dotfile, showgraph
+   :members: compile, connect, functions, linearize, report_summary, report_lists, dotfile, showgraph
    :undoc-members:
    :show-inheritance:
    :no-index:
