@@ -543,15 +543,15 @@ class Linearization:
         The model as a python-control state-space system.
 
         :param name: name of the system, defaults to one chosen by python-control
-        :return: a ``control.StateSpace`` with the matrices ``A, B, C, D`` of this
+        :return: a :class:`control.StateSpace` with the matrices ``A, B, C, D`` of this
             model, and with the names of the states, inputs and outputs as its signal
             names, taken from ``xindex``, ``uindex`` and ``yindex``
         :raises ImportError: python-control is not installed
 
         `python-control <https://github.com/python-control/python-control>`_ is the
         usual package for the design of control systems, and this is the way to use
-        it on a diagram.  For example, to design a linear quadratic regulator for a
-        cart and pole and apply it::
+        it on a diagram.  For example, to design a linear quadratic regulator
+        (:func:`control.lqr`) for a cart and pole and apply it::
 
             import control
 
@@ -561,7 +561,7 @@ class Linearization:
             F = -K * bd.STATE()
 
         The signal names carry through, so that systems made this way can be
-        connected by name with ``control.interconnect``.
+        connected by name with :func:`control.interconnect`.
 
         python-control is an optional dependency, imported when this method is
         called: ``pip install control``, or install bdsim with the ``control`` extra.
@@ -577,7 +577,7 @@ class Linearization:
         operating point itself are not part of it, and stay on this object.  The
         values of the matrices are those of the numerical derivative, so an element
         that is zero may be of the order of 1e-10, which can matter for tests of
-        rank such as ``control.ctrb``.
+        rank such as :func:`control.ctrb`.
 
         :seealso: :meth:`~bdsim.BlockDiagram.linearize`
             :class:`~bdsim.blocks.continuous.LTI_SS`
