@@ -68,6 +68,9 @@ Part of the RVC ecosystem. **Read [rvc-ecosystem/AGENTS.md](https://github.com/p
   rather than filtering `blocklist` for `blockclass == "continuous"` again. `bd.statenames` and
   `out.xnames` are the same elements in the same order with `name:x_k` strings, which are public
   and tested, so their format does not change.
+  The discrete state is held clock by clock and named the same way: `clock.statenames` (and
+  `bd.dstatenames`, their concatenation in the order of `bd.clocklist`) with `name:X_k` strings, and
+  `clock.index`, an `Index` like `bd.xindex`. Both honour the names a block gave with `snames`.
 - The current Qt-based editor is a vendored student project — kept working for now, but the
   long-term aim is to make it redundant once the web editor lands, not to invest further in it.
 - **Block discovery is AST-based, not import-based.** `BDSim` builds its block registry

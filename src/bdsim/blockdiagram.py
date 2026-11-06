@@ -84,6 +84,28 @@ def _is_finite(value: Any) -> bool:
     return True
 
 
+def _state_labels(block: Block, count: int, letter: str) -> list[str]:
+    """
+    The names of the states of a block, for ``bd.statenames`` and the clocks'.
+
+    :param block: a block with ``count`` states, continuous or discrete
+    :param count: its number of states
+    :param letter: ``"x"`` for continuous states and ``"X"`` for discrete, used in
+        the default names
+    :return: the names the block gave its states, with ``snames``, and otherwise
+        ``name:x_0``, ``name:x_1``, ...
+    :raises ValueError: the block gave the wrong number of names
+    """
+    given = block._state_names
+    if given is None:
+        return [f"{block.name or ''}:{letter}_{i}" for i in range(count)]
+    if len(given) != count:
+        raise ValueError(
+            f"block {block.name}: {len(given)} state names for {count} states"
+        )
+    return list(given)
+
+
 class BlockDiagram(
     AnalysisMixin, GraphMixin, ReportMixin, BlockFactoryStubs, RTBStubs, MVTBStubs
 ):
@@ -523,30 +545,19 @@ class BlockDiagram(
         for b in self.blocklist:
             if b.blockclass == "continuous":
                 self.nstates += b.nstates
-                if b._state_names is not None:
-                    if len(b._state_names) != b.nstates:
-                        raise ValueError(
-                            "number of state names not consistent with number of states"
-                        )
-                    self.statenames.extend(b._state_names)
-                else:
-                    # create default state names
-                    self.statenames.extend(
-                        [f"{b.name or ''}:x_{i}" for i in range(0, b.nstates)]
-                    )
+                self.statenames.extend(_state_labels(b, b.nstates, "x"))
             if b.blockclass == "sampled":
                 self.ndstates += b.ndstates
-                if b._state_names is not None:
-                    if len(b._state_names) != b.nstates:
-                        raise ValueError(
-                            "number of state names not consistent with number of states"
-                        )
-                    self.dstatenames.extend(b._state_names)
-                else:
-                    # create default state names
-                    b._clock.statenames.extend(
-                        [f"{b.name or ''}:X_{i}" for i in range(0, b.ndstates)]
-                    )
+
+        # the discrete state is held clock by clock, so it is named clock by clock, in
+        # the order of each clock's state vector; bd.dstatenames is those in turn
+        for clock in self.clocklist:
+            clock.statenames = [
+                name
+                for b in clock.blocklist
+                for name in _state_labels(b, b.ndstates, "X")
+            ]
+            self.dstatenames.extend(clock.statenames)
 
         # connect the source and destination blocks to each wire
         if verbose:
@@ -583,7 +594,9 @@ class BlockDiagram(
                 raise ValueError(f"incorrect number of input names given: {b}")
             if b._outport_names is not None and len(b._outport_names) != b.nout:
                 raise ValueError(f"incorrect number of output names given: {b}")
-            if b._state_names is not None and len(b._state_names) != b.nstates:
+            if b._state_names is not None and len(b._state_names) != (
+                b.nstates or b.ndstates
+            ):
                 raise ValueError(f"incorrect number of state names given: {b}")
 
         # check for cycles of function blocks
