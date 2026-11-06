@@ -1,10 +1,10 @@
-"""Analysis of a compiled block diagram as a nonlinear system.
+r"""Analysis of a compiled block diagram as a nonlinear system.
 
 For nonlinear control it is usual to write a system as
 
 .. math::
 
-    \\dot{x} = f(x, u, t), \\qquad y = g(x, u, t)
+    \dot{x} = f(x, u, t), \qquad y = g(x, u, t)
 
 :meth:`~bdsim.blockdiagram.BlockDiagram.functions` returns these two functions
 for a compiled diagram, and :meth:`~bdsim.blockdiagram.BlockDiagram.linearize`
@@ -12,9 +12,9 @@ estimates the matrices :math:`(A, B, C, D)` of the local linear model by
 numerical differentiation of them.
 
 The input :math:`u` is the output of the diagram's source blocks, which are
-replaced by the values given, and the output :math:`y` is the input of its sink
-blocks.  :math:`x` is the continuous state of the diagram, in the order the
-blocks were added.
+replaced by the values given, and the output :math:`y` is a set of signals of the
+diagram, by default those that the sink blocks receive.  :math:`x` is the
+continuous state of the diagram, in the order the blocks were added.
 
 These methods are split out of :mod:`bdsim.blockdiagram` as a mixin.
 """
@@ -26,6 +26,7 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Iterator
 
 import numpy as np
+from numpy.typing import ArrayLike, NDArray
 
 from bdsim.block import SinkBlock, SourceBlock
 from bdsim.exceptions import BlockRuntimeError
@@ -104,7 +105,7 @@ class Index:
         return f"Index({len(self)} elements: {', '.join(self.names)})"
 
 
-def _flatten(value: Any, block: Block, port: int, what: str) -> np.ndarray:
+def _flatten(value: Any, block: Block, port: int, what: str) -> NDArray:
     """A port value as a 1-D float array, or an error that names the port."""
     try:
         return np.asarray(value, dtype=float).reshape(-1)
@@ -115,19 +116,48 @@ def _flatten(value: Any, block: Block, port: int, what: str) -> np.ndarray:
         ) from None
 
 
-def _select(item: Block | Plug, port_attr: str) -> tuple[Block, list[int]]:
-    """The block, and the numbers of its ports, selected by a block or a plug.
+def _block_and_ports(
+    bd: Any, item: Block | Plug | str, port_attr: str
+) -> tuple[Block, list[int]]:
+    """The block, and the numbers of its ports, selected by a block, a plug or a name.
 
     :param port_attr: ``"nout"`` or ``"nin"``, the attribute giving the number of ports
     """
-    from bdsim.components import Plug
+    from bdsim.components import Block, Plug
 
+    if isinstance(item, str):
+        item = bd[item]
     if isinstance(item, Plug):
         nports = getattr(item.block, port_attr)
         port = item.port
         ports = list(range(nports))[port] if isinstance(port, slice) else [port]
         return item.block, ports
+    if not isinstance(item, Block):
+        raise TypeError(f"expected a block, a plug or a block name, not {item!r}")
     return item, list(range(getattr(item, port_attr)))
+
+
+def _output_signals(bd: Any, item: Block | Plug | str) -> list[tuple[Block, int]]:
+    """The signals, as (producing block, output port), that an entry of ``outputs`` names.
+
+    A sink has no outputs, so naming a sink, or one of its inputs, means the signal
+    wired into it.  Anything else means its own outputs.
+    """
+    block, _ = _block_and_ports(bd, item, "nout")
+    if isinstance(block, SinkBlock):
+        block, ports = _block_and_ports(bd, item, "nin")
+        signals = []
+        for p in ports:
+            wire = block._input_wires[p]
+            if wire is None:
+                raise ValueError(f"{block.name} has an unconnected input {p}")
+            port = wire.start.port
+            if not isinstance(port, int):  # a wire starts at one port
+                raise ValueError(f"{block.name} input {p} is wired from {port!r}")
+            signals.append((wire.start.block, port))
+        return signals
+    block, ports = _block_and_ports(bd, item, "nout")
+    return [(block, p) for p in ports]
 
 
 class SystemFunctions:
@@ -152,7 +182,7 @@ class SystemFunctions:
     :vartype xindex: Index
     :ivar uindex: which inputs are the outputs of which source block
     :vartype uindex: Index
-    :ivar yindex: which outputs are the inputs of which sink block
+    :ivar yindex: which outputs are the signals of which block
     :vartype yindex: Index
 
     Calling it evaluates the diagram, so it is not meant to be used during a
@@ -163,10 +193,12 @@ class SystemFunctions:
     def __init__(
         self,
         bd: Any,
-        inputs: list[Block | Plug] | None = None,
-        outputs: list[Block | Plug] | None = None,
+        inputs: list[Block | Plug | str] | None = None,
+        outputs: list[Block | Plug | str] | None = None,
     ) -> None:
         self.bd = bd
+        if not bd.compiled:
+            raise RuntimeError("the block diagram has not been compiled")
 
         sampled = [b for b in bd.blocklist if b.ndstates > 0]
         if sampled:
@@ -190,30 +222,34 @@ class SystemFunctions:
                 for b in bd.blocklist
                 if isinstance(b, SourceBlock) and b.type != "time"
             ]
-        self._inputs: dict[Block, list[int]] = {}
+        selected: dict[Block, list[int]] = {}
         for item in inputs:
-            block, ports = _select(item, "nout")
+            block, ports = _block_and_ports(bd, item, "nout")
             if not isinstance(block, SourceBlock):
                 raise TypeError(f"input {block.name} is not a source block")
             if block.type == "time":
                 raise ValueError("TIME is not an input: it is the t argument")
-            self._inputs.setdefault(block, [])
-            self._inputs[block].extend(p for p in ports if p not in self._inputs[block])
+            selected.setdefault(block, [])
+            selected[block].extend(p for p in ports if p not in selected[block])
+        self._inputs: dict[Block, list[int]] = {
+            b: sorted(p) for b, p in selected.items()
+        }
 
+        # outputs: signals, each named by the block and output port that
+        # produces it.  The default is the signal into every sink input.
         if outputs is None:
             outputs = [b for b in bd.blocklist if isinstance(b, SinkBlock)]
-        self._outputs: dict[Block, list[int]] = {}
+        signals: dict[Block, list[int]] = {}
         for item in outputs:
-            block, ports = _select(item, "nin")
-            if not isinstance(block, SinkBlock):
-                raise TypeError(f"output {block.name} is not a sink block")
-            self._outputs.setdefault(block, [])
-            self._outputs[block].extend(
-                p for p in ports if p not in self._outputs[block]
-            )
+            for block, port in _output_signals(bd, item):
+                signals.setdefault(block, [])
+                if port not in signals[block]:
+                    signals[block].append(port)
+        self._outputs: dict[Block, list[int]] = {
+            b: sorted(p) for b, p in signals.items()
+        }
 
-        # the blocks must have run once for a source to have a shape and for a
-        # sink to have an input
+        # the blocks must have run once for a source or an output to have a shape
         self._prepare()
         self._probe()
 
@@ -228,8 +264,6 @@ class SystemFunctions:
         so they are reset and configured as a run would.
         """
         bd = self.bd
-        if not bd.compiled:
-            raise RuntimeError("the block diagram has not been compiled")
         if not bd._started:
             bd.reset()
             try:
@@ -268,9 +302,8 @@ class SystemFunctions:
         yentries: list[tuple[Block, int]] = []
         self._output_order = sorted(self._outputs, key=order.__getitem__)
         for block in self._output_order:
-            values = block.inport_values
             count = sum(
-                _flatten(values[p], block, p, "output").size
+                _flatten(block.outport_value(p), block, p, "output").size
                 for p in self._outputs[block]
             )
             yentries.extend((block, k) for k in range(count))
@@ -279,7 +312,7 @@ class SystemFunctions:
 
     # ------------------------------------------------------------------ #
 
-    def u_at(self, t: float = 0.0) -> np.ndarray:
+    def u_at(self, t: float = 0.0) -> NDArray:
         """
         The values of the inputs at time ``t``, flattened.
 
@@ -296,7 +329,7 @@ class SystemFunctions:
                 parts.append(_flatten(out[p], block, p, "input"))
         return np.concatenate(parts) if parts else np.zeros(0)
 
-    def _overrides(self, u: np.ndarray, t: float) -> dict[Block, list[Any]]:
+    def _overrides(self, u: NDArray, t: float) -> dict[Block, list[Any]]:
         overrides: dict[Block, list[Any]] = {}
         i = 0
         for block in self._input_order:
@@ -314,14 +347,16 @@ class SystemFunctions:
             overrides[block] = out
         return overrides
 
-    def fg(self, x: Any, u: Any, t: float = 0.0) -> tuple[np.ndarray, np.ndarray]:
-        """
-        Evaluate :math:`\\dot{x} = f(x, u, t)` and :math:`y = g(x, u, t)` together.
+    def fg(self, x: ArrayLike, u: ArrayLike, t: float = 0.0) -> tuple[NDArray, NDArray]:
+        r"""
+        Evaluate :math:`\dot{x} = f(x, u, t)` and :math:`y = g(x, u, t)` together.
 
-        :param x: continuous state, length ``nx``
-        :param u: input, length ``nu``
+        :param x: continuous state
+        :type x: array_like(nx)
+        :param u: input
+        :type u: array_like(nu)
         :param t: time, defaults to 0
-        :return: :math:`(\\dot{x}, y)`
+        :return: :math:`(\dot{x}, y)`
         """
         x = np.asarray(x, dtype=float).reshape(-1)
         u = np.asarray(u, dtype=float).reshape(-1)
@@ -343,17 +378,16 @@ class SystemFunctions:
 
         parts = []
         for block in self._output_order:
-            values = block.inport_values
             for p in self._outputs[block]:
-                parts.append(_flatten(values[p], block, p, "output"))
+                parts.append(_flatten(block.outport_value(p), block, p, "output"))
         y = np.concatenate(parts) if parts else np.zeros(0)
         return xdot, y
 
-    def f(self, x: Any, u: Any, t: float = 0.0) -> np.ndarray:
-        """State derivative :math:`\\dot{x} = f(x, u, t)`."""
+    def f(self, x: ArrayLike, u: ArrayLike, t: float = 0.0) -> NDArray:
+        r"""State derivative :math:`\dot{x} = f(x, u, t)`."""
         return self.fg(x, u, t)[0]
 
-    def g(self, x: Any, u: Any, t: float = 0.0) -> np.ndarray:
+    def g(self, x: ArrayLike, u: ArrayLike, t: float = 0.0) -> NDArray:
         """Output :math:`y = g(x, u, t)`."""
         return self.fg(x, u, t)[1]
 
@@ -366,16 +400,16 @@ class SystemFunctions:
 
 @dataclass
 class Linearization:
-    """
+    r"""
     A local linear model of a block diagram, from
     :meth:`~bdsim.blockdiagram.BlockDiagram.linearize`.
 
     It unpacks as ``A, B, C, D``.
 
-    :ivar A: :math:`\\partial f / \\partial x`, shape ``(nx, nx)``
-    :ivar B: :math:`\\partial f / \\partial u`, shape ``(nx, nu)``
-    :ivar C: :math:`\\partial g / \\partial x`, shape ``(ny, nx)``
-    :ivar D: :math:`\\partial g / \\partial u`, shape ``(ny, nu)``
+    :ivar A: :math:`\partial f / \partial x`, shape ``(nx, nx)``
+    :ivar B: :math:`\partial f / \partial u`, shape ``(nx, nu)``
+    :ivar C: :math:`\partial g / \partial x`, shape ``(ny, nx)``
+    :ivar D: :math:`\partial g / \partial u`, shape ``(ny, nu)``
     :ivar f0: :math:`f(x, u, t)` at the operating point; zero at an equilibrium
     :ivar y0: :math:`g(x, u, t)` at the operating point
     :ivar x: state of the operating point
@@ -390,24 +424,24 @@ class Linearization:
 
     .. math::
 
-        \\frac{d}{dt}(\\delta x) = A\\,\\delta x + B\\,\\delta u + f_0
+        \frac{d}{dt}(\delta x) = A\,\delta x + B\,\delta u + f_0
     """
 
-    A: np.ndarray
-    B: np.ndarray
-    C: np.ndarray
-    D: np.ndarray
-    f0: np.ndarray
-    y0: np.ndarray
-    x: np.ndarray
-    u: np.ndarray
+    A: NDArray
+    B: NDArray
+    C: NDArray
+    D: NDArray
+    f0: NDArray
+    y0: NDArray
+    x: NDArray
+    u: NDArray
     t: float
     xindex: Index
     uindex: Index
     yindex: Index
-    error: dict[str, np.ndarray] | None = field(default=None)
+    error: dict[str, NDArray] | None = field(default=None)
 
-    def __iter__(self) -> Iterator[np.ndarray]:
+    def __iter__(self) -> Iterator[NDArray]:
         return iter((self.A, self.B, self.C, self.D))
 
 
@@ -425,16 +459,17 @@ class AnalysisMixin:
 
     def functions(
         self,
-        inputs: list[Block | Plug] | None = None,
-        outputs: list[Block | Plug] | None = None,
+        inputs: list[Block | Plug | str] | None = None,
+        outputs: list[Block | Plug | str] | None = None,
     ) -> SystemFunctions:
         r"""
         The diagram as the functions :math:`f` and :math:`g` of a nonlinear system
 
-        :param inputs: source blocks, or plugs of them, whose outputs are the input
-            :math:`u`.  Defaults to every source block except ``TIME``.
-        :param outputs: sink blocks, or plugs of them, whose inputs are the output
-            :math:`y`.  Defaults to every sink block.
+        :param inputs: the source blocks, or the outputs of them, that are the
+            input :math:`u`, see below.  Defaults to every source block except
+            ``TIME``.
+        :param outputs: the signals that are the output :math:`y`, see below.
+            Defaults to the signal into every sink input.
         :return: the functions, which unpack as ``f, g``
         :raises NotImplementedError: the diagram has sampled (discrete-time) blocks
         :raises RuntimeError: the diagram has not been compiled
@@ -445,9 +480,56 @@ class AnalysisMixin:
 
         The diagram must be compiled.  The source blocks are replaced by the
         values of :math:`u`, ``TIME`` supplies :math:`t`, and :math:`y` is read
-        from the inputs of the sink blocks, which are not executed (nothing is
-        plotted, printed or logged).  :math:`x` is the continuous state in the
-        order the blocks were added to the diagram, as in ``bd.statenames``.
+        from the diagram.  The sink blocks are not executed (nothing is plotted,
+        printed or logged).  :math:`x` is the continuous state in the order the
+        blocks were added to the diagram, as in ``bd.statenames``.
+
+        **Choosing the input and the output**
+
+        Both are lists.  An entry is a block, one of its ports (a plug, such as
+        ``plant[0]``), or the name of a block (such as ``"plant"``).
+
+        .. list-table::
+            :header-rows: 1
+            :widths: 45 55
+
+            * - Entry of ``inputs``
+              - :math:`u` contains
+            * - a source block, ``demand``
+              - all its outputs
+            * - a port of a source block, ``demand[0]``
+              - that output
+
+        Source blocks that are not selected keep producing their own values.
+        ``TIME`` cannot be an input, it is the argument ``t``.  To add a signal
+        into the middle of a diagram, which has no input there, insert a ``SUM``
+        block and a ``CONSTANT(0)`` block at that point: the constant is then an
+        input.
+
+        .. list-table::
+            :header-rows: 1
+            :widths: 45 55
+
+            * - Entry of ``outputs``
+              - :math:`y` contains
+            * - any other block, ``plant``
+              - all its outputs
+            * - a port of a block, ``plant[0]``
+              - that output
+            * - a sink block, ``scope``
+              - the signals wired into all its inputs
+            * - a port of a sink block, ``scope[1]``
+              - the signal wired into that input
+
+        The output is a signal, named by the block and port that produce it.  A
+        sink has no outputs, so naming a sink means the signals it receives.
+        This is also how the default is made, and a signal that is wired to
+        several sinks is included once.
+
+        The elements of :math:`u` and :math:`y` are ordered by the order in which
+        the blocks were added to the diagram, and then by port, whatever the order
+        of the lists.  A block's array output is flattened, and ``uindex`` and
+        ``yindex`` say where each block's elements are.
 
         For example::
 
@@ -472,27 +554,29 @@ class AnalysisMixin:
 
     def linearize(
         self,
-        x: Any = None,
-        u: Any = None,
+        x: ArrayLike | None = None,
+        u: ArrayLike | None = None,
         t: float = 0.0,
         *,
-        inputs: list[Block | Plug] | None = None,
-        outputs: list[Block | Plug] | None = None,
+        inputs: list[Block | Plug | str] | None = None,
+        outputs: list[Block | Plug | str] | None = None,
         h: float | None = None,
-        scale: Any = None,
+        scale: ArrayLike | None = None,
         estimate_error: bool = False,
         full: bool = False,
-    ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray] | Linearization:
+    ) -> tuple[NDArray, NDArray, NDArray, NDArray] | Linearization:
         r"""
         Linearize the diagram about an operating point
 
         :param x: state of the operating point, defaults to the initial state of
             the diagram.  After a run use ``out.x[-1]``.
+        :type x: array_like(nx), optional
         :param u: input of the operating point, defaults to the natural input of
             the sources at ``t``
+        :type u: array_like(nu), optional
         :param t: time of the operating point
-        :param inputs: source blocks or plugs that are the input, see :meth:`functions`
-        :param outputs: sink blocks or plugs that are the output, see :meth:`functions`
+        :param inputs: the source blocks or ports that are the input, see :meth:`functions`
+        :param outputs: the blocks or ports whose signals are the output, see :meth:`functions`
         :param h: step of the numerical derivative, defaults to a size chosen for
             each variable
         :param scale: typical size of the variables, a number or an array with
@@ -564,7 +648,7 @@ class AnalysisMixin:
         v0 = np.r_[x, u]
         f0, y0 = sysf.fg(x, u, t)
 
-        def jacobian(factor: float) -> np.ndarray:
+        def jacobian(factor: float) -> NDArray:
             """Columns of d(f,g)/d(x,u) by central differences, step times factor."""
             J = np.zeros((sysf.nx + sysf.ny, nv))
             for i in range(nv):

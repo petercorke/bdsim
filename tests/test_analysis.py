@@ -145,7 +145,8 @@ class FunctionsTest(unittest.TestCase):
         bd.compile(verbose=False)
         with self.assertRaisesRegex(TypeError, r"input text\[0\].*str"):
             bd.functions()
-        with self.assertRaisesRegex(TypeError, r"output y\[0\].*str"):
+        # the output is the signal from "text", whatever receives it
+        with self.assertRaisesRegex(TypeError, r"output text\[0\].*str"):
             bd.functions(inputs=[])
 
 
@@ -162,20 +163,22 @@ class SelectionTest(unittest.TestCase):
         bd.compile(verbose=False)
         return bd, a, b
 
-    def test_default_is_every_source_and_every_sink_in_creation_order(self):
+    def test_default_is_every_source_and_the_signal_into_every_sink(self):
         bd, a, b = self.two_source_diagram()
         sysf = bd.functions()
         self.assertEqual((sysf.nu, sysf.ny), (2, 2))
         self.assertEqual(sysf.uindex.names, ["a", "b"])
-        self.assertEqual(sysf.yindex.names, ["y1", "y2"])
-        np.testing.assert_allclose(sysf.g([], [10.0, 20.0]), [30.0, 20.0])
+        # y1 receives total and y2 receives b: named by the block that produces
+        # them, in the order the blocks were added (a, b, total)
+        self.assertEqual(sysf.yindex.names, ["b", "total"])
+        np.testing.assert_allclose(sysf.g([], [10.0, 20.0]), [20.0, 30.0])
 
     def test_inputs_select_sources_and_the_rest_keep_their_value(self):
         bd, a, b = self.two_source_diagram()
         sysf = bd.functions(inputs=[a])
         self.assertEqual(sysf.nu, 1)
         # b is not an input: it still outputs its own 5
-        np.testing.assert_allclose(sysf.g([], [10.0]), [15.0, 5.0])
+        np.testing.assert_allclose(sysf.g([], [10.0]), [5.0, 15.0])
 
     def test_a_plug_selects_a_sink_port(self):
         bd, a, b = self.two_source_diagram()
@@ -208,12 +211,19 @@ class SelectionTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "TIME is not an input"):
             bd.functions(inputs=[time])
 
-    def test_inputs_must_be_sources_and_outputs_sinks(self):
+    def test_inputs_must_be_sources(self):
         bd, a, b = self.two_source_diagram()
         with self.assertRaisesRegex(TypeError, "total is not a source"):
             bd.functions(inputs=[bd["total"]])
-        with self.assertRaisesRegex(TypeError, "total is not a sink"):
-            bd.functions(outputs=[bd["total"]])
+
+    def test_an_entry_must_be_a_block_a_plug_or_a_name(self):
+        bd, a, b = self.two_source_diagram()
+        with self.assertRaisesRegex(
+            TypeError, "expected a block, a plug or a block name"
+        ):
+            bd.functions(outputs=[42])
+        with self.assertRaises(KeyError):
+            bd.functions(outputs=["nothing"])
 
     def test_a_vector_source_is_flattened(self):
         bd = new_diagram()
@@ -224,6 +234,131 @@ class SelectionTest(unittest.TestCase):
         self.assertEqual((sysf.nu, sysf.ny), (3, 3))
         self.assertEqual(sysf.uindex.names, ["v[0]", "v[1]", "v[2]"])
         np.testing.assert_allclose(sysf.g([], [7, 8, 9]), [7, 8, 9])
+
+
+def eg1_diagram():
+    """The diagram of examples/eg1.py: a unity feedback loop, scope on two signals."""
+    bd = new_diagram()
+    demand = bd.STEP(T=1, name="demand")
+    total = bd.SUM("+-")
+    gain = bd.GAIN(20)
+    plant = bd.LTI_SISO(0.5, [2, 1], name="plant")
+    scope = bd.SCOPE(nin=2, name="scope")
+    bd.connect(demand, total[0], scope[1])
+    bd.connect(plant, total[1])
+    bd.connect(total, gain)
+    bd.connect(gain, plant)
+    bd.connect(plant, scope[0])
+    bd.compile(verbose=False)
+    return bd, demand, plant, scope
+
+
+class OutputSignalTest(unittest.TestCase):
+    """An output is a signal, named by the block that produces it."""
+
+    def test_the_default_is_the_signals_the_scope_receives(self):
+        bd, demand, plant, scope = eg1_diagram()
+        sysf = bd.functions()
+        self.assertEqual((sysf.nu, sysf.ny), (1, 2))
+        self.assertEqual(sysf.yindex.names, ["demand", "plant"])
+
+    def test_a_block_is_its_output(self):
+        bd, demand, plant, scope = eg1_diagram()
+        sysf = bd.functions(inputs=[demand], outputs=[plant])
+        self.assertEqual((sysf.nu, sysf.ny), (1, 1))
+        self.assertEqual(sysf.yindex.names, ["plant"])
+
+    def test_all_the_ways_to_name_the_same_signal_agree(self):
+        bd, demand, plant, scope = eg1_diagram()
+        results = []
+        for outputs in (
+            [plant],
+            ["plant"],
+            [plant[0]],
+            [scope[0]],
+            [plant, "plant", plant[0], scope[0]],
+        ):
+            sysf = bd.functions(inputs=[demand], outputs=outputs)
+            self.assertEqual((sysf.ny, sysf.yindex.names), (1, ["plant"]), outputs)
+            results.append(sysf.g([0.3], [1.0]))
+        for r in results:
+            np.testing.assert_array_equal(r, results[0])
+
+    def test_a_sink_means_the_signals_it_receives(self):
+        bd, demand, plant, scope = eg1_diagram()
+        both = bd.functions(outputs=[scope])
+        self.assertEqual(both.yindex.names, ["demand", "plant"])
+        # scope[1] receives the demand
+        one = bd.functions(outputs=[scope[1]])
+        self.assertEqual(one.yindex.names, ["demand"])
+        np.testing.assert_allclose(one.g([0.0], [4.0]), [4.0])
+
+    def test_the_inputs_can_be_named_too(self):
+        bd, demand, plant, scope = eg1_diagram()
+        for inputs in ([demand], ["demand"], [demand[0]]):
+            self.assertEqual(bd.functions(inputs=inputs).uindex.names, ["demand"])
+
+    def demux_diagram(self):
+        bd = new_diagram()
+        v = bd.CONSTANT(np.array([1.0, 2.0]), name="v")
+        demux = bd.DEMUX(2, name="demux")
+        bd.connect(v, demux)
+        bd.connect(demux[0], bd.NULL(1, name="y0"))
+        bd.connect(demux[1], bd.NULL(1, name="y1"))
+        bd.compile(verbose=False)
+        return bd, demux
+
+    def test_a_block_with_several_outputs_gives_one_signal_per_port(self):
+        bd, demux = self.demux_diagram()
+        u = [7.0, 8.0]
+        for outputs in (None, [demux], ["demux"], [bd["y0"], bd["y1"]]):
+            sysf = bd.functions(outputs=outputs)
+            self.assertEqual(sysf.yindex.names, ["demux[0]", "demux[1]"], outputs)
+            np.testing.assert_allclose(sysf.g([], u), [7.0, 8.0], err_msg=str(outputs))
+
+    def test_a_port_selects_that_output_and_the_sink_it_feeds(self):
+        bd, demux = self.demux_diagram()
+        u = [7.0, 8.0]
+        for outputs in ([demux[1]], [bd["y1"]], ["y1"]):
+            sysf = bd.functions(outputs=outputs)
+            self.assertEqual(sysf.ny, 1, outputs)
+            np.testing.assert_allclose(sysf.g([], u), [8.0], err_msg=str(outputs))
+
+    def test_the_ports_are_ordered_whatever_the_order_asked_for(self):
+        bd, demux = self.demux_diagram()
+        sysf = bd.functions(outputs=[demux[1], demux[0]])
+        self.assertEqual(sysf.yindex.names, ["demux[0]", "demux[1]"])
+        np.testing.assert_allclose(sysf.g([], [7.0, 8.0]), [7.0, 8.0])
+
+    def test_a_signal_into_several_sinks_is_included_once(self):
+        bd = new_diagram()
+        source = bd.CONSTANT(2.0, name="source")
+        bd.connect(source, bd.NULL(1, name="first"), bd.NULL(1, name="second"))
+        bd.compile(verbose=False)
+        sysf = bd.functions()
+        self.assertEqual((sysf.ny, sysf.yindex.names), (1, ["source"]))
+
+    def test_the_input_can_be_seen_in_the_output(self):
+        # the output is the demand itself, so y = u and D = 1
+        bd, demand, plant, scope = eg1_diagram()
+        A, B, C, D = bd.linearize(inputs=[demand], outputs=[demand])
+        np.testing.assert_allclose(D, [[1.0]], atol=1e-8)
+        np.testing.assert_allclose(C, [[0.0]], atol=1e-8)
+
+    def test_the_closed_loop_of_eg1(self):
+        # 20 * 0.5/(2s+1) in a unity feedback loop: 10 / (2s + 11)
+        bd, demand, plant, scope = eg1_diagram()
+        A, B, C, D = bd.linearize(x=[0.0], u=[0.0], outputs=[plant])
+        self.assertEqual((A.shape, B.shape, C.shape, D.shape), ((1, 1),) * 4)
+        np.testing.assert_allclose(A, [[-5.5]], atol=1e-7)
+        np.testing.assert_allclose(
+            C @ B, [[5.0]], atol=1e-7
+        )  # independent of the realization
+        np.testing.assert_allclose(D, [[0.0]], atol=1e-8)
+        # the same system named through the scope
+        again = bd.linearize(x=[0.0], u=[0.0], outputs=[scope[0]])
+        for a, b in zip((A, B, C, D), again):
+            np.testing.assert_array_equal(a, b)
 
 
 class IndexTest(unittest.TestCase):
@@ -262,7 +397,8 @@ class IndexTest(unittest.TestCase):
         bd.compile(verbose=False)
         sysf = bd.functions(inputs=[b, a], outputs=[bd["yb"], bd["ya"]])
         self.assertEqual(sysf.uindex.names, ["a", "b"])
-        self.assertEqual(sysf.yindex.names, ["ya", "yb"])
+        # ya and yb receive a and b
+        self.assertEqual(sysf.yindex.names, ["a", "b"])
         np.testing.assert_allclose(sysf.g([], [10.0, 20.0]), [10.0, 20.0])
 
     def test_repr(self):
@@ -319,7 +455,7 @@ class LinearizeTest(unittest.TestCase):
         self.assertIsNone(lin.error)
         self.assertEqual(lin.xindex.names, ["system[0]", "system[1]"])
         self.assertEqual(lin.uindex.names, ["u1", "u2"])
-        self.assertEqual(lin.yindex.names, ["y"])
+        self.assertEqual(lin.yindex.names, ["system"])
         a, b, c, d = lin
         np.testing.assert_array_equal(a, lin.A)
 
