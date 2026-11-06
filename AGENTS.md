@@ -55,6 +55,10 @@ Part of the RVC ecosystem. **Read [rvc-ecosystem/AGENTS.md](https://github.com/p
   `tests/test_icons.py` fails for a block without one. Most are made from LaTeX with `bdtex2icon`
   (add the line to `icons.sh`); the rest come from the `make_*_icons.py` scripts. The README in
   that folder says how. A toolbox keeps the icons of its own blocks in its own `Icons` folder.
+- **Cross-references to `BlockDiagram` use `bdsim.BlockDiagram`**, the name the docs document it
+  under (`:meth:`~bdsim.BlockDiagram.linearize``), not `bdsim.blockdiagram.BlockDiagram`. Sphinx
+  drops an unresolved reference without a warning, so a wrong path is a dead link nobody sees:
+  check the built HTML for the `href` when a `:seealso:` matters.
 - The current Qt-based editor is a vendored student project — kept working for now, but the
   long-term aim is to make it redundant once the web editor lands, not to invest further in it.
 - **Block discovery is AST-based, not import-based.** `BDSim` builds its block registry

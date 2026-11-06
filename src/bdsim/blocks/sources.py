@@ -11,10 +11,14 @@ from __future__ import annotations
 
 import numpy as np
 import math
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from bdsim.components import EventSource, SourceBlock
 from bdsim.signature import maybe_asarray, unify
+
+if TYPE_CHECKING:
+    from bdsim.analysis import Index
+    from bdsim.components import Block
 
 
 # ------------------------------------------------------------------------ #
@@ -83,6 +87,113 @@ class Constant(SourceBlock):
 # ------------------------------------------------------------------------ #
 
 
+class _StateReader:
+    """
+    What STATE and STATE_S share: choosing blocks and reading their state.
+
+    The state of every stateful block is in the diagram's state map, which
+    ``BlockDiagram.evaluate`` sets before it executes any block, so a block can
+    read it while the diagram is evaluated.  A subclass says which blocks have
+    state to offer, in ``_candidates``, and how wide each block's state is.
+
+    The blocks asked for are not parameters of the block: they say which parts
+    of the diagram to read, as the inputs of a block say what is connected to it.
+    They are named by block or by name, and resolved on first use, because a block
+    named may be created after this one.
+    """
+
+    _not_an_input: str | None = "it is the state of the system, an argument of f and g"
+    _reads_state: bool = True
+    _blocks_arg: Block | str | list[Block | str] | None = None
+    _selected: list[Block] | None = None
+
+    def reset(self) -> None:
+        self._selected = None  # the diagram may have changed since it was resolved
+        super().reset()  # type: ignore[misc]
+
+    def _candidates(self) -> list[Block]:
+        raise NotImplementedError  # pragma: no cover
+
+    def _width(self, block: Block) -> int:
+        raise NotImplementedError  # pragma: no cover
+
+    def _domain(self) -> str:
+        raise NotImplementedError  # pragma: no cover
+
+    def _blocks(self) -> list[Block]:
+        """The blocks whose state is the output, in the order of the output."""
+        if self._selected is None:
+            self._selected = self._resolve()
+        return self._selected
+
+    def _resolve(self) -> list[Block]:
+        candidates = self._candidates()
+        arg = self._blocks_arg
+        if arg is None:
+            selected = list(candidates)
+        else:
+            items = list(arg) if isinstance(arg, (list, tuple)) else [arg]
+            selected = []
+            for item in items:
+                if isinstance(item, str):
+                    try:
+                        block = self.bd[item]  # type: ignore[attr-defined]
+                    except KeyError:
+                        raise ValueError(
+                            f"{self.name}: no block named {item!r}"  # type: ignore[attr-defined]
+                        ) from None
+                else:
+                    block = item
+                if not any(block is c for c in candidates):
+                    raise ValueError(
+                        f"{self.name}: {getattr(block, 'name', block)!r} has no "  # type: ignore[attr-defined]
+                        f"{self._domain()} in this diagram"
+                    )
+                if any(block is b for b in selected):
+                    raise ValueError(
+                        f"{self.name}: {block.name!r} is given twice"  # type: ignore[attr-defined]
+                    )
+                selected.append(block)
+        if not selected:
+            raise ValueError(
+                f"{self.name}: the diagram has no {self._domain()}"  # type: ignore[attr-defined]
+            )
+        return selected
+
+    def output(self, t: float, inputs: list[Any], x: np.ndarray) -> list[Any]:
+        state_map = self.bd._state_map  # type: ignore[attr-defined]
+        return [
+            np.concatenate(
+                [
+                    np.asarray(state_map[b], dtype=float).reshape(-1)
+                    for b in self._blocks()
+                ]
+            )
+        ]
+
+    @property
+    def index(self) -> Index:
+        """
+        Which elements of the output belong to which block.
+
+        :return: an :class:`~bdsim.analysis.Index`, the same kind of object that
+            ``bd.functions()`` and ``bd.linearize()`` use for the state ``x``
+        """
+        from bdsim.analysis import Index
+
+        return Index([(b, k) for b in self._blocks() for k in range(self._width(b))])
+
+    @property
+    def statenames(self) -> list[str]:
+        """
+        The name of every element of the output, in order.
+
+        :return: a list of names, a block's own name if it has one state and
+            ``name[k]`` for the ``k``-th of several
+        """
+        return self.index.names
+
+
 class Time(SourceBlock):
     """
     :blockname:`TIME`
@@ -114,6 +225,7 @@ class Time(SourceBlock):
 
     nin = 0
     nout = 1
+    _not_an_input = "it is the t argument"
 
     def __init__(self, value: Any | None = None, **blockargs: Any) -> None:
         """
@@ -125,6 +237,112 @@ class Time(SourceBlock):
 
     def output(self, t: float, inputs: list[Any], x: np.ndarray) -> list[Any]:
         return [t]
+
+
+# ------------------------------------------------------------------------ #
+
+
+class State(_StateReader, SourceBlock):
+    r"""
+    :blockname:`STATE`
+
+    Continuous state of the system.
+
+    :inputs: 0
+    :outputs: 1
+    :states: 0
+
+    .. list-table::
+        :header-rows: 1
+
+        *   - Port type
+            - Port number
+            - Types
+            - Description
+        *   - Output
+            - 0
+            - ndarray(n)
+            - :math:`x(t)`
+
+    Outputs the state vector :math:`x` of the diagram, which is what state
+    feedback needs.  For example, to apply the force :math:`F = -K x` to a cart
+    and pole with a gain matrix :math:`K` from linear quadratic regulator (LQR)
+    design::
+
+        F = -K * bd.STATE()
+
+    **What the state is.**  A block that has continuous state, such as an
+    ``INTEGRATOR`` or an ``LTI_SS``, contributes its state to the state vector
+    of the diagram, and this is the vector that the solver advances.  The
+    blocks contribute in the order they were added to the diagram, so the output
+    is in the same order as ``bd.statenames``, and as the states of
+    :meth:`~bdsim.BlockDiagram.functions` and
+    :meth:`~bdsim.BlockDiagram.linearize`.  A gain matrix designed
+    from the ``A`` and ``B`` of ``linearize`` therefore applies directly to this
+    output.  The output of an integrator is its state, so this block gives the
+    same signal as a ``MUX`` of the integrators, in a guaranteed order.
+
+    If the controller has states of its own, such as an integrator added for
+    integral action, they are also in the diagram's state.  To read only the
+    states of the plant, list its blocks, by block or by name, in the order
+    that suits the gain matrix::
+
+        x = bd.STATE([x_dot, x, theta_dot, theta])
+        x = bd.STATE(["x_dot", "x", "theta_dot", "theta"])
+
+    **Checking the state.**  The block reports what its output is made of.
+    After the diagram is compiled::
+
+        x = bd.STATE()
+        x.statenames   # ['x_dot', 'x', 'theta_dot', 'theta']
+        x.index        # which slice of the output belongs to which block
+
+    ``bd.statenames`` gives the state names of the whole diagram.
+
+    This is the state of the simulation, a perfect and instantaneous
+    measurement.  It does not exist on hardware, where a controller uses sensors
+    or an estimator, and it is not offered as an input of ``functions()`` or
+    ``linearize()``: the state is the argument ``x`` of those functions.
+
+    .. note:: The output is a vector, so ``K * x`` with a NumPy matrix ``K``
+        makes a ``GAIN`` block that multiplies it.  A single state is a scalar,
+        as for any size-1 signal.
+
+    :param blocks: blocks, or their names, whose state to output, in this order,
+        defaults to the continuous states of every block in the diagram
+    :type blocks: block, str, or list of block or str, optional
+
+    :seealso: :meth:`~bdsim.BlockDiagram.linearize`
+        :meth:`~bdsim.BlockDiagram.functions`
+        :class:`~bdsim.blocks.sampled.State_S` :class:`~bdsim.blocks.sources.Time`
+    """
+
+    nin = 0
+    nout = 1
+
+    def __init__(
+        self, blocks: Block | str | list[Block | str] | None = None, **blockargs: Any
+    ) -> None:
+        """
+        :param blocks: blocks, or their names, whose state to output, in this
+            order, defaults to the continuous states of every block
+        :type blocks: block, str, or list of block or str, optional
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
+        :type blockargs: dict
+        """
+        super().__init__(**blockargs)
+        # not a parameter: which blocks to read is structure, like a connection
+        self._blocks_arg = blocks
+        self._selected = None
+
+    def _candidates(self) -> list[Block]:
+        return [b for b in self.bd.blocklist if b.blockclass == "continuous"]
+
+    def _width(self, block: Block) -> int:
+        return block.nstates
+
+    def _domain(self) -> str:
+        return "continuous state"
 
 
 # ------------------------------------------------------------------------ #

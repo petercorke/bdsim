@@ -14,7 +14,7 @@ from spatialmath import SE2, SE3, SO2, SO3, Twist3
 from spatialmath.base.types import ArrayLike3
 
 if TYPE_CHECKING:
-    from bdsim.components import Clock
+    from bdsim.components import Block, Clock
     from bdsim.blockdiagram import BlockDiagram
     from roboticstoolbox import mobile  # optional dependency
 

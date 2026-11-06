@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 
 
 class GraphMixin:
-    """Methods of :class:`~bdsim.blockdiagram.BlockDiagram` that draw it as a graph.
+    """Methods of :class:`~bdsim.BlockDiagram` that draw it as a graph.
 
     The attributes declared below are the ones these methods read; they are set
     by ``BlockDiagram``.

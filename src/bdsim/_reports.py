@@ -39,7 +39,7 @@ def _signature_str(signature: Signature | None) -> str:
 
 
 class ReportMixin:
-    """Methods of :class:`~bdsim.blockdiagram.BlockDiagram` that print reports.
+    """Methods of :class:`~bdsim.BlockDiagram` that print reports.
 
     The attributes declared below are the ones these methods read; they are set
     by ``BlockDiagram``.

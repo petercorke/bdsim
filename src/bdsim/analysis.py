@@ -6,8 +6,8 @@ For nonlinear control it is usual to write a system as
 
     \dot{x} = f(x, u, t), \qquad y = g(x, u, t)
 
-:meth:`~bdsim.blockdiagram.BlockDiagram.functions` returns these two functions
-for a compiled diagram, and :meth:`~bdsim.blockdiagram.BlockDiagram.linearize`
+:meth:`~bdsim.BlockDiagram.functions` returns these two functions
+for a compiled diagram, and :meth:`~bdsim.BlockDiagram.linearize`
 estimates the matrices :math:`(A, B, C, D)` of the local linear model by
 numerical differentiation of them.
 
@@ -47,7 +47,7 @@ class Index:
     Maps the elements of a flattened vector to the blocks they belong to.
 
     The vectors :math:`x`, :math:`u` and :math:`y` of
-    :meth:`~bdsim.blockdiagram.BlockDiagram.functions` are the values of several
+    :meth:`~bdsim.BlockDiagram.functions` are the values of several
     blocks, flattened and concatenated in the order the blocks were added to the
     diagram.  An ``Index`` says which elements belong to which block.
 
@@ -181,7 +181,9 @@ def _not_a_source(block: Block) -> str:
             upstream = plug.block
             if isinstance(upstream, SourceBlock):
                 name = str(upstream.name)
-                if upstream.type != "time" and name not in sources:
+                if upstream._reads_state:
+                    stateful = True
+                elif upstream._not_an_input is None and name not in sources:
                     sources.append(name)
             elif upstream.blockclass == "function":
                 todo.append(upstream)
@@ -208,7 +210,7 @@ class SystemFunctions:
     """
     The functions :math:`f` and :math:`g` of a block diagram.
 
-    Returned by :meth:`~bdsim.blockdiagram.BlockDiagram.functions`.  It unpacks
+    Returned by :meth:`~bdsim.BlockDiagram.functions`.  It unpacks
     as the two functions::
 
         f, g = bd.functions()
@@ -264,15 +266,19 @@ class SystemFunctions:
             inputs = [
                 b
                 for b in bd.blocklist
-                if isinstance(b, SourceBlock) and b.type != "time" and not b._implicit
+                if isinstance(b, SourceBlock)
+                and b._not_an_input is None
+                and not b._implicit
             ]
         selected: dict[Block, list[int]] = {}
         for item in inputs:
             block, ports = _block_and_ports(bd, item, "nout")
             if not isinstance(block, SourceBlock):
                 raise TypeError(_not_a_source(block))
-            if block.type == "time":
-                raise ValueError("TIME is not an input: it is the t argument")
+            if block._not_an_input is not None:
+                raise ValueError(
+                    f"{block.type.upper()} is not an input: {block._not_an_input}"
+                )
             selected.setdefault(block, [])
             selected[block].extend(p for p in ports if p not in selected[block])
         self._inputs: dict[Block, list[int]] = {
@@ -451,7 +457,7 @@ def _matrix_str(M: NDArray) -> str:
 class Linearization:
     r"""
     A local linear model of a block diagram, from
-    :meth:`~bdsim.blockdiagram.BlockDiagram.linearize`.
+    :meth:`~bdsim.BlockDiagram.linearize`.
 
     It unpacks as ``A, B, C, D``.  ``print`` shows the model with each matrix
     labelled by the names of the signals that are its rows and columns, and the
@@ -566,7 +572,7 @@ class Linearization:
 
 
 class AnalysisMixin:
-    """Methods of :class:`~bdsim.blockdiagram.BlockDiagram` that analyse it as a system.
+    """Methods of :class:`~bdsim.BlockDiagram` that analyse it as a system.
 
     The attributes declared below are the ones these methods read; they are set
     by ``BlockDiagram``.
@@ -670,6 +676,7 @@ class AnalysisMixin:
         simulation: they overwrite the values on the wires.
 
         :seealso: :meth:`linearize` :class:`~bdsim.analysis.SystemFunctions`
+            :class:`~bdsim.blocks.sources.State` :class:`~bdsim.blocks.sampled.State_S`
         """
         return SystemFunctions(self, inputs, outputs)
 
@@ -741,12 +748,21 @@ class AnalysisMixin:
             out = sim.run(bd, T=5)
             A, B, C, D = bd.linearize(out.x[-1])
 
+        To design state feedback from the result, take a gain matrix ``K`` from
+        the ``A`` and ``B`` and feed the state back with a
+        :class:`~bdsim.blocks.sources.State` block, ``F = -K * bd.STATE()``.  The
+        state of that block is in the order of the states of this method, so
+        ``K`` applies directly, and linearizing the closed loop gives
+        :math:`A - BK`.  The state of a clocked block is available from
+        :class:`~bdsim.blocks.sampled.State_S`.
+
         If the operating point is at a corner of a non-smooth block (a limit, a
         dead band, a switch) the derivative is not defined there.  The result is
         then the slope across the step; with ``estimate_error`` a warning says
         that the estimate is not reliable.
 
         :seealso: :meth:`functions` :class:`~bdsim.blocks.continuous.LTI_SS`
+            :class:`~bdsim.blocks.sources.State` :class:`~bdsim.blocks.sampled.State_S`
         """
         sysf = self.functions(inputs, outputs)
 
