@@ -432,13 +432,14 @@ class Block(ABC, Port):
         self._outport_names = onames
 
         if snames is not None:
-            if nstates is not None:
-                if len(snames) != nstates:
-                    raise ValueError(
-                        "number of state names must match number of states"
-                    )
-            else:
-                nstates = len(snames)
+            # the names are those of the continuous states, or, for a block that has
+            # only discrete states, such as a sampled block, of those
+            named = nstates if nstates else ndstates
+            if len(snames) != named:
+                raise ValueError(
+                    f"number of state names ({len(snames)}) must match number of "
+                    f"states ({named})"
+                )
         self._state_names = snames
 
         # block inputs can be specified in the constructor for convenience, and are connected here.

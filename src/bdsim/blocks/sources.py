@@ -188,8 +188,9 @@ class _StateReader:
         """
         The name of every element of the output, in order.
 
-        :return: a list of names, a block's own name if it has one state and
-            ``name[k]`` for the ``k``-th of several
+        :return: a list of names: those a block gave its states, with ``snames``,
+            and otherwise a block's own name if it has one state and ``name[k]`` for
+            the ``k``-th of several
         """
         return self.index.names
 

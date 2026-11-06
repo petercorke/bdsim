@@ -410,6 +410,11 @@ class LTI_SS(ContinuousBlock):
     feedthrough, the output depends on the input at the same instant, which creates an
     algebraic loop if the output feeds back to the input without a delay.
 
+    The output is a single port: a float if ``C`` has one row, and otherwise an
+    ndarray with one element for each row of ``C``, so a system with several outputs
+    is one wire, which a ``DEMUX`` block can split.  The input has one port for each
+    column of ``B``, each carrying a scalar.
+
     Examples::
 
         lti = bd.LTI_SS(A=np.array([[-2.0]]), B=np.array([1.0]), C=np.array([-1.0]))
@@ -458,16 +463,16 @@ class LTI_SS(ContinuousBlock):
 
         if len(C.shape) == 1:
             # 1D array, assume it's a row vector and reshape to (1,n)
-            nout = 1
+            p = 1
             if C.shape[0] != n:
                 raise ValueError("C must have same number of columns as A")
             C = C.reshape((1, n))
         else:
-            nout = C.shape[0]
+            p = C.shape[0]
             if C.shape[1] != n:
                 raise ValueError("C must have same number of columns as A")
 
-        D = _as_D(D, nout, nin)
+        D = _as_D(D, p, nin)
 
         self.A = A
         self.B = B
@@ -478,8 +483,9 @@ class LTI_SS(ContinuousBlock):
         feedthrough = D is not None and bool(np.any(D != 0))
         self._D: np.ndarray | None = D if feedthrough else None
 
+        # one output port, whatever the number of rows of C: see the class docstring
         super().__init__(
-            nstates=n, nin=nin, nout=nout, x0=x0, feedthrough=feedthrough, **blockargs
+            nstates=n, nin=nin, nout=1, x0=x0, feedthrough=feedthrough, **blockargs
         )
         self.add_param("A")
         self.add_param("B")
