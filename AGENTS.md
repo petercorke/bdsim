@@ -50,6 +50,11 @@ Part of the RVC ecosystem. **Read [rvc-ecosystem/AGENTS.md](https://github.com/p
   Callers are unchanged (`bd.graph()`). A mixin declares the attributes it reads under
   `if TYPE_CHECKING:` in its class body, because mypy rejects annotating `self` with the subclass.
   The split is a pure move: compare output before and after, and keep the tests.
+- **A new block needs an icon.** Every block in `bdsim.blocks.*` has a 250x250 PNG in
+  `src/bdsim/blocks/Icons/`, named for its class in lower case (`State_S` -> `state_s.png`), and
+  `tests/test_icons.py` fails for a block without one. Most are made from LaTeX with `bdtex2icon`
+  (add the line to `icons.sh`); the rest come from the `make_*_icons.py` scripts. The README in
+  that folder says how. A toolbox keeps the icons of its own blocks in its own `Icons` folder.
 - The current Qt-based editor is a vendored student project — kept working for now, but the
   long-term aim is to make it redundant once the web editor lands, not to invest further in it.
 - **Block discovery is AST-based, not import-based.** `BDSim` builds its block registry
