@@ -1335,9 +1335,8 @@ class BlockDiagram(
         # get the state from each stateful block
         try:
             x0: np.ndarray[tuple[Any, ...], np.dtype[Any]] = np.array([])
-            for b in self.blocklist:
-                if b.blockclass == "continuous":
-                    x0 = np.r_[x0, b.getstate0_safe()]
+            for b in self.xindex:  # the blocks that have continuous state, in order
+                x0 = np.r_[x0, b.getstate0_safe()]
             return x0
         except BlockRuntimeError as err:
             self._handle_block_runtime_error(err)

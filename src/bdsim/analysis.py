@@ -23,7 +23,7 @@ from __future__ import annotations
 
 import warnings
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, Iterator
+from typing import TYPE_CHECKING, Any, Callable, Iterable, Iterator
 
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
@@ -57,9 +57,15 @@ class Index:
     elements have no entry.
     """
 
-    def __init__(self, entries: list[tuple[Block, int]]) -> None:
+    def __init__(
+        self,
+        entries: list[tuple[Block, int]],
+        names: list[str | None] | None = None,
+    ) -> None:
         """
         :param entries: ``(block, k)`` for each element of the vector
+        :param names: a name for each element to use instead of the one made from
+            the block's name, or ``None`` for an element that has no name of its own
         """
         self.labels: list[tuple[Block, int]] = entries
         self.slices: dict[Block, slice] = {}
@@ -69,6 +75,40 @@ class Index:
             else:
                 self.slices[block] = slice(i, i + 1)
         self._by_name = {b.name: b for b in self.slices}
+
+        self._names = []
+        for i, (block, k) in enumerate(entries):
+            count = self.slices[block].stop - self.slices[block].start
+            self._names.append(f"{block.name}[{k}]" if count > 1 else f"{block.name}")
+        if names is not None:
+            if len(names) != len(entries):
+                raise ValueError(
+                    f"{len(names)} names for {len(entries)} elements of the index"
+                )
+            for i, given in enumerate(names):
+                if given is not None:
+                    self._names[i] = given
+
+    @classmethod
+    def of_states(cls, blocks: Iterable[Block], width: Callable[[Block], int]) -> Index:
+        """
+        The index of the state of some blocks, in the order given.
+
+        :param blocks: the blocks
+        :param width: the number of states of a block, ``nstates`` for continuous
+            state and ``ndstates`` for discrete
+        :return: an index whose names are the ones a block gave its states, with
+            ``snames=``, and otherwise the block's name, or ``name[k]`` for the
+            ``k``-th of several
+        """
+        entries: list[tuple[Block, int]] = []
+        names: list[str | None] = []
+        for block in blocks:
+            given = block._state_names
+            for k in range(width(block)):
+                entries.append((block, k))
+                names.append(given[k] if given is not None and k < len(given) else None)
+        return cls(entries, names)
 
     def __len__(self) -> int:
         return len(self.labels)
@@ -92,14 +132,12 @@ class Index:
 
     def name(self, i: int) -> str:
         """Name of element ``i`` for display, for example ``"integrator.0[1]"``."""
-        block, k = self.labels[i]
-        count = self.slices[block].stop - self.slices[block].start
-        return f"{block.name}[{k}]" if count > 1 else f"{block.name}"
+        return self._names[i]
 
     @property
     def names(self) -> list[str]:
         """The display name of every element."""
-        return [self.name(i) for i in range(len(self))]
+        return list(self._names)
 
     def __repr__(self) -> str:
         return f"Index({len(self)} elements: {', '.join(self.names)})"
@@ -255,8 +293,7 @@ class SystemFunctions:
             )
 
         # continuous state, in the order the blocks were added
-        self._xblocks = [b for b in bd.blocklist if b.blockclass == "continuous"]
-        self.xindex = Index([(b, k) for b in self._xblocks for k in range(b.nstates)])
+        self.xindex = bd.xindex
         self.nx = len(self.xindex)
         self.x0 = np.asarray(bd.getstate0(), dtype=float).reshape(-1)
 
@@ -582,6 +619,30 @@ class AnalysisMixin:
         blocklist: list[Block]
         wirelist: list[Wire]
         compiled: bool
+
+    @property
+    def xindex(self) -> Index:
+        """
+        Which elements of the continuous state vector belong to which block.
+
+        :return: an :class:`~bdsim.analysis.Index`
+
+        This is the one definition of the layout of the state :math:`x` of the
+        diagram, the vector the solver advances: the states of the blocks that
+        have continuous state, in the order the blocks were added.  The state
+        passed to :meth:`functions`, returned by :meth:`BDSim.run` as ``out.x``,
+        and output by a :class:`~bdsim.blocks.sources.State` block are all in this
+        order.
+
+        The names are those a block gave its states, with ``snames``, and
+        otherwise the block's name, or ``name[k]`` for the ``k``-th of several.
+        ``bd.statenames`` names the same elements in the same order, in the form
+        ``name:x_k``, which is also what ``out.xnames`` holds.
+        """
+        return Index.of_states(
+            (b for b in self.blocklist if b.blockclass == "continuous"),
+            lambda b: b.nstates,
+        )
 
     def functions(
         self,

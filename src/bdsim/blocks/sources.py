@@ -181,7 +181,7 @@ class _StateReader:
         """
         from bdsim.analysis import Index
 
-        return Index([(b, k) for b in self._blocks() for k in range(self._width(b))])
+        return Index.of_states(self._blocks(), self._width)
 
     @property
     def statenames(self) -> list[str]:
@@ -336,7 +336,7 @@ class State(_StateReader, SourceBlock):
         self._selected = None
 
     def _candidates(self) -> list[Block]:
-        return [b for b in self.bd.blocklist if b.blockclass == "continuous"]
+        return list(self.bd.xindex)
 
     def _width(self, block: Block) -> int:
         return block.nstates

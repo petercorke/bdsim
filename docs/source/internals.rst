@@ -15,7 +15,7 @@ and plugs <https://github.com/petercorke/bdsim/wiki/Blocks%2C-Wires-and-Plugs>`_
 fits together conceptually.
 
 .. autoclass:: bdsim.BlockDiagram
-   :members: compile, connect, functions, linearize, report_summary, report_lists, dotfile, showgraph
+   :members: compile, connect, functions, linearize, xindex, report_summary, report_lists, dotfile, showgraph
    :undoc-members:
    :show-inheritance:
 
@@ -107,7 +107,7 @@ Full member listing for ``BlockDiagram`` — see its description and wiki links 
 `Simulation-user API`_ above.
 
 .. autoclass:: bdsim.BlockDiagram
-   :members: compile, connect, functions, linearize, report_summary, report_lists, dotfile, showgraph
+   :members: compile, connect, functions, linearize, xindex, report_summary, report_lists, dotfile, showgraph
    :undoc-members:
    :show-inheritance:
    :no-index:

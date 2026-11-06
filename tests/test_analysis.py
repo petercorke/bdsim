@@ -709,6 +709,81 @@ class LinearizationDisplayTest(unittest.TestCase):
         self.assertEqual(repr(self.lin()), "Linearization(t=0, nx=2, nu=2, ny=1)")
 
 
+class StateLayoutTest(unittest.TestCase):
+    """bd.xindex is the one definition of the layout of the continuous state."""
+
+    def named_states_diagram(self):
+        bd = new_diagram()
+        plain = bd.INTEGRATOR(x0=1.0, name="plain")
+        pair = bd.INTEGRATOR(x0=[2.0, 3.0], snames=["pos", "vel"], name="pair")
+        unnamed_pair = bd.INTEGRATOR(x0=[4.0, 5.0], name="unnamed")
+        bd.connect(bd.CONSTANT(0.0, name="u"), plain)
+        bd.connect(bd.CONSTANT(np.zeros(2), name="v"), pair)
+        bd.connect(bd.CONSTANT(np.zeros(2), name="w"), unnamed_pair)
+        bd.connect(plain, bd.NULL(1, name="y"))
+        bd.compile(verbose=False)
+        return bd
+
+    def test_it_lists_the_continuous_states_in_the_order_of_the_blocks(self):
+        bd = self.named_states_diagram()
+        index = bd.xindex
+        self.assertEqual(len(index), 5)
+        self.assertEqual(list(index), [bd["plain"], bd["pair"], bd["unnamed"]])
+        self.assertEqual(index["pair"], slice(1, 3))
+        self.assertEqual(index["unnamed"], slice(3, 5))
+
+    def test_names_a_block_gave_its_states_are_used(self):
+        bd = self.named_states_diagram()
+        self.assertEqual(
+            bd.xindex.names, ["plain", "pos", "vel", "unnamed[0]", "unnamed[1]"]
+        )
+
+    def test_it_describes_the_same_elements_in_the_same_order_as_statenames(self):
+        bd = self.named_states_diagram()
+        index = bd.xindex
+        self.assertEqual(len(bd.statenames), len(index))
+        for i, name in enumerate(bd.statenames):
+            block, k = index.labels[i]
+            # default names are "block:x_k", and the names a block gave are as given
+            given = block._state_names
+            expected = given[k] if given else f"{block.name}:x_{k}"
+            self.assertEqual(name, expected)
+
+    def test_the_names_agree_where_the_block_named_its_states(self):
+        bd = self.named_states_diagram()
+        self.assertEqual(bd.statenames[1:3], bd.xindex.names[1:3])
+
+    def test_it_is_the_state_of_functions_and_of_the_state_block(self):
+        bd = self.named_states_diagram()
+        st = bd.STATE(name="state")
+        bd.connect(st, bd.NULL(1, name="y2"))
+        bd.compile(verbose=False)
+        self.assertEqual(bd.functions().xindex.names, bd.xindex.names)
+        self.assertEqual(st.statenames, bd.xindex.names)
+        self.assertEqual(st.index.slices, bd.xindex.slices)
+
+    def test_getstate0_follows_it(self):
+        bd = self.named_states_diagram()
+        np.testing.assert_array_equal(bd.getstate0(), [1.0, 2.0, 3.0, 4.0, 5.0])
+        self.assertEqual(len(bd.getstate0()), len(bd.xindex))
+
+    def test_a_diagram_with_no_state_has_an_empty_index(self):
+        bd = new_diagram()
+        bd.connect(bd.CONSTANT(1.0), bd.NULL(1))
+        bd.compile(verbose=False)
+        self.assertEqual(len(bd.xindex), 0)
+        self.assertEqual(list(bd.xindex), [])
+        self.assertEqual(len(bd.getstate0()), 0)
+
+    def test_an_index_can_be_given_names(self):
+        bd = self.named_states_diagram()
+        entries = [(bd["plain"], 0), (bd["pair"], 0), (bd["pair"], 1)]
+        index = Index(entries, ["a", None, "c"])
+        self.assertEqual(index.names, ["a", "pair[0]", "c"])
+        with self.assertRaisesRegex(ValueError, "2 names for 3 elements"):
+            Index(entries, ["a", "b"])
+
+
 class AfterARunTest(unittest.TestCase):
     def limited_integrator_diagram(self):
         bd = new_diagram()
