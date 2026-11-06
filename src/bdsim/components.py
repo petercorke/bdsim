@@ -16,6 +16,7 @@ from typing import TYPE_CHECKING, Any, Callable, Protocol, TypeVar, runtime_chec
 from bdsim.exceptions import SimulationContextError
 
 if TYPE_CHECKING:
+    from bdsim.analysis import Index
     from bdsim.blockdiagram import BlockDiagram
     from bdsim.run_context import SimulationContext
 
@@ -618,6 +619,23 @@ class Clock:
         for b in self.blocklist:
             s += f"    {b.name}\n"
         return s
+
+    @property
+    def index(self) -> Index:
+        """
+        Which elements of the clock's state vector belong to which block.
+
+        :return: an :class:`~bdsim.analysis.Index` of the discrete state of the
+            blocks on this clock, in the order of its state vector
+
+        This is for the discrete state what ``bd.xindex`` is for the continuous state.
+        The names are those a block gave its states, with ``snames``, and otherwise
+        the block's name, or ``name[k]`` for the ``k``-th of several.
+        ``clock.statenames`` names the same elements in the form ``name:X_k``.
+        """
+        from bdsim.analysis import Index
+
+        return Index.of_states(self.blocklist, lambda b: b.ndstates)
 
     def getstate0(self) -> np.ndarray[tuple[Any, ...], np.dtype[Any]]:
         # get the state from each stateful block on this clock
