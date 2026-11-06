@@ -32,6 +32,7 @@ of a nonlinear system :math:`\dot{x} = f(x, u, t),\ y = g(x, u, t)`, and
    :show-inheritance:
 
 .. autoclass:: bdsim.analysis.Linearization
+   :members: poles
    :show-inheritance:
 
 .. autoclass:: bdsim.analysis.Index

@@ -442,13 +442,20 @@ class SystemFunctions:
         return f"SystemFunctions(nx={self.nx}, nu={self.nu}, ny={self.ny})"
 
 
-@dataclass
+def _matrix_str(M: NDArray) -> str:
+    """A matrix for display: commas, four digits, and noise-sized values as 0."""
+    return np.array2string(M, precision=4, suppress_small=True, separator=", ")
+
+
+@dataclass(repr=False)
 class Linearization:
     r"""
     A local linear model of a block diagram, from
     :meth:`~bdsim.blockdiagram.BlockDiagram.linearize`.
 
-    It unpacks as ``A, B, C, D``.
+    It unpacks as ``A, B, C, D``.  ``print`` shows the model with each matrix
+    labelled by the names of the signals that are its rows and columns, and the
+    poles, the eigenvalues of ``A``.
 
     :ivar A: :math:`\partial f / \partial x`, shape ``(nx, nx)``
     :ivar B: :math:`\partial f / \partial u`, shape ``(nx, nu)``
@@ -487,6 +494,75 @@ class Linearization:
 
     def __iter__(self) -> Iterator[NDArray]:
         return iter((self.A, self.B, self.C, self.D))
+
+    @property
+    def poles(self) -> NDArray:
+        """
+        The poles of the model, the eigenvalues of ``A``, sorted by real part.
+
+        :return: complex array of length ``nx``
+        """
+        return np.sort_complex(np.linalg.eigvals(self.A))
+
+    def _poles_str(self) -> str:
+        poles = self.poles
+        if poles.size == 0:
+            return "[]"
+        if np.all(np.abs(poles.imag) <= 1e-9 * np.maximum(1.0, np.abs(poles))):
+            return np.array2string(
+                poles.real,
+                separator=", ",
+                formatter={"float_kind": lambda v: f"{v:.4g}"},
+            )
+        return np.array2string(
+            poles, separator=", ", formatter={"complex_kind": lambda z: f"{z:.4g}"}
+        )
+
+    def __str__(self) -> str:
+        nx, nu, ny = len(self.xindex), len(self.uindex), len(self.yindex)
+        states = ", ".join(self.xindex.names)
+        inputs = ", ".join(self.uindex.names)
+        outputs = ", ".join(self.yindex.names)
+
+        lines = [f"Linearization at t = {self.t:g}", ""]
+        lines.append(f"states  x ({nx}): {states}")
+        lines.append(f"inputs  u ({nu}): {inputs}")
+        lines.append(f"outputs y ({ny}): {outputs}")
+        lines.append("")
+
+        blocks = (
+            ("A = df/dx", self.A, "rows and columns", states),
+            ("B = df/du", self.B, "rows x, columns u", None),
+            ("C = dg/dx", self.C, "rows y, columns x", None),
+            ("D = dg/du", self.D, "rows y, columns u", None),
+        )
+        for label, M, meaning, same in blocks:
+            r, c = M.shape
+            lines.append(f"{label}  ({r}x{c})")
+            if same is not None:
+                lines.append(f"  {meaning}: {same}")
+            else:
+                rows = states if label[0] == "B" else outputs
+                cols = inputs if label[0] in "BD" else states
+                lines.append(f"  rows: {rows}")
+                lines.append(f"  columns: {cols}")
+            lines.append(_matrix_str(M))
+            lines.append("")
+
+        lines.append(f"poles: {self._poles_str()}")
+        worst = float(np.max(np.abs(self.f0))) if self.f0.size else 0.0
+        if worst > 1e-9:
+            lines.append(
+                f"not an equilibrium: max |f0| = {worst:.3g}, the model is "
+                "d(dx)/dt = A dx + B du + f0"
+            )
+        return "\n".join(lines)
+
+    def __repr__(self) -> str:
+        return (
+            f"Linearization(t={self.t:g}, nx={len(self.xindex)}, "
+            f"nu={len(self.uindex)}, ny={len(self.yindex)})"
+        )
 
 
 class AnalysisMixin:

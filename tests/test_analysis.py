@@ -603,6 +603,112 @@ class LinearizeTest(unittest.TestCase):
         np.testing.assert_allclose(d, D[:, 1:], atol=1e-8)
 
 
+class LinearizationDisplayTest(unittest.TestCase):
+    def lin(self, **kwargs):
+        bd, _ = lti_diagram()
+        return bd.linearize(x=[1.0, 2.0], u=[1.0, 2.0], full=True, **kwargs)
+
+    def test_each_matrix_is_labelled_with_the_names_of_its_signals(self):
+        text = str(self.lin())
+        self.assertIn("states  x (2): system[0], system[1]", text)
+        self.assertIn("inputs  u (2): u1, u2", text)
+        self.assertIn("outputs y (1): system", text)
+        self.assertIn("A = df/dx  (2x2)", text)
+        self.assertIn("rows and columns: system[0], system[1]", text)
+        self.assertIn("B = df/du  (2x2)", text)
+        self.assertIn("columns: u1, u2", text)
+        self.assertIn("C = dg/dx  (1x2)", text)
+        self.assertIn("D = dg/du  (1x2)", text)
+
+    def test_rows_and_columns_are_named_correctly_for_every_matrix(self):
+        # distinct names for the states (vel, pos), the input (force) and the
+        # outputs (amp, vel), so that a swapped label is visible
+        bd = new_diagram()
+        force = bd.CONSTANT(1.0, name="force")
+        amp = bd.GAIN(2.0, name="amp")
+        vel = bd.INTEGRATOR(x0=0.0, name="vel")
+        pos = bd.INTEGRATOR(x0=0.0, name="pos")
+        bd.connect(force, amp)
+        bd.connect(amp, vel)
+        bd.connect(vel, pos)
+        bd.connect(amp, bd.NULL(1, name="y_amp"))
+        bd.connect(vel, bd.NULL(1, name="y_vel"))
+        bd.compile(verbose=False)
+        text = str(bd.linearize(full=True))
+        lines = text.splitlines()
+
+        def section(label):
+            i = next(k for k, ln in enumerate(lines) if ln.startswith(label))
+            return lines[i + 1 : i + 3]
+
+        self.assertIn("states  x (2): vel, pos", text)
+        self.assertIn("inputs  u (1): force", text)
+        self.assertIn("outputs y (2): amp, vel", text)
+        self.assertEqual(
+            section("A = "), ["  rows and columns: vel, pos", "[[0., 0.],"]
+        )
+        self.assertEqual(section("B = "), ["  rows: vel, pos", "  columns: force"])
+        self.assertEqual(section("C = "), ["  rows: amp, vel", "  columns: vel, pos"])
+        self.assertEqual(section("D = "), ["  rows: amp, vel", "  columns: force"])
+
+    def test_the_matrices_are_shown(self):
+        text = str(self.lin())
+        # A = [[0, 1], [-2, -3]]
+        self.assertIn("[[ 0.,  1.],\n [-2., -3.]]", text)
+
+    def test_the_labels_change_with_the_selection(self):
+        bd, _ = lti_diagram()
+        text = str(bd.linearize(inputs=["u2"], full=True))
+        self.assertIn("inputs  u (1): u2", text)
+        self.assertNotIn("u1", text)
+
+    def test_the_poles_are_the_eigenvalues_of_a(self):
+        lin = self.lin()
+        np.testing.assert_allclose(lin.poles, [-2.0, -1.0], atol=1e-6)
+        self.assertEqual(lin.poles.dtype, complex)
+
+    def test_real_poles_are_printed_without_padding_or_zero_imaginary_parts(self):
+        self.assertIn("poles: [-2, -1]", str(self.lin()))
+
+    def test_complex_poles_are_printed_compactly(self):
+        # a lightly damped oscillator: poles -0.1 +- 2j
+        bd = new_diagram()
+        system = bd.LTI_SS(
+            A=np.array([[0, 1], [-4.01, -0.2]]),
+            B=np.array([[0.0], [1.0]]),
+            C=np.array([[1.0, 0.0]]),
+            name="oscillator",
+        )
+        bd.connect(bd.CONSTANT(0.0, name="u"), system)
+        bd.connect(system, bd.NULL(1, name="y"))
+        bd.compile(verbose=False)
+        lin = bd.linearize(full=True)
+        np.testing.assert_allclose(sorted(lin.poles.imag), [-2.0, 2.0], atol=1e-6)
+        line = [ln for ln in str(lin).splitlines() if ln.startswith("poles:")][0]
+        self.assertRegex(line, r"-0\.1(0000)?[+-]2j")
+        self.assertNotIn("  ", line)
+
+    def test_it_says_when_the_point_is_not_an_equilibrium(self):
+        self.assertIn("not an equilibrium", str(self.lin()))
+        bd = pendulum_diagram(torque=0.0, theta0=0.0, omega0=0.0)
+        self.assertNotIn("not an equilibrium", str(bd.linearize(full=True)))
+
+    def test_no_inputs_or_outputs_still_prints(self):
+        bd = new_diagram()
+        integrator = bd.INTEGRATOR(x0=0, name="integrator")
+        bd.connect(bd.CONSTANT(1.0, name="u"), integrator)
+        bd.compile(verbose=False)
+        text = str(bd.linearize(inputs=[], outputs=[], full=True))
+        self.assertIn("inputs  u (0): ", text)
+        self.assertIn("(1x0)", text)
+
+    def test_it_can_be_printed_on_any_console(self):
+        str(self.lin()).encode("ascii")
+
+    def test_repr_is_short(self):
+        self.assertEqual(repr(self.lin()), "Linearization(t=0, nx=2, nu=2, ny=1)")
+
+
 class AfterARunTest(unittest.TestCase):
     def limited_integrator_diagram(self):
         bd = new_diagram()
