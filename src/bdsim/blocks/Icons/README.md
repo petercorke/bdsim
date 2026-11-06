@@ -7,6 +7,8 @@ one folder.
 
 Icon names are all lower-case versions of the CamelCase class name, eg. the class `Gain` has the icon file named `gain.png`.
 
+Every block in `bdsim.blocks.*` must have one: `tests/test_icons.py` checks that the file exists and is 250x250.
+
 ![gain.png](https://github.com/petercorke/bdsim/raw/main/src/bdsim/blocks/Icons/gain.png)
 
 Icons are drawn to be interpretted with inputs on the left and outputs on the right.  Icons can be flipped so that inputs are on the right, and
