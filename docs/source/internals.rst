@@ -28,15 +28,19 @@ of a nonlinear system :math:`\dot{x} = f(x, u, t),\ y = g(x, u, t)`, and
 :meth:`BlockDiagram.linearize` estimates its local linear model :math:`(A, B, C, D)`.
 
 .. autoclass:: bdsim.analysis.SystemFunctions
-   :members: fg, f, g, u_at
+   :members:
+   :member-order: bysource
    :show-inheritance:
 
 .. autoclass:: bdsim.analysis.Linearization
-   :members: poles
+   :members:
+   :special-members: __str__, __iter__
+   :member-order: bysource
    :show-inheritance:
 
 .. autoclass:: bdsim.analysis.Index
-   :members: name, names
+   :members:
+   :member-order: bysource
    :show-inheritance:
 
 BDSim class
