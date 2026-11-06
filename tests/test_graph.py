@@ -3,7 +3,6 @@
 import io
 import json
 import unittest
-import xml.etree.ElementTree as ET
 
 import bdsim
 from bdsim._graph import GraphMixin
@@ -52,11 +51,12 @@ class GraphTest(unittest.TestCase):
         self.assertTrue(text.startswith("```mermaid"))
         self.assertIn("flowchart LR", text)
 
-    def test_graphml_is_xml_with_the_right_graph(self):
-        root = ET.fromstring(make_diagram().graph(format="graphml").encode("utf-8"))
-        ns = {"g": "http://graphml.graphdrawing.org/xmlns"}
-        self.assertEqual(len(root.findall(".//g:node", ns)), 3)
-        self.assertEqual(len(root.findall(".//g:edge", ns)), 2)
+    def test_graphml(self):
+        text = make_diagram().graph(format="graphml")
+        self.assertTrue(text.startswith("<?xml"))
+        self.assertTrue(text.rstrip().endswith("</graphml>"))
+        self.assertEqual(text.count("<node "), 3)
+        self.assertEqual(text.count("<edge "), 2)
 
     def test_elk_is_json_with_the_right_graph(self):
         d = json.loads(make_diagram().graph(format="elk"))

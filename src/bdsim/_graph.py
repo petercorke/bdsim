@@ -167,7 +167,7 @@ class GraphMixin:
 
     def graph(
         self,
-        format: str = "dot",
+        format: str = "dot",  # pylint: disable=redefined-builtin
         filename: str | io.TextIOWrapper | None = None,
         shapes: Any = None,
     ) -> str:
@@ -447,7 +447,7 @@ class GraphMixin:
         # Lazy import
         try:
             import tempfile
-            import subprocess
+            import subprocess  # nosec B404
             import webbrowser
         except ModuleNotFoundError:
             return
@@ -461,7 +461,10 @@ class GraphMixin:
         pdffile: _TemporaryFileWrapper[bytes] = tempfile.NamedTemporaryFile(
             suffix=".pdf", delete=False
         )
-        subprocess.run("dot -Tpdf", shell=True, stdin=dotfile, stdout=pdffile)
+        # constant command string, but see #198 about shell=True
+        subprocess.run(  # nosec B602 B607  # nosemgrep: python.lang.security.audit.dangerous-subprocess-use-audit.dangerous-subprocess-use-audit
+            "dot -Tpdf", shell=True, stdin=dotfile, stdout=pdffile
+        )
 
         # open the PDF file in browser (hopefully portable), then cleanup
         webbrowser.open(f"file://{pdffile.name}")
