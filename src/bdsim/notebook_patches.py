@@ -170,8 +170,8 @@ def patch_roboticstoolbox_pyplot_launch_for_notebook() -> None:
             setattr(_plt, "show", _orig_show)
             setattr(_plt, "draw", _orig_draw)
 
-    PyPlot.launch = patched_launch
-    PyPlot.add = patched_add
+    setattr(PyPlot, "launch", patched_launch)
+    setattr(PyPlot, "add", patched_add)
     setattr(PyPlot, "_bdsim_launch_patch_version", patch_version)
 
 
@@ -338,6 +338,6 @@ def patch_roboticstoolbox_armplot_for_notebook() -> None:
         return None
 
     setattr(ArmPlot, "_bdsim_original_step", original_step)
-    ArmPlot.step = patched_step
+    setattr(ArmPlot, "step", patched_step)
     setattr(ArmPlot, "_bdsim_notebook_patch_applied", True)
     setattr(ArmPlot, "_bdsim_notebook_patch_version", patch_version)
