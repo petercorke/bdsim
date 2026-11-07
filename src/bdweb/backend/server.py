@@ -217,10 +217,14 @@ def _serialisable_block_info(info: dict) -> dict:
 
 @app.get("/api/blocks")
 def get_blocks() -> dict[str, Any]:
-    """Return the full block library, grouped by blockclass."""
+    """Return the user-facing block library, grouped by blockclass.
+
+    Uses the public ``block_library`` view so deprecated blocks stay out of
+    the palette, matching bdedit and the docs.
+    """
     sim = get_sim()
     library: dict[str, list[dict]] = {}
-    for name, info in sim._blocklibrary.items():
+    for name, info in sim.block_library.items():
         cls = info.get("blockclass", "other").capitalize()
         entry = _serialisable_block_info(info)
         entry["name"] = name  # e.g. "GAIN"
@@ -233,9 +237,10 @@ def get_block_info(name: str) -> dict[str, Any]:
     """Return metadata for a single block type."""
     sim = get_sim()
     name_upper = name.upper()
-    if name_upper not in sim._blocklibrary:
+    block_library = sim.block_library
+    if name_upper not in block_library:
         raise HTTPException(status_code=404, detail=f"Block '{name}' not found")
-    return _serialisable_block_info(sim._blocklibrary[name_upper])
+    return _serialisable_block_info(block_library[name_upper])
 
 
 # ---------------------------------------------------------------------------
