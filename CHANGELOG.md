@@ -1,5 +1,76 @@
 # Changelog
 
+## [1.5.0](https://github.com/petercorke/bdsim/compare/v1.4.1...v1.5.0) (2026-11-07)
+
+
+### Features
+
+* --npz writes the results as a NumPy archive ([#154](https://github.com/petercorke/bdsim/issues/154)) ([6ee2a19](https://github.com/petercorke/bdsim/commit/6ee2a193232d5b995021d851af203e799146b3dd))
+* a list of numbers becomes an ndarray by default, with asarray=False to opt out ([dd55a75](https://github.com/petercorke/bdsim/commit/dd55a7573adbb305b210159b5cfe06d1cc6d1843))
+* a list of numbers becomes an ndarray by default; asarray=False to opt out ([93bef9d](https://github.com/petercorke/bdsim/commit/93bef9d1c8bfe4378270a0d80cac9a75f366d304))
+* add ANOISE_S and MNOISE_S, clocked additive and multiplicative noise blocks ([#184](https://github.com/petercorke/bdsim/issues/184)) ([8786f82](https://github.com/petercorke/bdsim/commit/8786f82d37b123165bfe93846d314dacf8c75ab4))
+* add bd.functions() and bd.linearize() ([#202](https://github.com/petercorke/bdsim/issues/202)) ([0e346a2](https://github.com/petercorke/bdsim/commit/0e346a232f247a7ce4fa6625e427c73d2a06e748))
+* add HYSTERESIS_S, a discrete-time hysteresis (relay with memory) block ([#182](https://github.com/petercorke/bdsim/issues/182)) ([6508400](https://github.com/petercorke/bdsim/commit/6508400cd8d94628ac8e7824f9d5b8159218abe3))
+* add icons for SWITCH and the blocks that had none ([#188](https://github.com/petercorke/bdsim/issues/188)) ([dc7c472](https://github.com/petercorke/bdsim/commit/dc7c47206896d58dc8afe200e895754a29f9c7f2))
+* add icons for the new function, hysteresis and noise blocks ([#186](https://github.com/petercorke/bdsim/issues/186)) ([6f33dce](https://github.com/petercorke/bdsim/commit/6f33dce8d8e09c71092604f452affa2c961b1560))
+* add Sqrt, Sign, Abs and Deadband function blocks ([#178](https://github.com/petercorke/bdsim/issues/178)) ([e89e173](https://github.com/petercorke/bdsim/commit/e89e173363e2d57f844c08f9fb04ab9d7a374ea5))
+* add SWITCH, a block that selects one of two signals ([#187](https://github.com/petercorke/bdsim/issues/187)) ([f22fc56](https://github.com/petercorke/bdsim/commit/f22fc56f5a9db441d7e88becb272193e0618b8d6))
+* add the Block.configure() hook, run once per run before start() ([70656dc](https://github.com/petercorke/bdsim/commit/70656dc5b0e6f703605b7ac2d05a324acdac5357))
+* add the STATE and STATE_S blocks ([#204](https://github.com/petercorke/bdsim/issues/204)) ([8f3a271](https://github.com/petercorke/bdsim/commit/8f3a27114ce9b253c7265e234ef21721d6679eec))
+* BDSim.run takes the per-run options as keyword arguments ([#233](https://github.com/petercorke/bdsim/issues/233)) ([819c92f](https://github.com/petercorke/bdsim/commit/819c92f27a32721c6d7dd38c38416024cb03cb99))
+* block parameters: one registry, type enforcement, --set and --param ([dee08f6](https://github.com/petercorke/bdsim/commit/dee08f6ada5c72d7fbdd1f5f354231bb84570fa3))
+* block parameters: one registry, type enforcement, --set and --param ([4c64920](https://github.com/petercorke/bdsim/commit/4c649209f25f701f09acfe516e40ffdaac0587db))
+* initial states are parameters, and --set is applied before they are collected ([4646bf2](https://github.com/petercorke/bdsim/commit/4646bf21e5adeda1063c2b43db4bc6a6dd7785ff))
+* Linearization.ss() returns a python-control state-space system ([#209](https://github.com/petercorke/bdsim/issues/209)) ([6d94000](https://github.com/petercorke/bdsim/commit/6d940000c8f590fdc5905ef7760036fb73e8b1e9))
+* NumPy dtype literals for parameters given as text, float32([1, 2]) ([#157](https://github.com/petercorke/bdsim/issues/157)) ([8a04025](https://github.com/petercorke/bdsim/commit/8a040258f1e4b1df224d2e4aba1f12ee5fbfe499))
+* NumPy dtype literals for parameters given as text: float32([1, 2]), uint16(5) ([8a04025](https://github.com/petercorke/bdsim/commit/8a040258f1e4b1df224d2e4aba1f12ee5fbfe499))
+* one switch for the run-time checks, and a check for change of signature ([c6de015](https://github.com/petercorke/bdsim/commit/c6de01568c478f9ee4512ed70ce96afad005f00c))
+* one switch for the run-time checks, and a check for change of signature ([615a924](https://github.com/petercorke/bdsim/commit/615a9241e38c7e7098becde6b8f192a7510786a1))
+* PID and PID_S take terms= to say which terms to build; fixes pure P ([#163](https://github.com/petercorke/bdsim/issues/163)) ([b4b5f01](https://github.com/petercorke/bdsim/commit/b4b5f010f03563b3e8577db6b029a5692c5e7b8a))
+* properties and forwarding for every block parameter ([f5b58c3](https://github.com/petercorke/bdsim/commit/f5b58c3e6ddb2e27f02d9619df9603574035cd31))
+* properties for the parameters of single blocks with derived state ([4b0def1](https://github.com/petercorke/bdsim/commit/4b0def1b39a0165a7625ca044cd0efdd5ae092af))
+* record the signature of every wire at compile time ([6eb8240](https://github.com/petercorke/bdsim/commit/6eb82403491cd1bd6fd107f0315839aceba6886f))
+* record wire signatures at compile time; Block.configure(); reset() restores block state ([dea411d](https://github.com/petercorke/bdsim/commit/dea411db491eb8f4b851129617792403f69462cc))
+* replace subsystem INPORT/OUTPORT blocks by wires (fixes [#84](https://github.com/petercorke/bdsim/issues/84)) ([32a259f](https://github.com/petercorke/bdsim/commit/32a259f933b9a7900a29506acac5cc007650b755))
+* replace the INPORT and OUTPORT blocks of a subsystem by wires ([#84](https://github.com/petercorke/bdsim/issues/84)) ([ed7e5fe](https://github.com/petercorke/bdsim/commit/ed7e5fedb12c5316a4373c077b48c3434b4f5e0b))
+* report_summary(implicit=False) hides implicit blocks, which sort last ([#230](https://github.com/petercorke/bdsim/issues/230)) ([1f981eb](https://github.com/petercorke/bdsim/commit/1f981ebce597bab54fff3564ce98d11e107d78a6))
+* source blocks emit one type, checked when the block is created ([6cccba5](https://github.com/petercorke/bdsim/commit/6cccba50187e281affea64b5c9421efe5bc94f99))
+* source blocks emit one type, checked when the block is created ([a390432](https://github.com/petercorke/bdsim/commit/a390432fc7f0bae61ca71b810415962ab926ab23))
+* stubgen --check, --package and --out; BlockFactoryStubs and toolbox stub snapshots ([#196](https://github.com/petercorke/bdsim/issues/196)) ([8ea3036](https://github.com/petercorke/bdsim/commit/8ea3036f5be816954107889008edaca5bcdf0caa))
+* subsystem blocks forward their parameters to the blocks inside ([1695667](https://github.com/petercorke/bdsim/commit/1695667701c5e107e156f0d28b5a0b2f9986721c))
+* write LTI_SS_S in Phi and Gamma, add them as attributes, and correct its docstring ([#191](https://github.com/petercorke/bdsim/issues/191)) ([92f171b](https://github.com/petercorke/bdsim/commit/92f171b0675bc870136f616d550942a7f5cd3eb3))
+* zero-crossing events for INTEGRATOR limits and enable, and CLIP corners ([#180](https://github.com/petercorke/bdsim/issues/180)) ([f7d7de7](https://github.com/petercorke/bdsim/commit/f7d7de704d490421429ded1167e29ea8291bea4f))
+
+
+### Bug Fixes
+
+* a crossing event with a fixed output grid restarts at the event time ([#159](https://github.com/petercorke/bdsim/issues/159)) ([e95592b](https://github.com/petercorke/bdsim/commit/e95592bd945a79fc4466c70ff731735bb8c5a1e4))
+* annotate LTI_SS x0 as Vector1D ([#177](https://github.com/petercorke/bdsim/issues/177)) ([a7304c6](https://github.com/petercorke/bdsim/commit/a7304c6094ad129380eae28bec3ea9cd3cfee3db))
+* annotate LTI_SS x0 as Vector1D, as documented and as subclasses pass it ([a7304c6](https://github.com/petercorke/bdsim/commit/a7304c6094ad129380eae28bec3ea9cd3cfee3db))
+* avoid endless repainting when setting background brush in bdedit ([#145](https://github.com/petercorke/bdsim/issues/145)) ([b6e23a0](https://github.com/petercorke/bdsim/commit/b6e23a0e25945d3ce090ce446b9107de3f598bc5))
+* **bdedit:** render the screenshot region for PNG export ([#142](https://github.com/petercorke/bdsim/issues/142)) ([0d51208](https://github.com/petercorke/bdsim/commit/0d5120844363a02aa7c378ef7970bc6a5f56f9fc))
+* BlockDiagram.ls() no longer loops forever ([#200](https://github.com/petercorke/bdsim/issues/200)) ([40883c8](https://github.com/petercorke/bdsim/commit/40883c892842012caf55c7b1e2495c938845a0ec))
+* bound the number of frames of a live animation, and report them ([#215](https://github.com/petercorke/bdsim/issues/215)) ([9b5a180](https://github.com/petercorke/bdsim/commit/9b5a1808dfe00c28935df4a4ce01867a442744ea))
+* give subsystem instances unique default names, and stop defaulting the diagram name to "main" ([0540805](https://github.com/petercorke/bdsim/commit/0540805522d56d11bb0ff8fa25cfab3cfed2137e))
+* LTI_SS and LTI_SS_S with several rows in C have one output port ([#210](https://github.com/petercorke/bdsim/issues/210)) ([fd47aab](https://github.com/petercorke/bdsim/commit/fd47aabff55da50c3322811bc25d841b554b5108))
+* name the discrete states consistently, clock by clock ([#211](https://github.com/petercorke/bdsim/issues/211)) ([89a15be](https://github.com/petercorke/bdsim/commit/89a15bef1ba1bf103f67decfdc5cd46f4ce7fd24))
+* recompute the state at a crossing from the start of its step ([#181](https://github.com/petercorke/bdsim/issues/181)) ([a63c372](https://github.com/petercorke/bdsim/commit/a63c372b79c82677bd2c472b85f413864c65ed53))
+* SCOPE no longer modifies the style dict it is given, and honors a line width in it ([#192](https://github.com/petercorke/bdsim/issues/192)) ([dd632db](https://github.com/petercorke/bdsim/commit/dd632db0c956d8af229dbaf9f5bbdc279b2a74b3))
+* Scope no longer passes the line style to matplotlib as its label ([#147](https://github.com/petercorke/bdsim/issues/147)) ([ea5084a](https://github.com/petercorke/bdsim/commit/ea5084a3f9ec4bbc20f84d0ad3b40538a97e3333))
+* Slice1 accepts an integer index as documented; drop a debug print in Function.start ([af9202b](https://github.com/petercorke/bdsim/commit/af9202bb1619bd29b97e7b0dcd5c5681f0d7e0ac))
+* unique default names for subsystem instances; diagram name defaults to None ([#148](https://github.com/petercorke/bdsim/issues/148)) ([0540805](https://github.com/petercorke/bdsim/commit/0540805522d56d11bb0ff8fa25cfab3cfed2137e))
+
+
+### Documentation
+
+* correct the LTI_SS and PID_S docstrings ([#190](https://github.com/petercorke/bdsim/issues/190)) ([92cef0a](https://github.com/petercorke/bdsim/commit/92cef0a6b48fa687e8c9dd8983d1d7e0632ef651))
+* correct the Pow matrix and Scope scale parameter descriptions ([c0e7adc](https://github.com/petercorke/bdsim/commit/c0e7adcd992c23334491773c9e840a8320466402))
+* document the attributes of Linearization, SystemFunctions and Index ([#208](https://github.com/petercorke/bdsim/issues/208)) ([214cc26](https://github.com/petercorke/bdsim/commit/214cc26c5b96ccb90f705b93571224fd405b3bf3))
+* say that supported Python versions are those in the pyproject classifiers ([#173](https://github.com/petercorke/bdsim/issues/173)) ([b01dab2](https://github.com/petercorke/bdsim/commit/b01dab22e5a701bf13c7aee9776b8721bf98c185))
+* sidebar, Developer API, installation extras and docstring fixes ([#214](https://github.com/petercorke/bdsim/issues/214)) ([a369504](https://github.com/petercorke/bdsim/commit/a369504b5f756d512809632f21ab5846c21b64b9))
+* state the timing of sampled blocks; fix the ZOH and DERIV_S docstrings ([#183](https://github.com/petercorke/bdsim/issues/183)) ([5f9a017](https://github.com/petercorke/bdsim/commit/5f9a017399abdfee9faeab3a36016c377aa2d9d8))
+* write LTI_SS_S in Phi and Gamma, add them as attributes, and correct the docstring ([92f171b](https://github.com/petercorke/bdsim/commit/92f171b0675bc870136f616d550942a7f5cd3eb3))
+
 ## [1.4.1](https://github.com/petercorke/bdsim/compare/v1.4.0...v1.4.1) (2026-10-19)
 
 ### Highlights
