@@ -567,33 +567,6 @@ class BDSim(Runner):
             return resolved
         return cls_obj
 
-    @staticmethod
-    def _is_notebook_frontend() -> bool:
-        """Return True when running under a notebook/IPython frontend.
-
-        This is used to suppress startup docstring banners that are noisy in
-        IPython/Jupyter (for example: "Automatically created module for
-        IPython interactive environment").
-        """
-        try:
-            backend = str(matplotlib.get_backend()).lower()
-        except Exception:
-            backend = ""
-
-        if any(token in backend for token in ("inline", "widget", "ipympl", "nbagg")):
-            return True
-
-        try:
-            from IPython.core.getipython import get_ipython
-
-            shell = get_ipython()
-            if shell is not None and getattr(shell, "kernel", None) is not None:
-                return True
-        except Exception:
-            pass
-
-        return False
-
     def __init__(
         self,
         banner: bool = True,
@@ -696,7 +669,7 @@ class BDSim(Runner):
         # self.blockdict: dict[str, Any] = {}
 
         # print docstring as a startup banner
-        if banner and not self.options.quiet and not self._is_notebook_frontend():
+        if banner and not self.options.quiet and not smb.isnotebook():
             current_frame: types.FrameType | None = inspect.currentframe()
             calling_frame: types.FrameType | None = (
                 current_frame.f_back if current_frame is not None else None

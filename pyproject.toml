@@ -7,7 +7,7 @@ dependencies = [
     "numpy>=2",
     "scipy",
     "matplotlib",
-    "spatialmath-python",
+    "spatialmath-python>=1.1.19",  # isnotebook() knows Colab and JupyterLite; no pre-commit dependency
     "ansitable",
     "progress",
 ]
