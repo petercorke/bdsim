@@ -566,10 +566,10 @@ def _tf2ss(
     :type form: str, optional
     :param order: The state ordering convention
     :type order: str, optional
-    :param verbose: _description_, defaults to False
+    :param verbose: print the state-space matrices, defaults to False
     :type verbose: bool, optional
-    :return: _description_
-    :rtype: tuple[np.ndarray, np.ndarray, np.ndarray]
+    :return: the state-space matrices ``A``, ``B``, ``C`` and ``D``
+    :rtype: tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]
 
     Coefficients can be specified in the form of an array of coefficients, or an array of factors.
     For example:

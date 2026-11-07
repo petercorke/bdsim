@@ -56,14 +56,14 @@ _MISSING = object()
 
 class Parameter:
     """
-    A parameter of a block, see :meth:`Block.add_param`.
+    A parameter of a block, see :meth:`~bdsim.Block.add_param`.
 
     :param name: the name, which is the ``__init__`` argument of the block
     :param when: ``"anytime"``, ``"setup"`` or ``"never"``
     :param validate: optional check of a new value, which raises if it is not acceptable
     :param coerce: check the new value against the type of the current one
     :param forward: ``(block, name)``, the parameter of another block that this one
-        stands for, see :meth:`Block.add_param`
+        stands for, see :meth:`~bdsim.Block.add_param`
     :param unavailable: why the parameter cannot be used, for a block that was built
         without the part it belongs to
     """
@@ -177,14 +177,7 @@ def _value_suffix(value: Any) -> str:
 
 
 class Block(ABC, Port):
-    """_summary_
-
-    :param ABC: _description_
-    :type ABC: _type_
-    :return: _description_
-    :rtype: _type_
-
-    Block is the superclass of all blocks in the simulation environment.  It defines the common properties of all blocks:
+    """Block is the superclass of all blocks in the simulation environment.  It defines the common properties of all blocks:
 
     - ``nin`` the number of input ports
     - ``nout`` the number of output ports
@@ -485,7 +478,7 @@ class Block(ABC, Port):
         Initialize a subclass of Block.
 
         :param cls: The subclass being initialized
-        :type cls: class type
+        :type cls: type
         :param kwargs: keyword args passed to subclass definition
         :type kwargs: dict
 
@@ -591,7 +584,7 @@ class Block(ABC, Port):
 
             * ``"anytime"``: at any time, between evaluations (default)
             * ``"setup"``: before the run starts, including from ``--set``, but not
-              while it runs, because :meth:`start` has used the value to build something
+              while it runs, because :meth:`~bdsim.Block.start` has used the value to build something
               such as an event or a figure
             * ``"never"``: not after the block is created, for structure such as
               ``nin`` or ``clock``
@@ -701,7 +694,7 @@ class Block(ABC, Port):
         :raises TypeError: the value is of the wrong type
 
         The new value must be of the same kind as the current one, see
-        :func:`_coerce_parameter`: an array keeps its shape and dtype, a number can widen
+        ``_coerce_parameter``: an array keeps its shape and dtype, a number can widen
         from integer to float but not narrow, and so on.  A list of numbers is
         converted to an array if the parameter is an array.
 
@@ -893,7 +886,7 @@ class Block(ABC, Port):
         This is determined at compile time by the connections in the block diagram.  It
         is used to determine the order of block execution.
 
-        :seealso: :meth:`Block.inports` :meth:`Block.inputs` :meth:`Block.source_name`
+        :seealso: :meth:`~bdsim.Block.sources` :meth:`~bdsim.Block.source_name`
         """
         sources: list[Block] = []
         for wire in self._input_wires:
@@ -916,7 +909,7 @@ class Block(ABC, Port):
         This is determined at compile time by the connections in the block diagram.  It
         is used to determine the order of block execution.
 
-        :seealso: :meth:`Block.sources` :meth:`Block.inputs`
+        :seealso: :meth:`~bdsim.Block.inports`
         """
         inports: list[Plug] = []
         for wire in self._input_wires:
@@ -1077,7 +1070,7 @@ class Block(ABC, Port):
         An entry is ``None`` until :meth:`BlockDiagram.compile` has observed
         the wire.
 
-        :seealso: :class:`~bdsim.signature.Signature` :attr:`insig`
+        :seealso: :class:`~bdsim.signature.Signature` :attr:`~bdsim.Block.insig`
         """
         slots = self.__dict__.get("_outport_slots")  # created by compile()
         if slots is None:
@@ -1090,10 +1083,10 @@ class Block(ABC, Port):
         Signatures of the input ports.
 
         The input port is bound to the slot of the output port that drives it,
-        so this is that producer's :attr:`outsig`.  An entry is ``None`` if the
+        so this is that producer's :attr:`~bdsim.Block.outsig`.  An entry is ``None`` if the
         port is unconnected or the wire has not yet been observed.
 
-        :seealso: :class:`~bdsim.signature.Signature` :attr:`outsig`
+        :seealso: :class:`~bdsim.signature.Signature` :attr:`~bdsim.Block.outsig`
         """
         slots = self.__dict__.get("_inport_slots")  # created by compile()
         if slots is None:
@@ -1685,7 +1678,7 @@ class Block(ABC, Port):
         :param other: A signal (block or plug) to be added
         :type other: Block or Plug
         :return: SUM block
-        :rtype: Block subclass
+        :rtype: Block
 
         This method is implicitly invoked by the + operator
         when the right operand is a ``Block``
@@ -1730,7 +1723,7 @@ class Block(ABC, Port):
         :param other: A signal (block or plug) to be added
         :type other: Block or Plug
         :return: SUM block
-        :rtype: Block subclass
+        :rtype: Block
 
         This method is implicitly invoked by the + operator
         when the right operand is a ``Block``
@@ -1775,7 +1768,7 @@ class Block(ABC, Port):
         :param other: A signal (block or plug) to be subtracted (subtrahend)
         :type other: Block or Plug
         :return: SUM block
-        :rtype: Block subclass
+        :rtype: Block
 
         This method is implicitly invoked by the - operator when the left operand is a ``Block``
         and the right operand is a ``Plug``, ``Block`` or constant::
@@ -1815,7 +1808,7 @@ class Block(ABC, Port):
         :param other: A signal (block or plug) to be subtracted (subtrahend)
         :type other: Block or Plug
         :return: SUM block
-        :rtype: Block subclass
+        :rtype: Block
 
         This method is implicitly invoked by the - operator when the left operand is a ``Block``
         and the right operand is a ``Plug``, ``Block`` or constant::
@@ -1858,7 +1851,7 @@ class Block(ABC, Port):
         :param self: A signal (block) to be negated
         :type self: Block
         :return: GAIN block
-        :rtype: Block subclass
+        :rtype: Block
 
         This method is implicitly invoked by the - operator for unary minus when the operand is a ``Block``::
 
@@ -1881,7 +1874,7 @@ class Block(ABC, Port):
         :param self: A signal (block) to be negated
         :type self: Block
         :return: POW block
-        :rtype: Block subclass
+        :rtype: Block
 
         This method is implicitly invoked by the ** operator for unary power when the operand is a ``Block``::
 
@@ -1906,7 +1899,7 @@ class Block(ABC, Port):
         :param other: A signal (block or plug) to be multiplied
         :type other: Block or Plug
         :return: PROD or GAIN block
-        :rtype: Block subclass
+        :rtype: Block
 
         This method is implicitly invoked by the * operator when the left operand is a ``Block``
         and the right operand is a ``Plug``, ``Block`` or constant::
@@ -1922,7 +1915,7 @@ class Block(ABC, Port):
 
         For the third case, create a ``GAIN(C)`` block named ``_gain.N``.
 
-        .. note:: ``C'' can be a scalar or ndarray.
+        .. note:: ``C`` can be a scalar or ndarray.
 
 
         :seealso: :meth:`Block.__rmul__` :meth:`Plug.__mul__`
@@ -1952,7 +1945,7 @@ class Block(ABC, Port):
         :param other: A signal (block or plug) to be multiplied
         :type other: Block or Plug
         :return: PROD or GAIN block
-        :rtype: Block subclass
+        :rtype: Block
 
         This method is implicitly invoked by the * operator when the right operand is a ``Block``
         and the left operand is a ``Plug``, ``Block`` or constant::
@@ -1968,7 +1961,7 @@ class Block(ABC, Port):
 
         For the third case, create a ``GAIN(C)`` block named ``_gain.N``.
 
-        .. note:: ``C'' can be a scalar or ndarray.
+        .. note:: ``C`` can be a scalar or ndarray.
 
 
         :seealso: :meth:`Block.__mul__` :meth:`Plug.__rmul__`
@@ -1988,7 +1981,7 @@ class Block(ABC, Port):
         :param other: A signal (block or plug) to be divided (divisor)
         :type other: Block or Plug
         :return: PROD or GAIN block
-        :rtype: Block subclass
+        :rtype: Block
 
         This method is implicitly invoked by the / operator when the left operand is a ``Block``
         and the right operand is a ``Plug``, ``Block`` or constant::
@@ -2004,7 +1997,7 @@ class Block(ABC, Port):
 
         For the third case, create a ``GAIN(1/C)`` block named ``_gain.N``.
 
-        .. note:: ``C'' can be a scalar or ndarray.
+        .. note:: ``C`` can be a scalar or ndarray.
 
         :seealso: :meth:`Block.__rtruediv__` :meth:`Plug.__truediv__`
         """
@@ -2040,7 +2033,7 @@ class Block(ABC, Port):
         :param other: A signal (block or plug) to be divided (divisor)
         :type other: Block or Plug
         :return: PROD block
-        :rtype: Block subclass
+        :rtype: Block
 
         This method is implicitly invoked by the / operator when the right operand is a ``Block``
         and the left operand is a ``Plug``, ``Block`` or constant::
@@ -2055,7 +2048,7 @@ class Block(ABC, Port):
         left and right operands.  For the third case, a new CONSTANT block
         named ``_const.N`` is also created.
 
-        .. note:: ``C'' can be a scalar or ndarray.
+        .. note:: ``C`` can be a scalar or ndarray.
 
 
         :seealso: :meth:`Block.__truediv__` :meth:`Plug.__rtruediv__`
@@ -2080,12 +2073,12 @@ class Block(ABC, Port):
         """
         Restore the block's initial internal state.
 
-        Called once per run, before :meth:`start`, so that nothing the
+        Called once per run, before :meth:`~bdsim.Block.start`, so that nothing the
         compile-time trial evaluation or a previous run did to the block is
         visible to the run about to start.  A block that keeps state of its own
         in Python, for example a random number generator or a mode flag, must
         override this and restore it.  Continuous and discrete state vectors
-        are not part of this: they are restored from :meth:`getstate0`.
+        are not part of this: they are restored from ``getstate0``.
 
         The values on the block's ports are not touched.
         """
@@ -2095,14 +2088,14 @@ class Block(ABC, Port):
         """
         Prepare the block for a run, using what compile() learned about its wires.
 
-        Called once per run, after :meth:`reset` and before :meth:`start`.  This
-        is the place to read :attr:`insig` and :attr:`outsig`, for example to
+        Called once per run, after :meth:`~bdsim.Block.reset` and before :meth:`~bdsim.Block.start`.  This
+        is the place to read :attr:`~bdsim.Block.insig` and :attr:`~bdsim.Block.outsig`, for example to
         size per-element detectors or allocate buffers.  The signatures are those
         observed by the trial evaluation in ``compile()``.  They are ``None`` if
         the diagram was compiled with ``evaluate=False``, in which case the block
         should not assume anything about its wires.
 
-        The default does nothing.  :meth:`start` keeps its meaning: acquire
+        The default does nothing.  :meth:`~bdsim.Block.start` keeps its meaning: acquire
         resources and register with the simulation.
         """
         pass

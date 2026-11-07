@@ -749,8 +749,8 @@ class Clock:
     def next_event(self, simstate: SimulationState) -> None:
         """Schedule the next event
 
-        :param simstate: _description_
-        :type simstate:
+        :param simstate: the simulation state, which holds the clock's state and the
+            queue of events
 
         The time of the k'th clock tick is
 

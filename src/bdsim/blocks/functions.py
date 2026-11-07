@@ -1318,7 +1318,7 @@ class Interpolate(FunctionBlock):
     :note: if ``time=True`` then the block has no
         input ports and acts as a ``Source`` not a ``Function`` block.
 
-    :seealso: :func:`scipy.interpolate.interp1d`
+    :seealso: :class:`scipy.interpolate.interp1d`
     """
 
     nin: int = -1
@@ -1419,7 +1419,7 @@ class Interpolate(FunctionBlock):
 
     @property
     def kind(self) -> str:
-        """The interpolation method, see :func:`scipy.interpolate.interp1d`."""
+        """The interpolation method, see :class:`scipy.interpolate.interp1d`."""
         return self._kind
 
     @kind.setter

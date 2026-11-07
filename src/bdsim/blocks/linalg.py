@@ -153,7 +153,7 @@ class Transpose(FunctionBlock):
         - An input 2D-array column vector of shape (N,1) becomes a 2D-array
           row vector with shape (1,N).
 
-    :seealso: :func:`numpy.linalg.transpose`
+    :seealso: :func:`numpy.transpose`
     """
 
     nin = 1
@@ -351,7 +351,7 @@ class Slice2(FunctionBlock):
     The list and tuple notation can be mixed, for example, one for rows
     and one for columns.
 
-    :seealso: :class:`Slice1` :class:`Index`
+    :seealso: :class:`Slice1` :class:`~bdsim.blocks.connections.Index`
     """
 
     nin = 1

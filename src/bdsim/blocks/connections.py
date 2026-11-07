@@ -186,7 +186,7 @@ class Mux(FunctionBlock):
 
         mux = bd.MUX(2)
 
-    :seealso: :class:`Demux` :class:`Dict`
+    :seealso: :class:`DeMux` :class:`Dict`
     """
 
     # TODO could be generalized to creating a list of non numeric data
@@ -302,7 +302,7 @@ class Index(FunctionBlock):
     are output.  The index can be an integer, sequence of integers, a Python slice
     object, or a string with Python slice notation, eg. ``"::-1"``.
 
-    :seealso: :class:`Slice1` :class:`Slice2`
+    :seealso: :class:`~bdsim.blocks.linalg.Slice1` :class:`~bdsim.blocks.linalg.Slice2`
     """
 
     nin = 1  # type: ignore[assignment]
@@ -382,7 +382,7 @@ class SubSystem(SubsystemBlock):
     This block represents a subsystem in a block diagram.  The definition
     of the subsystem can be:
 
-    - a path to a ``.bd`` JSON model file, which is loaded via :func:`~bdsim.bdload.bdload`, or
+    - a path to a ``.bd`` JSON model file, which is loaded via ``bdsim.bdload``, or
     - the name of a Python module which is imported and must create exactly
       one ``BlockDiagram`` instance, or
     - a ``BlockDiagram`` instance

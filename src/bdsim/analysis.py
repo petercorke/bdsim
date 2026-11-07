@@ -795,7 +795,7 @@ class AnalysisMixin:
         This is the one definition of the layout of the state :math:`x` of the
         diagram, the vector the solver advances: the states of the blocks that
         have continuous state, in the order the blocks were added.  The state
-        passed to :meth:`functions`, returned by :meth:`BDSim.run` as ``out.x``,
+        passed to :meth:`~bdsim.BlockDiagram.functions`, returned by :meth:`~bdsim.BDSim.run` as ``out.x``,
         and output by a :class:`~bdsim.blocks.sources.State` block are all in this
         order.
 
@@ -1017,8 +1017,8 @@ class AnalysisMixin:
             the sources at ``t``
         :type u: array_like(nu), optional
         :param t: time of the operating point
-        :param inputs: the source blocks or ports that are the input, see :meth:`functions`
-        :param outputs: the blocks or ports whose signals are the output, see :meth:`functions`
+        :param inputs: the source blocks or ports that are the input, see :meth:`~bdsim.BlockDiagram.functions`
+        :param outputs: the blocks or ports whose signals are the output, see :meth:`~bdsim.BlockDiagram.functions`
         :param h: step of the numerical derivative, defaults to a size chosen for
             each variable
         :param scale: typical size of the variables, a number or an array with
@@ -1041,7 +1041,7 @@ class AnalysisMixin:
             C = \frac{\partial g}{\partial x},\quad
             D = \frac{\partial g}{\partial u}
 
-        of the functions :math:`f` and :math:`g` of :meth:`functions`, estimated
+        of the functions :math:`f` and :math:`g` of :meth:`~bdsim.BlockDiagram.functions`, estimated
         by central differences with a step :math:`h \approx \epsilon^{1/3}
         \max(|v|, s)` for a variable :math:`v` of typical size :math:`s`, where
         :math:`\epsilon` is the machine precision.
@@ -1077,7 +1077,7 @@ class AnalysisMixin:
         then the slope across the step; with ``estimate_error`` a warning says
         that the estimate is not reliable.
 
-        :seealso: :meth:`functions` :class:`~bdsim.blocks.continuous.LTI_SS`
+        :seealso: :meth:`~bdsim.BlockDiagram.functions` :class:`~bdsim.blocks.continuous.LTI_SS`
             :class:`~bdsim.blocks.sources.State` :class:`~bdsim.blocks.sources.State_S`
         """
         sysf = self.functions(inputs, outputs, full=True)

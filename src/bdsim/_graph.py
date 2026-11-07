@@ -41,7 +41,7 @@ class GraphMixin:
 
         Display execution plan as a dataflow graph.
 
-        :seealso: :func:`schedule_plan`, :func:`schedule_print`
+        :seealso: :meth:`~bdsim.BlockDiagram.report_schedule`
         """
 
         if isinstance(filename, str):
@@ -106,7 +106,7 @@ class GraphMixin:
             maps block class (sink, source, graphics, function, transfer) to the names
             of GraphViz shapes.
 
-        :seealso: :meth:`graph` :meth:`showgraph`
+        :seealso: :meth:`~bdsim.BlockDiagram.graph` :meth:`~bdsim.BlockDiagram.showgraph`
         """
         if shapes is None:
             shapes = dict(
@@ -444,7 +444,7 @@ class GraphMixin:
         """
         Display diagram as a graph in browser tab
 
-        :seealso: :meth:`dotfile` :meth:`graph`
+        :seealso: :meth:`~bdsim.BlockDiagram.dotfile` :meth:`~bdsim.BlockDiagram.graph`
         """
 
         # Lazy import
