@@ -137,6 +137,59 @@ def test_blockinfo_unknown_block(client: TestClient) -> None:
     assert response.json() == {"detail": "Block 'unknown' not found"}
 
 
+@pytest.mark.parametrize("name", ["DINTEGRATOR", "DPOSEINTEGRATOR"])
+def test_blocks_hide_deprecated(client: TestClient, name: str) -> None:
+    response = client.get("/api/blocks")
+
+    assert response.status_code == 200
+    names = {block["name"] for blocks in response.json().values() for block in blocks}
+    assert name not in names
+
+
+@pytest.mark.parametrize("name", ["INTEGRATOR_S", "POSEINTEGRATOR_S"])
+def test_blocks_keep_replacements(client: TestClient, name: str) -> None:
+    response = client.get("/api/blocks")
+
+    assert response.status_code == 200
+    names = {block["name"] for blocks in response.json().values() for block in blocks}
+    assert name in names
+
+
+@pytest.mark.parametrize("name", ["DINTEGRATOR", "dintegrator"])
+def test_blockinfo_deprecated_block(client: TestClient, name: str) -> None:
+    response = client.get(f"/api/blockinfo/{name}")
+
+    assert response.status_code == 404
+    assert response.json() == {"detail": f"Block '{name}' not found"}
+
+
+def test_load_diagram_with_deprecated_block(client: TestClient, tmp_path: Path) -> None:
+    blocks = [
+        {
+            "id": 1,
+            "block_type": "DINTEGRATOR",
+            "outputs": [{"id": 101, "index": 0}],
+        }
+    ]
+    path = tmp_path / "legacy.bd"
+    path.write_text(
+        json.dumps(
+            {
+                "blocks": blocks,
+                "wires": [],
+                "scene_width": 2000.0,
+                "scene_height": 1000.0,
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    response = client.post("/api/load", json={"path": str(path)})
+
+    assert response.status_code == 200
+    assert response.json()["blocks"] == blocks
+
+
 def test_load_bdedit_socket_ids(client: TestClient, tmp_path: Path) -> None:
     blocks = [
         {"id": 41, "outputs": [{"id": 101, "index": 0}]},
