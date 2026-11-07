@@ -256,6 +256,7 @@ class RunIntervalStats:
     integrator_wall_time: float = 0.0
     events_detected_total: int = 0
     events_detected_by_source: Counter[str] = field(default_factory=Counter)
+    animation_frames: int = 0  # figure refreshes during the run
 
 
 class BDSimState(SimulationState):
@@ -591,7 +592,8 @@ class BDSim(Runner):
         ``--blocks``                        blocks          False    display block list at startup
         ``--param``                         param           False    display the parameters of all blocks, as used by ``--set``, and their values after compiling
         ``--debug F``, ``-d F``             debug           ``''``   debug flags: p/ropagate, s/tate, d/eriv, i/nteractive, g/raphics-diagnostics
-        ``--animation-rate R``              animation_rate  20.0     target update rate for animation/debugger (Hz)
+        ``--animation-rate R``              animation_rate  20.0     target update rate for animation/debugger, per second of simulated time (Hz)
+        ``--max-frames N``                  max_frames      1000     most frames a live animation shows in one run, 0 for no limit
         ``--simtime T[,dt]``, ``-S``        simtime         None     simulation time as T or T,dt
         ``--dt DT``                         dt              None     output sample interval (build solve_ivp t_eval)
         ``--max-step DT``                   max_step        None     maximum solve_ivp integration step
@@ -1164,7 +1166,7 @@ class BDSim(Runner):
           ``watch``
         - ``.stats`` — :class:`BDStruct` with integration statistics:
           ``integration_time_points``, ``run_interval_calls``,
-          ``ydot_calls``, ``integrator_wall_time``,
+          ``ydot_calls``, ``integrator_wall_time``, ``animation_frames``,
           ``events_detected_total``, ``events_detected_by_source``
 
         The ``watch`` argument is a list of one or more signals whose value
@@ -1316,6 +1318,29 @@ class BDSim(Runner):
             ):
                 interactive_rate_hz = float(simstate.options.animation_rate)
                 interactive_dt = 1.0 / interactive_rate_hz
+                # animation_rate is per second of *simulated* time, so a long
+                # simulation of a slow system would show thousands of frames, each
+                # ending an integration interval and redrawing the figures.  Bound
+                # the number of frames.  Only a live animation is limited: for a
+                # movie, the debugger or a stateless diagram the frame grid is what
+                # was asked for, or the grid the results are sampled on.
+                max_frames = getattr(simstate.options, "max_frames", None)
+                if (
+                    max_frames
+                    and simstate.options.animation
+                    and not (
+                        simstate.isdebug("i") or _stateless_no_clock or _movies_active
+                    )
+                    and tf * interactive_rate_hz > max_frames
+                ):
+                    interactive_dt = tf / max_frames
+                    if not simstate.options.quiet:
+                        print(
+                            f"  animation: limiting to {max_frames} frames, one every"
+                            f" {interactive_dt:.3g}s of simulated time"
+                            f" ({interactive_rate_hz:g} Hz would be"
+                            f" {int(tf * interactive_rate_hz)} frames)"
+                        )
             if simstate.isdebug("i") and interactive_dt is not None and bd.nstates > 0:
                 current_max_step = simstate.solver_args.get("max_step")
                 if current_max_step is None or float(current_max_step) > interactive_dt:
@@ -1502,6 +1527,7 @@ class BDSim(Runner):
                     stats["run_interval_calls"] = simstate.stats.run_interval_calls
                     stats["ydot_calls"] = simstate.stats.ydot_calls
                     stats["integrator_wall_time"] = simstate.stats.integrator_wall_time
+                    stats["animation_frames"] = simstate.stats.animation_frames
                     stats["events_detected_total"] = (
                         simstate.stats.events_detected_total
                     )
@@ -1571,12 +1597,14 @@ class BDSim(Runner):
                     # Keep figure outputs current for the active backend.
                     if not notebook_backend:
                         display_manager.refresh()
+                        ss.stats.animation_frames += 1
                     else:
                         nonlocal last_notebook_refresh_t
                         # Notebook rendering is expensive; limit display updates
                         # to a practical UI frame rate while simulation can run faster.
                         if t - last_notebook_refresh_t >= notebook_min_refresh_dt:
                             display_manager.refresh()
+                            ss.stats.animation_frames += 1
                             last_notebook_refresh_t = t
                             if sys.platform == "emscripten":
                                 # Yield briefly so JupyterLite can process display
@@ -1616,6 +1644,7 @@ class BDSim(Runner):
                     simstate.options.animation or _movies_active
                 ) and simstate.display_manager is not None:
                     simstate.display_manager.refresh()
+                    simstate.stats.animation_frames += 1
                 if simstate.stop is not None:
                     # Stop triggered at t=0: clamp the run horizon so the
                     # interval loop below is skipped entirely. The existing
@@ -1737,6 +1766,11 @@ class BDSim(Runner):
                     f"  (simulated {simstate.T:.3g}s in {run_wall_time * 1000:.1f} ms)"
                 )
                 print(f"  integration time points:   {len(simstate.tlist)}")
+                if simstate.stats.animation_frames:
+                    print(
+                        f"  animation frames:          {simstate.stats.animation_frames}"
+                        f"  (scheduled every {interactive_dt:.3g}s of simulated time)"
+                    )
                 # Scheduled events (clock ticks, explicit declare_event calls) are
                 # the interval boundaries; nintervals = number of interval-handler calls.
                 print(
@@ -1786,6 +1820,7 @@ class BDSim(Runner):
             stats["run_interval_calls"] = simstate.stats.run_interval_calls
             stats["ydot_calls"] = simstate.stats.ydot_calls
             stats["integrator_wall_time"] = simstate.stats.integrator_wall_time
+            stats["animation_frames"] = simstate.stats.animation_frames
             stats["events_detected_total"] = simstate.stats.events_detected_total
             stats["events_detected_by_source"] = dict(
                 simstate.stats.events_detected_by_source
@@ -3192,6 +3227,7 @@ class Options(OptionsBase):
             "animation": False,
             "movies": None,
             "animation_rate": 20.0,
+            "max_frames": 1000,
             "dt": None,
             "atol": None,
             "rtol": None,
@@ -3412,6 +3448,14 @@ class Options(OptionsBase):
                 default=effective_defaults["animation_rate"],
                 metavar="HZ",
                 help="target interactive update cadence for animation/debugger",
+            )
+            gfx.add_argument(
+                "--max-frames",
+                type=int,
+                default=effective_defaults["max_frames"],
+                metavar="N",
+                help="most frames a live animation shows in one run, "
+                "0 for no limit; a long simulation is animated more sparsely",
             )
 
             sim = parser.add_argument_group("Simulation Control")
@@ -3751,6 +3795,9 @@ class Options(OptionsBase):
 
         if "animation_rate" in options and float(options["animation_rate"]) <= 0:
             raise ValueError("animation_rate must be > 0")
+
+        if options.get("max_frames") is not None and int(options["max_frames"]) < 0:
+            raise ValueError("max_frames must be >= 0")
 
         if options.get("dt") is not None and float(options["dt"]) <= 0:
             raise ValueError("dt must be > 0")
