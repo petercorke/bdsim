@@ -1254,6 +1254,13 @@ class BDSim(Runner):
             Each change is reported, old value to new, unless ``quiet``.
             This is new and may change.
 
+        .. versionchanged:: next
+            The options of :class:`RunOptions` can be given to ``run`` as keyword
+            arguments, and to ``submit``, which passes them on.  An option given on
+            the command line now also wins over ``dt``, ``max_step``, ``check`` and
+            ``block`` given to ``run``, which used to override it, and a message says
+            that the value from the code was ignored.
+
         The integration backend is always ``scipy.integrate.solve_ivp``.  The
         ``solver`` argument selects the method (e.g. ``RK45``, ``DOP853``,
         ``Radau``, ``BDF``, ``LSODA``).  Finer control — tolerances, first
