@@ -7,7 +7,7 @@ Block library
 .. include:: <isonum.txt>
 
 The block diagrams comprise blocks which belong to one of a number of different categories. These come from
-the package ``bdsim.blocks``, ``roboticstoolbox.blocks``, ``machinevisiontoolbox.blocks``.
+the package ``bdsim.blocks``, `roboticstoolbox.blocks <https://petercorke.github.io/robotics-toolbox-python/blocks.html>`_, `machinevisiontoolbox.blocks <https://petercorke.github.io/machinevision-toolbox-python/blocks.html>`_.
 
 Icons, if shown to the left of the black header bar, are as used with `bdedit <https://github.com/petercorke/bdsim/tree/main/src/bdedit>`_.
 
@@ -123,6 +123,6 @@ External Toolbox blocksets
 
 External toolbox block documentation is maintained in each toolbox project.
 
-- Robotics Toolbox for Python: https://github.com/petercorke/robotics-toolbox-python
-- Machine Vision Toolbox for Python: https://github.com/petercorke/machinevision-toolbox-python
+- Robotics Toolbox for Python: https://petercorke.github.io/robotics-toolbox-python/blocks.html
+- Machine Vision Toolbox for Python: https://petercorke.github.io/machinevision-toolbox-python/blocks.html
 

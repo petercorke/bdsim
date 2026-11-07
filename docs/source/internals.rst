@@ -23,8 +23,7 @@ fits together conceptually.
 Functions and linearization
 ---------------------------
 
-:meth:`BlockDiagram.functions` returns a compiled diagram as the functions :math:`f` and :math:`g`
-of a nonlinear system :math:`\dot{x} = f(x, u, t),\ y = g(x, u, t)`, and
+:meth:`BlockDiagram.functions` returns a compiled diagram as the non-linear functions :math:`f` and :math:`g`, and
 :meth:`BlockDiagram.linearize` estimates its local linear model :math:`(A, B, C, D)`.
 
 .. autoclass:: bdsim.analysis.SystemFunctions
@@ -44,7 +43,7 @@ of a nonlinear system :math:`\dot{x} = f(x, u, t),\ y = g(x, u, t)`, and
    :show-inheritance:
 
 BDSim class
------------
+===========
 
 The run-time environment for executing a block diagram. See the wiki's
 `Running <https://github.com/petercorke/bdsim/wiki/Running>`_ and `Runtime options
@@ -58,7 +57,7 @@ invoke it.
    :special-members: __init__
 
 BDStruct class
----------------
+==============
 
 A struct-like container for storing simulation data, returned by :meth:`BDSim.run`. See the wiki's
 `Simulation results <https://github.com/petercorke/bdsim/wiki/Simulation-results>`_ page for the full
@@ -139,6 +138,22 @@ Plug
    :special-members:
    :exclude-members: __dict__, __weakref__, __array_ufunc__, __module__
 
+Port
+-----
+
+.. autoclass:: bdsim.connect.Port
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Signal slot
+------------
+
+.. autoclass:: bdsim.block.PortValueSlot
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 Blocks
 -------
 
@@ -186,7 +201,7 @@ Continuous-time block
    :special-members:
 
 Discrete-time block
-"""""""""""""""""""""
+^^^^^^^^^^^^^^^^^^^^
 
 See the wiki's `Time stepping <https://github.com/petercorke/bdsim/wiki/Time-stepping>`_ page for how
 ``Clock``/``TimeQ`` drive the scheduled-event queue that also carries animation/movie frames.
@@ -228,5 +243,30 @@ Graphics block
    :special-members: 
 
 
+Block parameters
+=================
 
+.. autoclass:: bdsim.block.Parameter
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
+Options
+========
+
+.. autoclass:: bdsim.run_sim.Options
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. autoclass:: bdsim.components.OptionsBase
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Exceptions
+===========
+
+.. automodule:: bdsim.exceptions
+   :members:
+   :show-inheritance:
