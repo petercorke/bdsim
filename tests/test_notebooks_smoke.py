@@ -3,13 +3,10 @@
 
 from __future__ import annotations
 
-import pytest
-
-pytestmark = pytest.mark.skip(reason="notebook smoke tests temporarily disabled")
-
 import os
 import subprocess
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -19,6 +16,10 @@ NOTEBOOK_FILES = sorted(path.name for path in NOTEBOOKS_DIR.glob("*.ipynb"))
 # Notebooks skipped from smoke execution.
 SKIP_NOTEBOOKS: dict[str, str] = {
     "index.ipynb": "index-only notebook, not meant to be executed standalone",
+    "advanced-topics.ipynb": (
+        "records a movie and then displays it; with graphics off, as here, there is "
+        "no movie, and a movie needs ffmpeg"
+    ),
 }
 
 # Keep this list intentionally small and revisit when notebook/runtime fixes land.
@@ -43,6 +44,11 @@ class NotebooksSmokeTest(unittest.TestCase):
         env["MPLBACKEND"] = "Agg"
         env["BDSIM_NO_GRAPHICS"] = "1"
 
+        # nbconvert always writes the executed notebook, and adds .ipynb to the output
+        # name, so it cannot be sent to os.devnull: give it a directory to throw away
+        outdir = tempfile.TemporaryDirectory()
+        self.addCleanup(outdir.cleanup)
+
         for notebook in NOTEBOOK_FILES:
             if notebook in SKIP_NOTEBOOKS:
                 continue
@@ -59,8 +65,8 @@ class NotebooksSmokeTest(unittest.TestCase):
                             "notebook",
                             "--execute",
                             "--ExecutePreprocessor.timeout=120",
-                            "--output",
-                            os.devnull,
+                            "--output-dir",
+                            outdir.name,
                             str(notebook_path),
                         ],
                         cwd=str(NOTEBOOKS_DIR),
