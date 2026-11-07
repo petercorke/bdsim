@@ -1037,7 +1037,6 @@ class BlockFactoryStubs:
         :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         :return: A PRINT block
-        :rtype: Print instance
         """
         raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
@@ -1117,7 +1116,7 @@ class BlockFactoryStubs:
         :type grid: bool or sequence
         :param title: title of plot
         :type title: str
-        :param loc: location of legend, see :meth:`matplotlib.pyplot.legend`, defaults to "best"
+        :param loc: location of legend, see :func:`matplotlib.pyplot.legend`, defaults to "best"
         :type loc: str
         :param blockargs: |GraphicsBlockOptions|
         :type blockargs: dict

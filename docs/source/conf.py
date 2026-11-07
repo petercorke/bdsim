@@ -80,6 +80,26 @@ suppress_warnings = [
     "config.cache",  # codeautolink_custom_blocks holds function refs, not picklable
 ]
 
+# Report every reference that does not resolve.  Without this Sphinx drops it silently,
+# leaving plain text where there should be a link.  What is ignored below cannot, or
+# should not, link anywhere.
+nitpicky = True
+nitpick_ignore_regex = [
+    # Private base classes that :show-inheritance: names: the mixins that
+    # BlockDiagram is split into, the generated stub classes, and helpers inside the
+    # block modules.
+    ("py:class", r"bdsim\.(\w+\.)*_\w+(\.\w+)*"),
+    ("py:class", r"bdsim\.analysis\.AnalysisMixin"),
+    # Words in a :type: field, which sphinx_autodoc_typehints reads as class names
+    (
+        "py:class",
+        r"optional( str)?|callable|array_like|file handle|SE3|2-element tuple|\d+",
+    ),
+    # NDArray as it is spelled in numpy's private module, and typing.Union
+    ("py:class", r"numpy\._typing\..*"),
+    ("py:data", r"typing\.Union"),
+]
+
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
 

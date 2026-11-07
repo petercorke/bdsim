@@ -171,7 +171,7 @@ def _store_watch_output(
 ) -> None:
     """Save watched-signal data into ``out.y``/``out.ynames``.
 
-    :param out: results struct being built for :meth:`BDSim.run`
+    :param out: results struct being built for :meth:`~bdsim.BDSim.run`
     :type out: BDStruct
     :param watchlist: watched plugs, in column order
     :type watchlist: list of Plug
@@ -262,14 +262,14 @@ class _LazyBlockClass:
 
 
 class RunOptions(TypedDict, total=False):
-    """Options that :meth:`BDSim.run` accepts as keyword arguments.
+    """Options that :meth:`~bdsim.BDSim.run` accepts as keyword arguments.
 
     These are the options that can differ from one run to the next.  Each one
     overrides the value given to :class:`BDSim` (or the default) for that run only,
     unless it was set on the command line, which always wins.
 
     ``dt``, ``max_step``, ``check`` and ``debug`` are also options, but are named
-    parameters of :meth:`BDSim.run`, and ``block`` is the same setting as ``hold``.
+    parameters of :meth:`~bdsim.BDSim.run`, and ``block`` is the same setting as ``hold``.
     """
 
     animation: bool
@@ -567,33 +567,6 @@ class BDSim(Runner):
             return resolved
         return cls_obj
 
-    @staticmethod
-    def _is_notebook_frontend() -> bool:
-        """Return True when running under a notebook/IPython frontend.
-
-        This is used to suppress startup docstring banners that are noisy in
-        IPython/Jupyter (for example: "Automatically created module for
-        IPython interactive environment").
-        """
-        try:
-            backend = str(matplotlib.get_backend()).lower()
-        except Exception:
-            backend = ""
-
-        if any(token in backend for token in ("inline", "widget", "ipympl", "nbagg")):
-            return True
-
-        try:
-            from IPython.core.getipython import get_ipython
-
-            shell = get_ipython()
-            if shell is not None and getattr(shell, "kernel", None) is not None:
-                return True
-        except Exception:
-            pass
-
-        return False
-
     def __init__(
         self,
         banner: bool = True,
@@ -676,7 +649,7 @@ class BDSim(Runner):
             the simulation, while ``animation=True`` will animate the graphs
             during simulation.
 
-        :seealso: :meth:`set_globals()`
+        :seealso: :meth:`~bdsim.BDSim.set_globals`
         """
 
         super().__init__()
@@ -696,7 +669,7 @@ class BDSim(Runner):
         # self.blockdict: dict[str, Any] = {}
 
         # print docstring as a startup banner
-        if banner and not self.options.quiet and not self._is_notebook_frontend():
+        if banner and not self.options.quiet and not smb.isnotebook():
             current_frame: types.FrameType | None = inspect.currentframe()
             calling_frame: types.FrameType | None = (
                 current_frame.f_back if current_frame is not None else None
@@ -728,7 +701,7 @@ class BDSim(Runner):
         ``url``, ``class``, ``module``, ``package``, ``params``, ``inputs``,
         ``outputs``, ``nin``, ``nout``, ``blockclass``.
 
-        Deprecated blocks (decorated with :func:`deprecated_block`) are
+        Deprecated blocks (decorated with ``deprecated_block``) are
         excluded so they don't appear in editor menus.  They remain in the
         internal registry and are still accessible as factory methods on a
         :class:`BlockDiagram`.
@@ -2060,13 +2033,13 @@ class BDSim(Runner):
 
         ``param`` is the name of the parameter used in the constructor.  It must be
         a registered parameter that can be set before the run starts, see
-        :meth:`Block.add_param`, and the new value must be of the same kind as the
-        current one, see :meth:`Block.set_param`.  :meth:`BlockDiagram.report_params`
+        :meth:`~bdsim.Block.add_param`, and the new value must be of the same kind as the
+        current one, see :meth:`~bdsim.Block.set_param`.  :meth:`~bdsim.BlockDiagram.report_params`
         lists the parameters and their current values.
 
         ``value`` is the new value of the variable: an integer, a float, a matrix
         written ``1 2; 3 4``, or a NumPy dtype literal such as ``float32([1, 2])``
-        or ``uint16(5)``, see :mod:`bdsim.literals`
+        or ``uint16(5)``, see ``bdsim.literals``
         """
 
         context: SimulationContext | None = self._get_context()
@@ -3276,7 +3249,7 @@ class BDSim(Runner):
         Single method wrapper for various block diagram reports.  Obeys the ``-q``
         option to suppress all reports at runtime.
 
-        :seealso: :meth:`BlockDiagram.report_summary` :meth:`BlockDiagram.report_lists` :meth:`BlockDiagram.report_schedule` :meth:`BlockDiagram.report_params` :meth:`BlockDiagram.report_subsystems`
+        :seealso: :meth:`~bdsim.BlockDiagram.report_summary` :meth:`~bdsim.BlockDiagram.report_lists` :meth:`~bdsim.BlockDiagram.report_schedule` :meth:`~bdsim.BlockDiagram.report_params` :meth:`~bdsim.BlockDiagram.report_subsystems`
         """
         context: SimulationContext | None = self._get_context()
         if self.options is None:
@@ -3303,7 +3276,7 @@ def _parse_param_text(text: str, current: Any) -> Any:
 
     :param text: the text after the ``=``
     :param current: the current value of the parameter, or ``None`` if there is none
-    :return: the value, which :meth:`Block.set_param` then checks against the current one
+    :return: the value, which :meth:`~bdsim.Block.set_param` then checks against the current one
     :raises ValueError: the text cannot be read as that type
 
     * a bool: ``true``, ``false``, ``yes``, ``no``, ``on``, ``off``, ``1`` or ``0``

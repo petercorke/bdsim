@@ -9,13 +9,13 @@ that are used to build and simulate block diagrams.
 BlockDiagram class
 ===================
 
-A collection of blocks and wires that can be "executed" by :meth:`BDSim.run`. See the wiki's
+A collection of blocks and wires that can be "executed" by :meth:`~bdsim.BDSim.run`. See the wiki's
 `Connecting blocks <https://github.com/petercorke/bdsim/wiki/Connecting-blocks>`_ and `Blocks, wires
 and plugs <https://github.com/petercorke/bdsim/wiki/Blocks%2C-Wires-and-Plugs>`_ pages for how this
 fits together conceptually.
 
 .. autoclass:: bdsim.BlockDiagram
-   :members: compile, connect, functions, linearize, xindex, report_summary, report_lists, dotfile, showgraph
+   :members: compile, connect, functions, linearize, xindex, report_summary, report_lists, report_params, report_schedule, report_subsystems, graph, schedule_dotfile, dotfile, showgraph
    :undoc-members:
    :show-inheritance:
 
@@ -23,8 +23,8 @@ fits together conceptually.
 Functions and linearization
 ---------------------------
 
-:meth:`BlockDiagram.functions` returns a compiled diagram as the non-linear functions :math:`f` and :math:`g`, and
-:meth:`BlockDiagram.linearize` estimates its local linear model :math:`(A, B, C, D)`.
+:meth:`~bdsim.BlockDiagram.functions` returns a compiled diagram as the non-linear functions :math:`f` and :math:`g`, and
+:meth:`~bdsim.BlockDiagram.linearize` estimates its local linear model :math:`(A, B, C, D)`.
 
 .. autoclass:: bdsim.analysis.SystemFunctions
    :members:
@@ -51,12 +51,12 @@ The run-time environment for executing a block diagram. See the wiki's
 invoke it.
 
 .. autoclass:: bdsim.BDSim
-   :members: blockdiagram, run, blocks, block_library, report, done
+   :members: blockdiagram, run, blocks, block_library, report, done, set_globals
    :undoc-members:
    :show-inheritance:
    :special-members: __init__
 
-The keyword options that :meth:`BDSim.run` takes, for that run only:
+The keyword options that :meth:`~bdsim.BDSim.run` takes, for that run only:
 
 .. autoclass:: bdsim.RunOptions
    :members:
@@ -65,7 +65,7 @@ The keyword options that :meth:`BDSim.run` takes, for that run only:
 BDStruct class
 ==============
 
-A struct-like container for storing simulation data, returned by :meth:`BDSim.run`. See the wiki's
+A struct-like container for storing simulation data, returned by :meth:`~bdsim.BDSim.run`. See the wiki's
 `Simulation results <https://github.com/petercorke/bdsim/wiki/Simulation-results>`_ page for the full
 layout — continuous vs. discrete/clocked state, watched signals, and the deprecated per-signal
 accessors — rather than duplicating that explanation here.
@@ -116,7 +116,7 @@ Full member listing for ``BlockDiagram`` — see its description and wiki links 
 `Simulation-user API`_ above.
 
 .. autoclass:: bdsim.BlockDiagram
-   :members: compile, connect, functions, linearize, xindex, report_summary, report_lists, dotfile, showgraph
+   :members: compile, connect, functions, linearize, xindex, report_summary, report_lists, report_params, report_schedule, report_subsystems, graph, schedule_dotfile, dotfile, showgraph
    :undoc-members:
    :show-inheritance:
    :no-index:
@@ -156,6 +156,45 @@ Signal slot
 ------------
 
 .. autoclass:: bdsim.block.PortValueSlot
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Signal signature
+-----------------
+
+.. autoclass:: bdsim.signature.Signature
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Event source and crossing detection
+------------------------------------
+
+.. autoclass:: bdsim.block.EventSource
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. autoclass:: bdsim.crossing.CrossingMixin
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Simulation state and jobs
+--------------------------
+
+.. autoclass:: bdsim.components.Runner
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. autoclass:: bdsim.components.SimulationState
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. autoclass:: bdsim.run_context.SimulationJob
    :members:
    :undoc-members:
    :show-inheritance:
