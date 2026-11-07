@@ -1922,7 +1922,7 @@ class Block(ABC, Port):
 
         For the third case, create a ``GAIN(C)`` block named ``_gain.N``.
 
-        .. note:: ``C'' can be a scalar or ndarray.
+        .. note:: ``C`` can be a scalar or ndarray.
 
 
         :seealso: :meth:`Block.__rmul__` :meth:`Plug.__mul__`
@@ -1968,7 +1968,7 @@ class Block(ABC, Port):
 
         For the third case, create a ``GAIN(C)`` block named ``_gain.N``.
 
-        .. note:: ``C'' can be a scalar or ndarray.
+        .. note:: ``C`` can be a scalar or ndarray.
 
 
         :seealso: :meth:`Block.__mul__` :meth:`Plug.__rmul__`
@@ -2004,7 +2004,7 @@ class Block(ABC, Port):
 
         For the third case, create a ``GAIN(1/C)`` block named ``_gain.N``.
 
-        .. note:: ``C'' can be a scalar or ndarray.
+        .. note:: ``C`` can be a scalar or ndarray.
 
         :seealso: :meth:`Block.__rtruediv__` :meth:`Plug.__truediv__`
         """
@@ -2054,7 +2054,7 @@ class Block(ABC, Port):
         left and right operands.  For the third case, a new CONSTANT block
         named ``_const.N`` is also created.
 
-        .. note:: ``C'' can be a scalar or ndarray.
+        .. note:: ``C`` can be a scalar or ndarray.
 
 
         :seealso: :meth:`Block.__truediv__` :meth:`Plug.__rtruediv__`
