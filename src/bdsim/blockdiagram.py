@@ -812,7 +812,7 @@ class BlockDiagram(
         :type verbose: bool, optional
         :param depth: subsystem import recursion depth, defaults to 0
         :type depth: int, optional
-        :return: the blocks and wires of the subsystem, with their names prefixed
+        :return: the blocks, with their names prefixed by ``sspath``, and the wires of the subsystem
         :rtype: tuple[list[Block], list[Wire]]
         """
         blocks = []  # create an empty block list
