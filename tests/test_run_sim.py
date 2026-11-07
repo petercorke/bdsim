@@ -1335,6 +1335,20 @@ class OptionsBackendCliTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             self._parse_with_argv(["prog", "--animation-rate", "0"])
 
+    def test_max_frames_default_and_cli(self):
+        """max_frames defaults to 1000 and --max-frames sets it, 0 for no limit."""
+        self.assertEqual(Options(sysargs=False).max_frames, 1000)
+        self.assertEqual(
+            self._parse_with_argv(["prog", "--max-frames", "50"]).max_frames, 50
+        )
+        self.assertEqual(
+            self._parse_with_argv(["prog", "--max-frames", "0"]).max_frames, 0
+        )
+
+    def test_max_frames_rejects_negative(self):
+        with self.assertRaises(ValueError):
+            Options(sysargs=False, max_frames=-1)
+
     def test_solve_ivp_options_from_constructor(self):
         """BDSim/Options kwargs should store solve_ivp defaults."""
         opts = Options(
