@@ -5,8 +5,11 @@ used to show T * animation_rate frames, each of which ended an integration inter
 and redrew the figures: 12,000 of them for a 600 s run.  max_frames bounds that.
 """
 
+import contextlib
+import io
 import os
 import unittest
+from unittest import mock
 
 os.environ.setdefault("MPLBACKEND", "Agg")
 
@@ -15,14 +18,14 @@ import numpy as np
 import bdsim
 
 
-def run(T: float = 10, *, animation: bool = True, **options):
+def run(T: float = 10, *, animation: bool = True, quiet: bool = True, **options):
     """A ramp, integrated, run with the given options; returns the output."""
     sim = bdsim.BDSim(
         sysargs=False,
         animation=animation,
         graphics=animation,
         banner=False,
-        quiet=True,
+        quiet=quiet,
         progress=False,
         **options,
     )
@@ -104,6 +107,37 @@ class FrameStatisticsTest(unittest.TestCase):
         stats = run(10, animation_rate=100, max_frames=50)[".stats"]
         self.assertIn("animation_frames", stats.keys())
         self.assertEqual(stats.animation_frames, 51)
+
+
+class ReportTest(unittest.TestCase):
+    def report(self, **options) -> str:
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            run(10, quiet=False, **options)
+        return out.getvalue()
+
+    def test_a_limited_run_says_so(self):
+        text = self.report(animation_rate=100, max_frames=20)
+        self.assertIn("animation: limiting to 20 frames", text)
+        self.assertIn("100 Hz would be 1000 frames", text)
+
+    def test_an_unlimited_run_does_not(self):
+        self.assertNotIn("limiting to", self.report(animation_rate=10))
+
+    def test_the_frames_are_in_the_summary(self):
+        text = self.report(animation_rate=100, max_frames=20)
+        self.assertIn("animation frames:", text)
+        self.assertIn("(scheduled every 0.5s of simulated time)", text)
+
+
+class NotebookBackendTest(unittest.TestCase):
+    def test_frames_are_counted_when_refreshes_are_rate_limited(self):
+        # a notebook backend redraws at most every 1/6 s of simulated time, however
+        # often the frame callback runs, and only the redraws are counted
+        with mock.patch("matplotlib.get_backend", return_value="widget"):
+            stats = run(10, animation_rate=100, max_frames=0)[".stats"]
+        self.assertGreater(stats.animation_frames, 0)
+        self.assertLess(stats.animation_frames, 100)
 
 
 if __name__ == "__main__":
