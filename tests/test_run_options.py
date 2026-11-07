@@ -169,9 +169,21 @@ class SetParamTest(unittest.TestCase):
 
     def test_a_dict_sets_the_parameters_with_python_values(self):
         sim, bd = make()
-        out, text = captured(sim.run, bd, T=2, setparam={"g:K": 3})
+        out, text = captured(sim.run, bd, T=2, quiet=False, setparam={"g:K": 3})
         self.assertAlmostEqual(self.final(out), 6.0, places=6)
         self.assertIn("changed value of g:K from 2.0 -> 3", text)
+
+    def test_quiet_suppresses_the_report_of_the_change(self):
+        sim, bd = make()  # quiet
+        out, text = captured(sim.run, bd, T=2, setparam={"g:K": 3})
+        self.assertAlmostEqual(self.final(out), 6.0, places=6)
+        self.assertNotIn("changed value", text)
+
+    def test_quiet_suppresses_the_report_of_the_command_line_too(self):
+        sim, bd = make(sysargs=True, argv=["-s", "g:K=4"])
+        out, text = captured(sim.run, bd, T=2)
+        self.assertAlmostEqual(self.final(out), 8.0, places=6)
+        self.assertNotIn("changed value", text)
 
     def test_the_block_can_be_given_by_id(self):
         sim, bd = make()

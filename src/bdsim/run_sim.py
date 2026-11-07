@@ -1251,6 +1251,7 @@ class BDSim(Runner):
             done after the command line has been read, and so can be overridden by
             ``-s gain:K=4``.  The keys are ``"block:param"``, with the block's name
             or its ``id`` as for ``-s``, and the values are Python objects, not text.
+            Each change is reported, old value to new, unless ``quiet``.
             This is new and may change.
 
         The integration backend is always ``scipy.integrate.solve_ivp``.  The
@@ -2071,19 +2072,22 @@ class BDSim(Runner):
         re_set: re.Pattern[str] = re.compile(
             r"(?P<block>[\w\./]+):(?P<param>[\w]+)=(?P<value>.*)"
         )
+        quiet = bool(options.get("quiet", False))
         for address, value in (values or {}).items():
             m: re.Match[str] | None = (
                 re_address.fullmatch(address) if isinstance(address, str) else None
             )
             if m is None:
                 raise ValueError(f"bad set parameter, want 'block:param': {address!r}")
-            self._set_parameter(bd, m["block"], m["param"], value=value)
+            self._set_parameter(bd, m["block"], m["param"], value=value, quiet=quiet)
 
         for s in options.setparam:
             m = re_set.match(s)
             if m is None:
                 raise ValueError("bad set parameter: " + s)
-            self._set_parameter(bd, m["block"], m["param"], text=m["value"])
+            self._set_parameter(
+                bd, m["block"], m["param"], text=m["value"], quiet=quiet
+            )
 
     @staticmethod
     def _set_parameter(
@@ -2093,8 +2097,12 @@ class BDSim(Runner):
         *,
         value: Any = None,
         text: str | None = None,
+        quiet: bool = False,
     ) -> None:
-        """Set one block parameter from a value, or from text read as the kind of the current value."""
+        """Set one block parameter from a value, or from text read as the kind of the current value.
+
+        The change is reported unless ``quiet``.
+        """
         # get block reference
         blockname: str | int = blockref
         try:
@@ -2127,7 +2135,8 @@ class BDSim(Runner):
             prev_value = block.set_param(param, value)
         except (TypeError, ValueError) as err:
             raise ValueError(f"cannot set {block.name}:{param}: {err}") from err
-        print(f"changed value of {block.name}:{param} from {prev_value} -> {value}")
+        if not quiet:
+            print(f"changed value of {block.name}:{param} from {prev_value} -> {value}")
 
     def _interval_hybrid(
         self, bd: Any, t0: float, t1: float, x0: np.ndarray, simstate: BDSimState

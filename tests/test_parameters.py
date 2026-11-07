@@ -274,7 +274,7 @@ class SetOptionTest(ParamTestCase):
             graphics=None,
             progress=False,
             banner=False,
-            quiet=True,
+            quiet=False,  # quiet suppresses the report of the change
             setparam=list(setparam),
         )
         buf = io.StringIO()
