@@ -15,11 +15,25 @@ import sys
 import importlib
 import importlib.util
 import argparse
+import difflib
 import types
 import time
 import traceback as tb
 import warnings
-from typing import Any, Callable, NoReturn, Sequence
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Mapping,
+    NoReturn,
+    Sequence,
+    TypedDict,
+)
+
+if TYPE_CHECKING:
+    # typing.Unpack is 3.11+, and typing_extensions is not a dependency: only the
+    # type checker needs it, annotations are not evaluated at run time
+    from typing_extensions import Unpack
 
 import matplotlib
 
@@ -245,6 +259,51 @@ class _LazyBlockClass:
 
     def __repr__(self) -> str:
         return f"<LazyBlockClass {self._module_name}.{self._class_name}>"
+
+
+class RunOptions(TypedDict, total=False):
+    """Options that :meth:`BDSim.run` accepts as keyword arguments.
+
+    These are the options that can differ from one run to the next.  Each one
+    overrides the value given to :class:`BDSim` (or the default) for that run only,
+    unless it was set on the command line, which always wins.
+
+    ``dt``, ``max_step``, ``check`` and ``debug`` are also options, but are named
+    parameters of :meth:`BDSim.run`, and ``block`` is the same setting as ``hold``.
+    """
+
+    animation: bool
+    animation_rate: float
+    max_frames: int
+    movies: bool | str | os.PathLike[str] | None
+    graphics: bool
+    hold: bool
+    progress: bool
+    quiet: bool
+    atol: float | None
+    rtol: float | None
+    backend: str | None
+    tiles: str | None
+    shape: str | None
+    altscreen: bool
+    outfile: str | None
+    jsonfile: str | None
+    npzfile: str | None
+    setparam: dict[str, Any]
+
+
+# Options that can only be set when BDSim is constructed, with the reason; run()
+# raises TypeError for these rather than ignoring them
+_CONSTRUCTION_ONLY_OPTIONS: dict[str, str] = {
+    "blocks": "the block library is loaded when BDSim is constructed",
+    "verbose": "the block library is loaded when BDSim is constructed",
+    "param": "the table of parameters is printed when the diagram is compiled",
+    "setglob": "global variables are changed by set_globals(), not by run()",
+    "banner": "the banner is printed when BDSim is constructed",
+    "sysargs": "the command line is read when BDSim is constructed",
+    "simtime": "pass the simulation time as T (and dt) to run()",
+    "method": "pass the integration method as solver to run()",
+}
 
 
 @dataclass
@@ -752,6 +811,34 @@ class BDSim(Runner):
         return options
 
     @staticmethod
+    def _check_run_options(options: Mapping[str, object]) -> None:
+        """Raise TypeError for a keyword argument that run() cannot take as an option.
+
+        :param options: the extra keyword arguments given to :meth:`run`
+        :raises TypeError: for an option that can only be set when :class:`BDSim` is
+            constructed, an unknown name, or a value of the wrong kind
+        """
+        for name in options:
+            if name in _CONSTRUCTION_ONLY_OPTIONS:
+                raise TypeError(
+                    f"run() cannot take the option {name!r}: "
+                    f"{_CONSTRUCTION_ONLY_OPTIONS[name]}"
+                )
+            if name not in RunOptions.__annotations__:
+                close = difflib.get_close_matches(name, RunOptions.__annotations__)
+                hint = f", did you mean {close[0]!r}?" if close else ""
+                raise TypeError(
+                    f"run() got an unexpected keyword argument {name!r}{hint}"
+                )
+        setparam = options.get("setparam")
+        if setparam is not None and not isinstance(setparam, dict):
+            raise TypeError(
+                "run(setparam=) takes a dict {'block:param': value}, not "
+                f"{type(setparam).__name__}; the 'block:param=value' text form is "
+                "for the command line"
+            )
+
+    @staticmethod
     def _sanitize_movie_stem(raw: str) -> str:
         name = raw.strip()
         name = re.sub(r"\s+", "_", name, flags=re.UNICODE)
@@ -1105,6 +1192,7 @@ class BDSim(Runner):
         minstepsize: float = 1e-12,
         watch: Any = None,
         threaded: bool = False,
+        **options: Unpack[RunOptions],
     ) -> BDStruct:
         """Run a compiled block diagram.
 
@@ -1136,10 +1224,42 @@ class BDSim(Runner):
         :type watch: list, optional
         :param threaded: run in a worker thread (disables graphics), default False
         :type threaded: bool, optional
+        :param options: any of the options of :class:`RunOptions`, for this run only,
+            for example ``animation=True`` or ``progress=False``
         :return: simulation results container
         :rtype: BDStruct
+        :raises TypeError: for an option that is unknown, or that can only be set
+            when :class:`BDSim` is constructed, such as ``blocks`` or ``verbose``
+        :raises RuntimeError: for a ``backend`` that matplotlib cannot switch to
 
         The system is simulated from time 0 to ``T``.
+
+        **Options.** The keyword arguments after ``threaded`` are options, the same
+        ones that :class:`BDSim` takes and that the command line sets.  Each overrides
+        the value given to :class:`BDSim` for this run only.  An option given on the
+        command line always wins, including ``dt``, ``max_step``, ``check`` and
+        ``block``, and a message says that the value from the code was ignored.  The
+        options that cannot differ from run to run, such as ``blocks`` or ``verbose``,
+        raise ``TypeError``.
+
+        .. warning::
+            ``setparam`` **changes the parameters of the blocks, and they stay
+            changed after the run**.  It is not a setting for this run only, unlike
+            the other options: a second ``run`` without ``setparam`` uses the values
+            the first one set.  ``setparam={"gain:K": 3}`` is the same as calling
+            ``set_param("K", 3)`` on the block named ``gain`` before the run, but is
+            done after the command line has been read, and so can be overridden by
+            ``-s gain:K=4``.  The keys are ``"block:param"``, with the block's name
+            or its ``id`` as for ``-s``, and the values are Python objects, not text.
+            Each change is reported, old value to new, unless ``quiet``.
+            This is new and may change.
+
+        .. versionchanged:: next
+            The options of :class:`RunOptions` can be given to ``run`` as keyword
+            arguments, and to ``submit``, which passes them on.  An option given on
+            the command line now also wins over ``dt``, ``max_step``, ``check`` and
+            ``block`` given to ``run``, which used to override it, and a message says
+            that the value from the code was ignored.
 
         The integration backend is always ``scipy.integrate.solve_ivp``.  The
         ``solver`` argument selects the method (e.g. ``RK45``, ``DOP853``,
@@ -1200,7 +1320,49 @@ class BDSim(Runner):
         if watch is None:
             watch = []
 
-        run_options: OptionsBase = self._make_run_options(threaded=threaded)
+        if checkfinite is not None:
+            warnings.warn(
+                "run(checkfinite=...) is deprecated, use check=",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            if check is None:
+                check = checkfinite
+
+        # Everything that run() can set for this run only goes through
+        # OptionsBase.set(), so an option given on the command line wins over it,
+        # for the named parameters and the keyword options alike.
+        self._check_run_options(options)
+        setparam: dict[str, Any] = options.get("setparam") or {}
+        overrides: dict[str, Any] = {
+            k: v for k, v in options.items() if k != "setparam"
+        }
+        for key, value in (
+            ("dt", dt),
+            ("max_step", max_step),
+            ("check", check),
+            ("hold", block),
+        ):
+            if value is not None:
+                overrides[key] = value
+
+        run_options: OptionsBase = self._make_run_options(
+            threaded=threaded, **overrides
+        )
+        dt = run_options.dt
+        max_step = run_options.max_step
+        check = bool(run_options.check)
+
+        # Fail here with the reason rather than from inside the first graphics
+        # block to start, where the error is reported as a failed block start.
+        backend = overrides.get("backend")
+        if backend is not None and run_options.graphics:
+            try:
+                matplotlib.use(backend)
+            except Exception as exc:
+                raise RuntimeError(
+                    f"can't select matplotlib backend {backend!r}: {exc}"
+                ) from exc
 
         # get simulation time
         #  --simtime=T  or --simtime=T,dt
@@ -1225,13 +1387,9 @@ class BDSim(Runner):
         simstate.T = tf
         simstate.tf = tf
 
-        if dt is None:
-            dt = getattr(run_options, "dt", None)
         movies_enabled = getattr(run_options, "movies", None) is not None
         if movies_enabled and dt is None:
             dt = 1.0 / float(getattr(run_options, "animation_rate", 20.0))
-        if max_step is None:
-            max_step = getattr(run_options, "max_step", None)
 
         if dt is not None and float(dt) <= 0:
             raise ValueError("dt must be > 0")
@@ -1247,16 +1405,6 @@ class BDSim(Runner):
         simstate.solver_args = solver_args
         simstate.minstepsize = minstepsize
         simstate.stop = None  # allow any block to stop.BlockDiagram by setting this to the block's name
-        if checkfinite is not None:
-            warnings.warn(
-                "run(checkfinite=...) is deprecated, use check=",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if check is None:
-                check = checkfinite
-        if check is None:
-            check = bool(getattr(run_options, "check", True))
         simstate.check = check
         bd.check = check
         simstate.options = run_options
@@ -1291,8 +1439,6 @@ class BDSim(Runner):
             # turn off progress bar if any debug options are given
             if simstate.hasdebug():
                 simstate.options.progress = False
-            if block is not None:
-                simstate.options.hold = block
 
             # Compute the animation / debugger frame interval from --animation-rate.
             # Animation uses Option-A eventq callables for frame pacing.
@@ -1397,7 +1543,7 @@ class BDSim(Runner):
 
             # update block parameters given on command line; this must come before the
             # initial state is collected, which a setup parameter such as x0 changes
-            self.update_parameters(bd)
+            self.update_parameters(bd, setparam)
 
             x0 = bd.getstate0()
 
@@ -1887,9 +2033,18 @@ class BDSim(Runner):
         future: Future[BDStruct] = BDSim._executor.submit(self.run, bd, **kwargs)
         return SimulationJob(future)
 
-    def update_parameters(self, bd: Any) -> None:
+    def update_parameters(self, bd: Any, values: dict[str, Any] | None = None) -> None:
         """
-        Set value of parameters according to command line arguments
+        Set value of parameters according to arguments to the run and the command line
+
+        :param bd: the compiled block diagram
+        :param values: parameter values from code, ``{"block:param": value}``, the
+            ``setparam`` argument of :meth:`run`
+
+        The values from code are set first, then those from the command line, so the
+        command line has the last word.  A value from code is used as it is, the text
+        of a command line value is read according to the kind of the current value.
+        The parameters are changed in the blocks and stay changed after the run.
 
         Command line arguments of the form:
 
@@ -1918,51 +2073,77 @@ class BDSim(Runner):
         if self.options is None:
             raise RuntimeError("options not initialised")  # pragma: no cover
         options: OptionsBase = context.options if context is not None else self.options
+        re_address: re.Pattern[str] = re.compile(
+            r"(?P<block>[\w\./]+):(?P<param>[\w]+)"
+        )
         re_set: re.Pattern[str] = re.compile(
             r"(?P<block>[\w\./]+):(?P<param>[\w]+)=(?P<value>.*)"
         )
+        quiet = bool(options.get("quiet", False))
+        for address, value in (values or {}).items():
+            m: re.Match[str] | None = (
+                re_address.fullmatch(address) if isinstance(address, str) else None
+            )
+            if m is None:
+                raise ValueError(f"bad set parameter, want 'block:param': {address!r}")
+            self._set_parameter(bd, m["block"], m["param"], value=value, quiet=quiet)
+
         for s in options.setparam:
-            m: re.Match[str] | None = re_set.match(s)
+            m = re_set.match(s)
             if m is None:
                 raise ValueError("bad set parameter: " + s)
+            self._set_parameter(
+                bd, m["block"], m["param"], text=m["value"], quiet=quiet
+            )
 
-            # get block reference
-            blockname: str | int | None = m["block"]
-            if blockname is not None:
-                try:
-                    blockname = int(blockname)
-                except ValueError:
-                    pass
-            block = bd[blockname]
+    @staticmethod
+    def _set_parameter(
+        bd: Any,
+        blockref: str,
+        param: str,
+        *,
+        value: Any = None,
+        text: str | None = None,
+        quiet: bool = False,
+    ) -> None:
+        """Set one block parameter from a value, or from text read as the kind of the current value.
 
-            param: str | Any = m["param"]
-            try:
-                block._lookup_param(param)  # is there such a parameter, can it be set?
-            except ValueError as err:
-                raise ValueError(f"cannot set {block.name}:{param}: {err}") from err
+        The change is reported unless ``quiet``.
+        """
+        # get block reference
+        blockname: str | int = blockref
+        try:
+            blockname = int(blockref)
+        except ValueError:
+            pass
+        block = bd[blockname]
+
+        try:
+            block._lookup_param(param)  # is there such a parameter, can it be set?
+        except ValueError as err:
+            raise ValueError(f"cannot set {block.name}:{param}: {err}") from err
+
+        if text is not None:
             if callable(block._param_value(param)):
                 raise ValueError(
                     f"cannot set {block.name}:{param} from text: it is a function, "
                     "set it from code with block.set_param"
                 )
-
-            # get the new value; the type of the current value says how to read the text
+            # the type of the current value says how to read the text
             try:
-                new_value = _parse_param_text(m["value"], block._param_value(param))
+                value = _parse_param_text(text, block._param_value(param))
             except ValueError as err:
                 raise ValueError(
-                    f"cannot set {block.name}:{param}: cannot read {m['value']!r}: {err}"
+                    f"cannot set {block.name}:{param}: cannot read {text!r}: {err}"
                 ) from err
 
-            # change the value; the old value decides what types are acceptable
-            try:
-                prev_value = block.set_param(param, new_value)
-            except (TypeError, ValueError) as err:
-                raise ValueError(f"cannot set {block.name}:{param}: {err}") from err
-            print(
-                f"changed value of {block.name}:{param} from {prev_value} ->"
-                f" {new_value}"
-            )
+        # change the value; the old value decides what types are acceptable
+        try:
+            prev_value = block.set_param(param, value)
+        except (TypeError, ValueError) as err:
+            raise ValueError(f"cannot set {block.name}:{param}: {err}") from err
+        if not quiet:
+            print(f"changed value of {block.name}:{param} from {prev_value} -> {value}")
 
     def _interval_hybrid(
         self, bd: Any, t0: float, t1: float, x0: np.ndarray, simstate: BDSimState
