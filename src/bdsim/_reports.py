@@ -303,7 +303,7 @@ class ReportMixin:
         :type kwargs: dict
 
         The first column is the name exactly as it is used by the ``--set`` option,
-        ``block:param``, and by :meth:`Block.set_param`.  The columns are
+        ``block:param``, and by :meth:`~bdsim.Block.set_param`.  The columns are
 
         1. the name, ``block:param``
         2. the current value, abbreviated if it is long
@@ -317,7 +317,7 @@ class ReportMixin:
         it, which can still be set by their own names.  The ``--param`` option prints
         this table when the diagram is compiled.
 
-        :seealso: :meth:`Block.add_param` :meth:`Block.set_param`
+        :seealso: :meth:`~bdsim.Block.add_param` :meth:`~bdsim.Block.set_param`
         """
         table = ANSITable(
             Column("parameter", headalign="^", colalign="<"),
@@ -365,7 +365,7 @@ class ReportMixin:
         :param kwargs: options passed to :meth:`ansitable.table.ANSIMatrix.print`
         :type kwargs: dict
 
-        :seealso: :func:`schedule_plan`, :func:`schedule_dotfile`
+        :seealso: :meth:`~bdsim.BlockDiagram.schedule_dotfile`
         """
         table = ANSITable(
             Column("Step"),

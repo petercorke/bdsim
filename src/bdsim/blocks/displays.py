@@ -339,7 +339,7 @@ class Scope(GraphicsBlock):
         :type grid: bool or sequence
         :param title: title of plot
         :type title: str
-        :param loc: location of legend, see :meth:`matplotlib.pyplot.legend`, defaults to "best"
+        :param loc: location of legend, see :func:`matplotlib.pyplot.legend`, defaults to "best"
         :type loc: str
         :param blockargs: |GraphicsBlockOptions|
         :type blockargs: dict
@@ -560,7 +560,7 @@ class Scope(GraphicsBlock):
         plt.draw()
 
     def record(self, t: float, inports: list[Any]) -> None:
-        """Append one sample. Runs on every accepted sample (see :meth:`step`)."""
+        """Append one sample. Runs on every accepted sample (see :meth:`~bdsim.SinkBlock.step`)."""
         if not self._enabled:
             return
 
