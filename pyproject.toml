@@ -45,6 +45,8 @@ dev = [
     "ruff>=0.17,<0.18",
     "ipython",
     "control>=0.10",
+    "nbconvert",  # tests/test_notebooks_smoke.py executes the notebooks
+    "ipykernel",
 ]
 
 docs = [
