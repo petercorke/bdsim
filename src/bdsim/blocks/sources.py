@@ -502,7 +502,7 @@ class WaveForm(SourceBlock, EventSource):
     .. note:: For discontinuous signals (square, triangle) the block declares
         events for every discontinuity.
 
-    :seealso: :meth:`declare_events`
+    :seealso: ``simstate.declare_event()``
     """
 
     nin = 0
@@ -723,7 +723,7 @@ class Piecewise(SourceBlock, EventSource):
 
     .. note:: The block declares an event for the start of each segment.
 
-    :seealso: :meth:`declare_events`
+    :seealso: ``simstate.declare_event()``
     """
 
     nin = 0
@@ -861,7 +861,7 @@ class Step(SourceBlock, EventSource):
 
     .. note:: The block declares an event for the step time.
 
-    :seealso: :meth:`declare_events`
+    :seealso: ``simstate.declare_event()``
     """
 
     nin = 0
@@ -970,7 +970,7 @@ class Ramp(SourceBlock, EventSource):
 
     .. note:: The block declares an event for the ramp start time.
 
-    :seealso: :meth:`declare_event`
+    :seealso: ``simstate.declare_event()``
     """
 
     nin = 0

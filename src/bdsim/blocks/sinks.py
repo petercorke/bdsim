@@ -90,7 +90,6 @@ class Print(SinkBlock):
         :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         :return: A PRINT block
-        :rtype: Print instance
         """
         super().__init__(**blockargs)
         self.fmt = fmt
@@ -494,7 +493,7 @@ class Watch(SinkBlock):
         watch[0] = step
         watch[1] = ramp
 
-    :seealso: :meth:`BDSim.run`
+    :seealso: :meth:`~bdsim.BDSim.run`
     """
 
     nin = 1

@@ -114,17 +114,17 @@ class BlockDiagram(
     the system.
 
     :ivar wirelist: all wires in the diagram
-    :vartype wirelist: list of Wire instances
+    :vartype wirelist: list[Wire]
     :ivar blocklist: all blocks in the diagram
-    :vartype blocklist: list of Block subclass instances
+    :vartype blocklist: list[Block]
     :ivar x: state vector
-    :vartype x: np.ndarray
+    :vartype x: numpy.ndarray
     :ivar compiled: diagram has successfully compiled
     :vartype compiled: bool
     :ivar blockcounter: unique counter for each block type
-    :vartype blockcounter: defaultdict of Counter
+    :vartype blockcounter: collections.defaultdict
     :ivar blockdict: index of all blocks by category
-    :vartype blockdict: dict of lists
+    :vartype blockdict: dict
     :ivar name: name of this diagram, ``None`` until given one.  A main diagram
         is named ``main`` when first compiled; a subsystem diagram's name is the stem of its
         instances' names, see :meth:`BDSim.blockdiagram`
@@ -135,7 +135,7 @@ class BlockDiagram(
     * holds all the blocks and wires that comprise the system
     * manages continuous- and discrete-time state vector for the whole system, splitting
       it across blocks as required
-    * evaluates the entire diagram as a function to compute :meth:`\dot{x} = f(x, t)`
+    * evaluates the entire diagram as a function to compute :math:`\dot{x} = f(x, t)`
     """
 
     def __init__(self, name: str | None = None, **kwargs: Any) -> None:
@@ -221,7 +221,7 @@ class BlockDiagram(
         :param ends: The input port(s) that the wire ends at.  Can be one or more.
         :type ends: Block | Plug
         :param name: The name of the wire, defaults to None
-        :type name: _type_, optional
+        :type name: str, optional
 
         Connect blocks together.  The start block can be connected to one or more end
         blocks.
@@ -812,8 +812,8 @@ class BlockDiagram(
         :type verbose: bool, optional
         :param depth: subsystem import recursion depth, defaults to 0
         :type depth: int, optional
-        :return: _description_
-        :rtype: _type_
+        :return: the blocks and wires of the subsystem, with their names prefixed
+        :rtype: tuple[list[Block], list[Wire]]
         """
         blocks = []  # create an empty block list
         wires = bd.wirelist  # start with wires in the current diagram
@@ -960,7 +960,7 @@ class BlockDiagram(
         :param sinks: evaluate sink blocks, defaults to True
         :type sinks: bool, optional
         :param check: check the block outputs, defaults to the diagram's ``check``
-            attribute, which :meth:`BDSim.run` sets from the ``check`` option
+            attribute, which :meth:`~bdsim.BDSim.run` sets from the ``check`` option
         :type check: bool, optional
         :param overrides: output values to publish for some blocks, instead of
             calling their ``output`` method; the list has one value per output
@@ -1577,7 +1577,7 @@ def bdload(
         ``None`` (default) allows evaluation with a one-time warning.  A NumPy dtype
         literal such as ``float32([1, 2])`` or ``uint16(5)`` is parsed without
         ``eval``, so it is accepted whatever ``allow_eval`` is, see
-        :mod:`bdsim.literals`.
+        ``bdsim.literals``.
     :type allow_eval: bool, optional
     :param trace_eval: print each expression before it is evaluated.
     :type trace_eval: bool, optional

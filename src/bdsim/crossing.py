@@ -26,7 +26,7 @@ class CrossingMixin:
 
     Blocks that do not need events do not inherit from this and pay nothing.
 
-    A subclass registers detectors from :meth:`start` with :meth:`declare_crossing`
+    A subclass registers detectors from :meth:`~bdsim.Block.start` with :meth:`~bdsim.crossing.CrossingMixin.declare_crossing`
     and overrides :meth:`crossing_event` to respond.  Detectors are sized in
     :meth:`~bdsim.Block.configure`, where :attr:`~bdsim.Block.insig` is known, and
     any mode kept by the block is restored in :meth:`~bdsim.Block.reset`.
@@ -172,7 +172,7 @@ class CrossingMixin:
         The solver restarts from the state map after this returns.
 
         The default does nothing for the threshold crossings declared by
-        :meth:`declare_thresholds` and raises for anything else.
+        :meth:`~bdsim.crossing.CrossingMixin.declare_thresholds` and raises for anything else.
         """
         if isinstance(tag, tuple) and tag and tag[0] == "threshold":
             return
