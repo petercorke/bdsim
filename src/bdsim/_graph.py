@@ -143,6 +143,9 @@ class GraphMixin:
             #         b.type
             #     )
             # )
+            if b.label != b.name:
+                # the node is the name, which identifies the block; show the value too
+                options.append('label="{:s}"'.format(b.label.replace('"', r"\"")))
             if len(options) > 0:
                 file.write('\t"{:s}" [{:s}]\n'.format(b.name, ", ".join(options)))
         file.write("\n")
@@ -242,7 +245,7 @@ class GraphMixin:
             for i, b in enumerate(self.blocklist):
                 node_id = f"b{i}"
                 node_ids[b] = node_id
-                label_raw = b.name if b.name is not None else f"{b.type}_{i}"
+                label_raw = b.label if b.name is not None else f"{b.type}_{i}"
                 label = label_raw.replace('"', r"\"")
                 if b.type == "sum":
                     # circle
@@ -303,7 +306,7 @@ class GraphMixin:
             for i, b in enumerate(self.blocklist):
                 node_id = f"n{i}"
                 node_ids[b] = node_id
-                label_raw = b.name if b.name is not None else f"{b.type}_{i}"
+                label_raw = b.label if b.name is not None else f"{b.type}_{i}"
                 lines.extend(
                     [
                         f'    <node id="{node_id}">',
@@ -344,7 +347,7 @@ class GraphMixin:
             for i, b in enumerate(self.blocklist):
                 node_id = f"n{i}"
                 node_ids[b] = node_id
-                label_raw = b.name if b.name is not None else f"{b.type}_{i}"
+                label_raw = b.label if b.name is not None else f"{b.type}_{i}"
 
                 ports = []
                 for p in range(b.nin):

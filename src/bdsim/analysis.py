@@ -348,7 +348,7 @@ class SystemFunctions:
                 for b in bd.blocklist
                 if isinstance(b, SourceBlock)
                 and b._not_an_input is None
-                and not b._implicit
+                and not b.implicit
             ]
         selected: dict[Block, list[int]] = {}
         for item in inputs:

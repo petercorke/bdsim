@@ -161,7 +161,16 @@ logic and Pythonic programming:
 
 This approach requires fewer lines of code and is arguably is more readable, while
 producing *exactly the same* underlying block diagram. Implicitly created blocks are
-automatically named with an underscore prefix.
+automatically named with an underscore prefix and a count, for example ``_gain.0``,
+``_const.0``, ``_pow.0`` and ``_sum.0``.  A name that starts with an underscore marks a
+block as private: reports list these blocks last, and ``report_summary(implicit=False)``
+leaves them out.
+
+The count depends on the order in which the expressions were written, so a block that
+you want to change later, such as the gain of a controller, is better given a name of its
+own, ``>> bd.GAIN(K, name="lqr")``, or kept in a variable.  Reports show the value of an
+implicit constant, gain or power block after its name, as in ``_gain.0(3)``, but the name
+is just ``_gain.0``.  That is what ``bd["_gain.0"]`` and ``--set _gain.0:K=3`` take.
 
 
 A list of available blocks can be obtained by::

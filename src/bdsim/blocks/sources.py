@@ -62,6 +62,7 @@ class Constant(SourceBlock):
 
     nin = 0
     nout = 1
+    _display_param = "value"  # shown in the label of an implicit block
 
     def __init__(self, value: Any = 0, asarray: bool = True, **blockargs: Any) -> None:
         """

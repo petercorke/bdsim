@@ -155,6 +155,27 @@ def _coerce_parameter(block: Block, name: str, old: Any, new: Any) -> Any:
     return new
 
 
+def _value_suffix(value: Any) -> str:
+    """The value of an implicit block as it is shown after the name, on one line.
+
+    A number is ``(3)``, a small array ``([[0. 0.]])`` and a longer array, or any
+    other object, is described by its kind: ``<float64 6x6>`` or ``<Foo>``.
+    """
+    if isinstance(value, numbers.Number) and not isinstance(value, np.ndarray):
+        try:
+            return f"({value:.3g})"
+        except (TypeError, ValueError):  # a complex number
+            return f"({value})"
+    if isinstance(value, str):
+        return f"({value[:20]}{'...' if len(value) > 20 else ''})"
+    if isinstance(value, np.ndarray):
+        if value.size <= 6:
+            text = np.array2string(value, precision=3, max_line_width=1000)
+            return "(" + " ".join(text.split()) + ")"
+        return f"<{value.dtype} {'x'.join(str(n) for n in value.shape)}>"
+    return f"<{type(value).__name__}>"
+
+
 class Block(ABC, Port):
     """_summary_
 
@@ -246,7 +267,9 @@ class Block(ABC, Port):
     _inport_names: list[str] | None
     _outport_names: list[str] | None
     _state_names: list[str] | None
-    _implicit: bool = False  # created by bdsim for a number in an expression
+    _display_param: str | None = (
+        None  # parameter that label shows for an implicit block
+    )
 
     _clocked: bool = False
     _clock: Clock | None
@@ -1627,15 +1650,8 @@ class Block(ABC, Port):
                 "block must be connected to a block diagram to create an automatic constant"
             )
 
-        if isinstance(value, (int, float)):
-            name = f"_const.{next(self.bd.n_auto_const)}({value:.3g})"
-        elif isinstance(value, str):
-            name = f"_const.{next(self.bd.n_auto_const)}({value})"
-        else:
-            name = f"_const.{next(self.bd.n_auto_const)}<{type(value).__name__}>"
-        constant = self.bd.CONSTANT(value, name=name)
-        constant._implicit = True
-        return constant
+        name = f"_const.{next(self.bd.n_auto_const)}"
+        return self.bd.CONSTANT(value, name=name)
 
     def _autogain(self, value: int | float | np.ndarray, **kwargs: Any) -> Block:
         if self.bd is None:
@@ -1643,14 +1659,11 @@ class Block(ABC, Port):
                 "block must be connected to a block diagram to create an automatic gain"
             )
 
-        if isinstance(value, (int, float)):
-            name = f"_gain.{next(self.bd.n_auto_gain)}({value:.3g})"
-        elif isinstance(value, np.ndarray):
-            name = f"_gain.{next(self.bd.n_auto_gain)}({value})"
-        else:
+        if not isinstance(value, (int, float, np.ndarray)):
             raise TypeError(
                 f"automatic gain value must be int, float, or ndarray, got {type(value).__name__}"
             )
+        name = f"_gain.{next(self.bd.n_auto_gain)}"
         return self.bd.GAIN(value, name=name, **kwargs)
 
     def _autopow(self, value: int | float, **kwargs: Any) -> Block:
@@ -1659,7 +1672,7 @@ class Block(ABC, Port):
                 "block must be connected to a block diagram to create an automatic power block"
             )
 
-        name = f"_pow.{next(self.bd.n_auto_pow)}({value:.3g})"
+        name = f"_pow.{next(self.bd.n_auto_pow)}"
         return self.bd.POW(value, name=name, **kwargs)
 
     @oodebug
@@ -2096,6 +2109,37 @@ class Block(ABC, Port):
     def _default_name_stem(self) -> str:
         """Stem of the default instance name ``<stem>.<n>``, the block type unless overridden."""
         return self.type
+
+    @property
+    def implicit(self) -> bool:
+        """True if the block is private, which means its name starts with ``_``.
+
+        bdsim gives this kind of name to the blocks it creates for an expression such
+        as ``x * 3`` or ``x + 1``, and you can give it to a block of your own.  Private
+        blocks are listed last in reports, are left out by ``report_summary(implicit=False)``
+        and are not taken to be inputs by :meth:`~bdsim.BlockDiagram.linearize`.
+
+        Only the last part of the name counts, since a block of a subsystem has the
+        name of the subsystem in front of its own, for example ``sub/_gain.0``.
+        """
+        return (self.name or "").rsplit("/", 1)[-1].startswith("_")
+
+    @property
+    def label(self) -> str:
+        """The name for display: for an implicit block, the name with its value.
+
+        An implicit constant, gain or power block is only known by a counter, for
+        example ``_gain.0``, so its label also shows the value that makes it
+        recognizable, ``_gain.0(3)``.  The value is the current one, not the one the
+        block was created with.  A block with a name of its own has the name as its label.
+
+        The name, not the label, identifies the block: it is what ``bd["_gain.0"]`` and
+        ``--set _gain.0:K=3`` take.
+        """
+        name = self.name or ""
+        if self._display_param is None or not self.implicit:
+            return name
+        return name + _value_suffix(getattr(self, self._display_param, None))
 
     def start(self, simstate: SimulationState) -> None:  # begin a simulation
         pass
