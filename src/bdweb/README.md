@@ -37,7 +37,13 @@ After `pip install bdsim[bdweb]`:
 ```bash
 bdweb                        # open empty canvas
 bdweb path/to/diagram.bd     # open with a diagram pre-loaded
+bdweb --host 0.0.0.0         # expose to the network (NOT SAFE on untrusted networks)
 ```
+
+The backend binds to `127.0.0.1` (loopback) by default, so the editor is only reachable
+from the machine it runs on. `--host` overrides the bind interface; passing anything other
+than loopback prints a warning, because the API can read, write and run files reachable by
+the server process.
 
 `bdweb` auto-detects which mode to use:
 
@@ -141,10 +147,10 @@ Handles are displayed as small triangles: output handles point **right**, input 
 | `POST` | `/api/save` | Save diagram JSON (`{"path": ..., "diagram": ...}`) as a `.bd` file, creating parent directories |
 | `POST` | `/api/run` | Run a saved `.bd` file with `bdrun` in a subprocess (`{"path": ..., "timeout": 120}`); returns `stdout`, `stderr`, `returncode`. Matplotlib windows open natively on the server |
 
-> **Security: not safe to expose to a network yet.** Only `/api/ls` is confined to `~`.
+> **Security: not safe to expose to a network yet.** `bdweb` binds to `127.0.0.1` by
+> default; exposing it with `--host` is at your own risk. Only `/api/ls` is confined to `~`.
 > `/api/load`, `/api/save`, `/api/exists` and `/api/run` accept any path the server process
-> can reach, and `bdweb` currently binds to `0.0.0.0` (all interfaces). Run it only on a
-> machine and network you trust until this is addressed. Tracked in
+> can reach. Run it only on a machine and network you trust until this is addressed. Tracked in
 > [#118](https://github.com/petercorke/bdsim/issues/118).
 
 See [BDFILE.md](BDFILE.md) for the `.bd` file format specification.
