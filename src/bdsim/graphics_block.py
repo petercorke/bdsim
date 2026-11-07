@@ -13,7 +13,7 @@ from __future__ import annotations
 import sys
 import math
 import importlib
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 import matplotlib
 import matplotlib.figure
@@ -23,7 +23,19 @@ import matplotlib.pyplot as plt
 from bdsim.block import SinkBlock
 
 if TYPE_CHECKING:
-    from bdsim.components import SimulationState
+    from bdsim.components import OptionsBase, SimulationState
+    from bdsim.connect import Wire
+    from bdsim.run_sim import BDSimState
+
+
+def _options_of(state: SimulationState) -> OptionsBase:
+    """The options of the run that ``state`` belongs to.
+
+    They are set before the run starts, so a block that is started always has them.
+    """
+    if state.options is None:
+        raise RuntimeError("the options of the run are not set")
+    return state.options
 
 
 def is_notebook_backend(backend: str) -> bool:
@@ -94,6 +106,7 @@ class GraphicsBlock(SinkBlock):
             self.TIMESTAMP_FORMAT if timestamp_fmt is None else str(timestamp_fmt)
         )
         self._timestamp_artist: Any = None
+        self._graphics_start_in_progress_run_id: int | None = None
 
     @property
     def fig(self) -> matplotlib.figure.Figure | None:
@@ -122,9 +135,15 @@ class GraphicsBlock(SinkBlock):
     def writer(self, v: Any) -> None:
         self._writer = v
 
+    @property
+    def _run_options(self) -> OptionsBase:
+        """The options of the run this block is part of, once it has started."""
+        return _options_of(self._simstate)
+
     def start(self, simstate: SimulationState) -> None:
         # plt.draw()
         # plt.show(block=False)
+        simstate = cast("BDSimState", simstate)
         run_id = id(simstate)
 
         if (
@@ -137,7 +156,7 @@ class GraphicsBlock(SinkBlock):
             raise RuntimeError("duplicate graphics start detected for block")
 
         self._simstate = simstate
-        self._enabled = simstate.options.graphics
+        self._enabled = self._run_options.graphics
 
         if self.watch:
             # watch-list registration is a data-collection concern, not a
@@ -147,7 +166,7 @@ class GraphicsBlock(SinkBlock):
             # rather than in each subclass's start() so every GraphicsBlock
             # gets it for free.
             for wire in self._input_wires:  # type: ignore[attr-defined]
-                plug = wire.start  # start plug for input wire
+                plug = cast("Wire", wire).start  # start plug for input wire
 
                 # append to the watchlist, bdsim.run() will do the rest
                 simstate.watchlist.append(plug)
@@ -199,7 +218,7 @@ class GraphicsBlock(SinkBlock):
 
         if self._movie is not None:
             try:
-                fps = float(getattr(self._simstate.options, "animation_rate", 10.0))
+                fps = float(getattr(self._run_options, "animation_rate", 10.0))
                 if fps <= 0:
                     fps = 10.0
                 fps_int = max(1, int(round(fps)))
@@ -251,7 +270,7 @@ class GraphicsBlock(SinkBlock):
         self._update_timestamp(t)
 
         # bring the figure up to date in a backend-specific way
-        if self._simstate.options.animation:
+        if self._run_options.animation:
             notebook_backend = bool(getattr(self._simstate, "notebook_backend", False))
             tiled = getattr(self._simstate, "ntiles", None) not in (None, [], [1, 1])
             draw_key = float(t)
@@ -266,7 +285,7 @@ class GraphicsBlock(SinkBlock):
                 pass
             elif not already_drawn:
                 if tiled and self._fig is not None:
-                    self._fig._bdsim_last_draw_t = draw_key
+                    setattr(self._fig, "_bdsim_last_draw_t", draw_key)
 
                 if self._simstate.backend == "TkAgg":
                     self._fig.canvas.flush_events()  # type: ignore[union-attr]
@@ -364,15 +383,16 @@ class GraphicsBlock(SinkBlock):
             backend: str = matplotlib.get_backend()
             x = int(x) + gstate.xoffset
             y = int(y)
+            manager = cast(Any, f.canvas.manager)
             if backend == "TkAgg":
-                f.canvas.manager.window.wm_geometry(f"+{x}+{y}")
+                manager.window.wm_geometry(f"+{x}+{y}")
             elif backend == "WXAgg":
-                f.canvas.manager.window.SetPosition((x, y))
+                manager.window.SetPosition((x, y))
             else:
                 # This works for QT and GTK
                 # You can also use window.setGeometry
                 try:
-                    f.canvas.manager.window.move(x, y)
+                    manager.window.move(x, y)
                 except AttributeError:
                     # Native MacOSX backend does not expose a window move API.
                     if (
@@ -388,8 +408,8 @@ class GraphicsBlock(SinkBlock):
                         gstate._warned_nomove = True
                     pass  # can't do this for MacOSX
 
-        gstate = state
-        options = state.options
+        gstate = cast("BDSimState", state)
+        options = _options_of(gstate)
         f: matplotlib.figure.Figure
         dpi: float
         row = 0
@@ -699,7 +719,7 @@ class GraphicsBlock(SinkBlock):
 
         if not getattr(f, "_bdsim_global_keys", False):
             f.canvas.mpl_connect("key_press_event", onkeypress)
-            f._bdsim_global_keys = True
+            setattr(f, "_bdsim_global_keys", True)
 
         self.bd.runtime.DEBUG(  # type: ignore[attr-defined]
             "graphics", "create figure {:d} at ({:d}, {:d})", gstate.fignum, row, col
