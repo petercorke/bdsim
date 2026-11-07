@@ -279,7 +279,7 @@ class GraphMixin:
             if graph_format == "mermaid_fenced":
                 text = "```mermaid\n" + text + "```\n"
         elif graph_format == "graphml":
-            node_ids: dict[Any, str] = {}
+            node_ids = {}
 
             def _xml_escape(value: str) -> str:
                 return (
@@ -338,7 +338,7 @@ class GraphMixin:
             lines.extend(["  </graph>", "</graphml>"])
             text = "\n".join(lines) + "\n"
         elif graph_format == "elk":
-            node_ids: dict[Any, str] = {}
+            node_ids = {}
             port_ids: dict[tuple[Any, str, int], str] = {}
 
             children = []

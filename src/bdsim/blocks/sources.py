@@ -17,7 +17,7 @@ from bdsim.components import EventSource, SourceBlock
 from bdsim.signature import maybe_asarray, unify
 
 if TYPE_CHECKING:
-    from bdsim.analysis import Index
+    import bdsim.analysis
     from bdsim.components import Block, Clock
 
 
@@ -173,7 +173,7 @@ class _StateReader:
         ]
 
     @property
-    def index(self) -> Index:
+    def index(self) -> "bdsim.analysis.Index":
         """
         Which elements of the output belong to which block.
 
