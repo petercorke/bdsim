@@ -5,7 +5,10 @@ It is not printed in a notebook, where the docstring is noise, or with quiet.
 
 import contextlib
 import io
+import runpy
+import tempfile
 import unittest
+from pathlib import Path
 from unittest import mock
 
 import bdsim.run_sim
@@ -20,9 +23,12 @@ sim = bdsim.BDSim(sysargs=False, graphics=False, progress=False, **options)
 
 def banner_text(notebook: bool, **options) -> str:
     out = io.StringIO()
-    with mock.patch.object(bdsim.run_sim.smb, "isnotebook", return_value=notebook):
-        with contextlib.redirect_stdout(out):
-            exec(compile(SCRIPT, "script.py", "exec"), {"options": options})
+    with tempfile.TemporaryDirectory() as directory:
+        script = Path(directory) / "script.py"
+        script.write_text(SCRIPT)
+        with mock.patch.object(bdsim.run_sim.smb, "isnotebook", return_value=notebook):
+            with contextlib.redirect_stdout(out):
+                runpy.run_path(str(script), init_globals={"options": options})
     return out.getvalue()
 
 
