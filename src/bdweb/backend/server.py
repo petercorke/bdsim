@@ -242,7 +242,25 @@ def get_block_info(name: str) -> dict[str, Any]:
 # Filesystem browser  (rooted at ~, serves dirs + .bd files only)
 # ---------------------------------------------------------------------------
 
-_FS_ROOT = Path.home()
+_FS_ROOT = Path(os.environ.get("BDWEB_ROOT", str(Path.home()))).expanduser().resolve()
+
+
+def _confined_path(raw: str) -> Path:
+    """Resolve a user-supplied path inside ``_FS_ROOT``, or raise 403.
+
+    Relative paths are taken relative to the root, matching ``/api/ls``.
+    ``expanduser`` + ``resolve`` follow ``~`` and symlinks, so escapes via
+    ``..``, ``~`` or a symlink pointing outside the root are all rejected.
+    """
+    p = Path(raw).expanduser()
+    if not p.is_absolute():
+        p = _FS_ROOT / p
+    p = p.resolve()
+    try:
+        p.relative_to(_FS_ROOT)
+    except ValueError:
+        raise HTTPException(status_code=403, detail="Path outside the root directory")
+    return p
 
 
 @app.get("/api/ls")
@@ -337,7 +355,7 @@ def _bd_to_diagram(raw: dict) -> dict:
 
 @app.post("/api/load")
 def load_file(req: LoadRequest) -> dict[str, Any]:
-    p = Path(req.path).expanduser().resolve()
+    p = _confined_path(req.path)
     if not p.exists():
         raise HTTPException(status_code=404, detail=f"File not found: {p}")
     if p.suffix != ".bd":
@@ -348,7 +366,7 @@ def load_file(req: LoadRequest) -> dict[str, Any]:
 
 @app.get("/api/exists")
 def file_exists(path: str) -> dict[str, bool]:
-    p = Path(path).expanduser().resolve()
+    p = _confined_path(path)
     return {"exists": p.exists()}
 
 
@@ -433,7 +451,7 @@ def _diagram_to_bd(diagram: dict) -> dict:
 
 @app.post("/api/save")
 def save_file(req: SaveRequest) -> dict[str, str]:
-    p = Path(req.path).expanduser().resolve()
+    p = _confined_path(req.path)
     p.parent.mkdir(parents=True, exist_ok=True)
     p.write_text(json.dumps(_diagram_to_bd(req.diagram), indent=2))
     return {"saved": str(p)}
@@ -456,7 +474,7 @@ def run_diagram(req: RunRequest) -> dict[str, Any]:
     Matplotlib windows open natively and close when bdrun exits.
     """
     import subprocess
-    p = Path(req.path).expanduser().resolve()
+    p = _confined_path(req.path)
     if not p.exists():
         raise HTTPException(status_code=404, detail=f"File not found: {p}")
     if p.suffix != ".bd":
