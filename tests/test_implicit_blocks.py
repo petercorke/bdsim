@@ -32,7 +32,7 @@ class NamesTest(unittest.TestCase):
         bd = sim().blockdiagram()
         x = bd.STEP(1, name="x")
         y = 3 * x + 1
-        z = (y**2) * np.array([[1.0, 2.0]])
+        (y**2) * np.array([[1.0, 2.0]])
         names = [b.name for b in bd.blocklist]
         self.assertIn("_gain.0", names)
         self.assertIn("_const.0", names)
