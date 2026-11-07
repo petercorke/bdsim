@@ -26,8 +26,16 @@ if TYPE_CHECKING:
     from bdsim.components import OptionsBase, SimulationState
     from bdsim.connect import Wire
     from bdsim.run_sim import BDSimState
-else:
-    OptionsBase = Wire = BDSimState = Any
+
+
+def _options_of(state: SimulationState) -> OptionsBase:
+    """The options of the run that ``state`` belongs to.
+
+    They are set before the run starts, so a block that is started always has them.
+    """
+    if state.options is None:
+        raise RuntimeError("the options of the run are not set")
+    return state.options
 
 
 def is_notebook_backend(backend: str) -> bool:
@@ -127,10 +135,15 @@ class GraphicsBlock(SinkBlock):
     def writer(self, v: Any) -> None:
         self._writer = v
 
+    @property
+    def _run_options(self) -> OptionsBase:
+        """The options of the run this block is part of, once it has started."""
+        return _options_of(self._simstate)
+
     def start(self, simstate: SimulationState) -> None:
         # plt.draw()
         # plt.show(block=False)
-        simstate = cast(BDSimState, simstate)
+        simstate = cast("BDSimState", simstate)
         run_id = id(simstate)
 
         if (
@@ -143,7 +156,7 @@ class GraphicsBlock(SinkBlock):
             raise RuntimeError("duplicate graphics start detected for block")
 
         self._simstate = simstate
-        self._enabled = cast(OptionsBase, simstate.options).graphics
+        self._enabled = self._run_options.graphics
 
         if self.watch:
             # watch-list registration is a data-collection concern, not a
@@ -153,7 +166,7 @@ class GraphicsBlock(SinkBlock):
             # rather than in each subclass's start() so every GraphicsBlock
             # gets it for free.
             for wire in self._input_wires:  # type: ignore[attr-defined]
-                plug = cast(Wire, wire).start  # start plug for input wire
+                plug = cast("Wire", wire).start  # start plug for input wire
 
                 # append to the watchlist, bdsim.run() will do the rest
                 simstate.watchlist.append(plug)
@@ -205,13 +218,7 @@ class GraphicsBlock(SinkBlock):
 
         if self._movie is not None:
             try:
-                fps = float(
-                    getattr(
-                        cast(OptionsBase, self._simstate.options),
-                        "animation_rate",
-                        10.0,
-                    )
-                )
+                fps = float(getattr(self._run_options, "animation_rate", 10.0))
                 if fps <= 0:
                     fps = 10.0
                 fps_int = max(1, int(round(fps)))
@@ -263,7 +270,7 @@ class GraphicsBlock(SinkBlock):
         self._update_timestamp(t)
 
         # bring the figure up to date in a backend-specific way
-        if cast(OptionsBase, self._simstate.options).animation:
+        if self._run_options.animation:
             notebook_backend = bool(getattr(self._simstate, "notebook_backend", False))
             tiled = getattr(self._simstate, "ntiles", None) not in (None, [], [1, 1])
             draw_key = float(t)
@@ -401,8 +408,8 @@ class GraphicsBlock(SinkBlock):
                         gstate._warned_nomove = True
                     pass  # can't do this for MacOSX
 
-        gstate = cast(BDSimState, state)
-        options = cast(OptionsBase, gstate.options)
+        gstate = cast("BDSimState", state)
+        options = _options_of(gstate)
         f: matplotlib.figure.Figure
         dpi: float
         row = 0
