@@ -484,7 +484,7 @@ class Deriv_S(SampledBlock):
 
     .. versionadded:: 1.2.0
 
-    :seealso: :class:`Integrator`
+    :seealso: :class:`Integrator_S`
     """
 
     nin = 1
@@ -589,6 +589,8 @@ class LTI_SS_S(SampledBlock):
     is the system :math:`x_k=-2x_{k-1}+u_k, y_k=-x_k`.
 
     .. versionadded:: 1.2.0
+
+    :seealso: :class:`~bdsim.blocks.sampled.LTI_SISO_S` :class:`~bdsim.blocks.continuous.LTI_SS`
     """
 
     nin = 1
@@ -762,13 +764,15 @@ class LTI_SISO_S(_TFParams, LTI_SS_S):
     order, ie. :math:`2z^2 - 4z +3` is ``[2, -4, 3]``, :math:`1 - z^{-1} + 2 z^{-2}` is ``[1, -1, 2]``.
 
     The state-space form can be either controller canonical form or observer canonical
-    form, as specified by the ``form`` argument. For either
+    form, as specified by the ``form`` argument. For either case, the state is the
+    output of a chain of integrators, and the ``order`` argument controls the order in
+    which they are mapped to rows of the state-transition matrix.
 
     Examples::
 
         lti = bd.LTI_SISO_S(clock, num=[1, 2], den=[2, 3, -4])
 
-    is the transfer function :math:`\frac{s+2}{2s^2+3s-4}`.
+    is the transfer function :math:`\frac{z+2}{2z^2+3z-4}`.
 
     .. note::
       * The state-space realization is not unique. The controller canonical form is more common
@@ -777,7 +781,15 @@ class LTI_SISO_S(_TFParams, LTI_SS_S):
         specified by the ``order`` argument, and results in either 1s on the super-diagonal
         or sub-diagonal of the A matrix for the controller canonical form.
 
+      * This block is single-input single-output.  For a system with more than
+        one input or output, convert the transfer function to state-space form with
+        :func:`scipy.signal.tf2ss`, which takes several numerators with a common
+        denominator, or :func:`control.tf2ss` for a full transfer function matrix,
+        and create the block with :class:`~bdsim.blocks.sampled.LTI_SS_S`.
+
     .. versionadded:: 1.2.0
+
+    :seealso: :class:`~bdsim.blocks.sampled.LTI_SS_S` :class:`~bdsim.blocks.continuous.LTI_SISO`
     """
 
     nin = 1
@@ -1554,7 +1566,11 @@ class Mnoise_S(_NoiseMixin, SampledBlock):
 
 @deprecated_block("Integrator_S")
 class DIntegrator(Integrator_S):
-    r"""Deprecated: use ``Integrator_S`` instead."""
+    r"""
+    :blockname:`DINTEGRATOR <INTEGRATOR_S>`
+
+    Deprecated: use ``Integrator_S`` instead.
+    """
 
 
 if __name__ == "__main__":  # pragma: no cover

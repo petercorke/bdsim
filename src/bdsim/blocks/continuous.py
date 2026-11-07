@@ -420,6 +420,8 @@ class LTI_SS(ContinuousBlock):
         lti = bd.LTI_SS(A=np.array([[-2.0]]), B=np.array([1.0]), C=np.array([-1.0]))
 
     is the system :math:`\dot{x}=-2x+u, y=-x`.
+
+    :seealso: :class:`~bdsim.blocks.continuous.LTI_SISO` :class:`~bdsim.blocks.sampled.LTI_SS_S`
     """
 
     nin = 1
@@ -830,6 +832,14 @@ class LTI_SISO(_TFParams, LTI_SS):
       * The state ordering convention (the direction of the integrator chain) can be
         specified by the ``order`` argument, and results in either 1s on the super-diagonal
         or sub-diagonal of the A matrix for the controller canonical form.
+
+    .. note:: This block is single-input single-output.  For a system with more than
+        one input or output, convert the transfer function to state-space form with
+        :func:`scipy.signal.tf2ss`, which takes several numerators with a common
+        denominator, or :func:`control.tf2ss` for a full transfer function matrix,
+        and create the block with :class:`~bdsim.blocks.continuous.LTI_SS`.
+
+    :seealso: :class:`~bdsim.blocks.continuous.LTI_SS` :class:`~bdsim.blocks.sampled.LTI_SISO_S`
     """
 
     nin = 1

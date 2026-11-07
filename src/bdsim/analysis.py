@@ -266,9 +266,15 @@ class SystemFunction(Protocol):
 
 
 class SystemFunctions:
-    """
-    The functions :math:`f` and :math:`g` of a block diagram, with the sizes and the
-    maps that say what the vectors are made of.
+    r"""
+    Contains the non-linear system functions of a block diagram 
+    
+    .. math::
+    
+        \dot{x} &= f(x, u, t), \\
+        y &= g(x, u, t)
+    
+    along with the sizes and the maps that say what the vectors are made of.
 
     Returned by :meth:`~bdsim.BlockDiagram.functions` when it is called with
     ``full=True``.  It unpacks as the two functions, which are the pair that
@@ -279,12 +285,28 @@ class SystemFunctions:
         xdot = f(x, u, t)
         y = g(x, u, t)
 
+    ``x``, ``u`` and ``y`` are Numpy arrays and ``t`` is a float.
+
+
     :meth:`fg` computes both from one propagation through the diagram, which is
     half the work of calling ``f`` and then ``g``.
+
 
     Calling it evaluates the diagram, so it is not meant to be used during a
     simulation: the values on the wires and the diagram's state map are
     overwritten.
+
+    .. note:: A hybrid system, which has blocks with discrete (clocked) state as well as
+        continuous state, has no such pair of functions: its next discrete state is
+        not a function of :math:`(x, u, t)` alone, since it depends on the state of the
+        clocks and the discrete state itself.  Such a diagram is not accepted, and
+        :class:`NotImplementedError` names the sampled blocks that are the reason.  To
+        analyse the continuous-time part of a hybrid diagram, build it with source
+        blocks in place of the sampled blocks and make those sources the ``inputs`` of
+        :meth:`~bdsim.BlockDiagram.functions`, so that what the sampled blocks would
+        have output becomes part of :math:`u`.
+
+    :seealso: :meth:`~bdsim.BlockDiagram.functions` :class:`~bdsim.analysis.Linearization`
     """
 
     nx: int  #: number of continuous states
@@ -532,9 +554,16 @@ class Linearization:
     attributes, as are the operating point and the maps that say which signal each
     row and column is.
 
+    It unpacks as ``A, B, C, D``::
+
+        lin = bd.linearize(outputs=[x, theta], full=True)
+        A, B, C, D = lin
+
     ``print`` shows the model with each matrix labelled by the names of the
     signals that are its rows and columns, see :meth:`__str__`.  :attr:`poles` are the
     eigenvalues of ``A``.
+
+    :seealso: :meth:`~bdsim.BlockDiagram.linearize` :class:`~bdsim.analysis.SystemFunctions`
     """
 
     A: NDArray  #: :math:`\partial f / \partial x`, shape ``(nx, nx)``
@@ -574,8 +603,8 @@ class Linearization:
 
             import control
 
-            X = bd.linearize(outputs=[x, theta], full=True)
-            sys = X.ss()
+            lin = bd.linearize(outputs=[x, theta], full=True)
+            sys = lin.ss()
             K, S, E = control.lqr(sys, Q, R)
             F = -K * bd.STATE()
 

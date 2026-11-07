@@ -413,7 +413,11 @@ class PoseIntegrator_S(SampledBlock):
 
 @deprecated_block("PoseIntegrator_S")
 class DPoseIntegrator(PoseIntegrator_S):
-    r"""Deprecated: use ``PoseIntegrator_S`` instead."""
+    r"""
+    :blockname:`DPOSEINTEGRATOR <POSEINTEGRATOR_S>`
+
+    Deprecated: use ``PoseIntegrator_S`` instead.
+    """
 
 
 # ------------------------------------------------------------------------ #
