@@ -37,6 +37,7 @@ After `pip install bdsim[bdweb]`:
 ```bash
 bdweb                        # open empty canvas
 bdweb path/to/diagram.bd     # open with a diagram pre-loaded
+bdweb --root ~/diagrams      # confine the file API to a directory (default: ~)
 bdweb --host 0.0.0.0         # expose to the network (NOT SAFE on untrusted networks)
 ```
 
@@ -44,6 +45,11 @@ The backend binds to `127.0.0.1` (loopback) by default, so the editor is only re
 from the machine it runs on. `--host` overrides the bind interface; passing anything other
 than loopback prints a warning, because the API can read, write and run files reachable by
 the server process.
+
+The file API (`/api/ls`, `/api/load`, `/api/save`, `/api/exists`, `/api/run`) is confined
+to a root directory: `~` by default, or `--root DIR`. Relative paths are resolved against
+the root; any path that resolves outside it — including via `..`, `~` or a symlink — is
+rejected with 403.
 
 `bdweb` auto-detects which mode to use:
 
@@ -141,17 +147,20 @@ Handles are displayed as small triangles: output handles point **right**, input 
 |---|---|---|
 | `GET` | `/api/blocks` | Full block library, grouped by block class (Source, Sink, Function, ...), with introspected parameters |
 | `GET` | `/api/blockinfo/{name}` | Metadata for a single block (docs URL, params); name is case-insensitive, 404 if unknown |
-| `GET` | `/api/ls?dir=…` | List directories and `.bd` files; `dir` is relative to `~` and cannot escape it (403) |
-| `GET` | `/api/exists?path=…` | Check whether a file path exists |
-| `POST` | `/api/load` | Load a `.bd` file (`{"path": ...}`); returns diagram JSON |
-| `POST` | `/api/save` | Save diagram JSON (`{"path": ..., "diagram": ...}`) as a `.bd` file, creating parent directories |
-| `POST` | `/api/run` | Run a saved `.bd` file with `bdrun` in a subprocess (`{"path": ..., "timeout": 120}`); returns `stdout`, `stderr`, `returncode`. Matplotlib windows open natively on the server |
+| `GET` | `/api/ls?dir=…` | List directories and `.bd` files; `dir` is relative to the root (`~` by default, `--root DIR`) and cannot escape it (403) |
+| `GET` | `/api/exists?path=…` | Check whether a file path exists (inside the root) |
+| `POST` | `/api/load` | Load a `.bd` file (`{"path": ...}`) inside the root; returns diagram JSON |
+| `POST` | `/api/save` | Save diagram JSON (`{"path": ..., "diagram": ...}`) as a `.bd` file inside the root, creating parent directories |
+| `POST` | `/api/run` | Run a saved `.bd` file inside the root with `bdrun` in a subprocess (`{"path": ..., "timeout": 120}`); returns `stdout`, `stderr`, `returncode`. Matplotlib windows open natively on the server |
 
 > **Security: not safe to expose to a network yet.** `bdweb` binds to `127.0.0.1` by
-> default; exposing it with `--host` is at your own risk. Only `/api/ls` is confined to `~`.
-> `/api/load`, `/api/save`, `/api/exists` and `/api/run` accept any path the server process
-> can reach. Run it only on a machine and network you trust until this is addressed. Tracked in
-> [#118](https://github.com/petercorke/bdsim/issues/118).
+> default; exposing it with `--host` is at your own risk. The file API (`/api/ls`,
+> `/api/load`, `/api/save`, `/api/exists`, `/api/run`) is confined to the root directory
+> (`~` by default, `--root DIR` to change): paths resolving outside it, including via
+> `..`, `~` or symlinks, are rejected with 403. This is path confinement, not a sandbox —
+> files inside the root are still fully readable, writable and runnable, and `/api/run`
+> executes `bdrun` with the server process's privileges. Run it only on a machine and
+> network you trust. Tracked in [#118](https://github.com/petercorke/bdsim/issues/118).
 
 See [BDFILE.md](BDFILE.md) for the `.bd` file format specification.
 

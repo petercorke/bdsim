@@ -130,7 +130,22 @@ def main() -> None:
             "networks: the API can read, write and run files"
         ),
     )
+    parser.add_argument(
+        "--root",
+        default=str(Path.home()),
+        help=(
+            "root directory the file API (ls/load/save/exists/run) is confined to "
+            "(default: the home directory). Paths resolving outside it, including "
+            "via .., ~ or symlinks, are rejected with 403"
+        ),
+    )
     args = parser.parse_args()
+
+    root = Path(args.root).expanduser().resolve()
+    if not root.is_dir():
+        print(f"[bdweb] ERROR: --root is not a directory: {root}", file=sys.stderr)
+        sys.exit(1)
+    os.environ["BDWEB_ROOT"] = str(root)
 
     bd_file: str | None = None
     if args.diagram is not None:
