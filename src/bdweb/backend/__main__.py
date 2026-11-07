@@ -4,10 +4,12 @@ bdweb — start backend + frontend dev server and open the browser.
 Usage:
     bdweb                  # empty canvas
     bdweb path/to/file.bd  # canvas pre-loaded with the given diagram
+    bdweb --host 0.0.0.0   # expose to the network (see the security warning)
 """
 
 from __future__ import annotations
 
+import argparse
 import os
 import signal
 import socket
@@ -105,16 +107,49 @@ def _start_vite(vite_port: int) -> "subprocess.Popen[str] | None":
 
 def main() -> None:
     # ── Parse arguments ────────────────────────────────────────────────────
+    parser = argparse.ArgumentParser(
+        prog="bdweb",
+        description="bdsim web-based block diagram editor.",
+        epilog=(
+            "Security: the backend can read, write and run files reachable by the server "
+            "process. It binds to loopback by default; only pass --host on a machine and "
+            "network you trust."
+        ),
+    )
+    parser.add_argument(
+        "diagram",
+        nargs="?",
+        help="optional .bd file to pre-load into the canvas",
+    )
+    parser.add_argument(
+        "--host",
+        default="127.0.0.1",
+        help=(
+            "interface to bind the backend to (default: %(default)s, loopback only). "
+            "Use 0.0.0.0 to expose the editor to the network — NOT SAFE on untrusted "
+            "networks: the API can read, write and run files"
+        ),
+    )
+    args = parser.parse_args()
+
     bd_file: str | None = None
-    for arg in sys.argv[1:]:
-        p = Path(arg)
-        if p.suffix == ".bd":
-            if not p.exists():
-                print(f"[bdweb] ERROR: file not found: {p}", file=sys.stderr)
-                sys.exit(1)
-            bd_file = str(p.expanduser().resolve())
-        else:
-            print(f"[bdweb] WARNING: ignoring unknown argument '{arg}'", file=sys.stderr)
+    if args.diagram is not None:
+        p = Path(args.diagram)
+        if p.suffix != ".bd":
+            print(f"[bdweb] ERROR: not a .bd file: {p}", file=sys.stderr)
+            sys.exit(1)
+        if not p.exists():
+            print(f"[bdweb] ERROR: file not found: {p}", file=sys.stderr)
+            sys.exit(1)
+        bd_file = str(p.expanduser().resolve())
+
+    host: str = args.host
+    if host not in ("127.0.0.1", "localhost", "::1"):
+        print(
+            f"[bdweb] WARNING: binding to {host} exposes the editor to the network. "
+            "The API can read, write and run files — only do this on a trusted network.",
+            file=sys.stderr,
+        )
 
     # ── Decide: production build or Vite dev server ────────────────────────
     _frontend_build = Path(__file__).parent.parent / "frontend" / "build"
@@ -162,7 +197,7 @@ def main() -> None:
     try:
         uvicorn.run(
             "bdweb.backend.server:app",
-            host="0.0.0.0",
+            host=host,
             port=api_port,
             reload=False,
             log_level="warning",  # suppress per-request noise; errors still shown
