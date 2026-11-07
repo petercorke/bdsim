@@ -69,7 +69,11 @@ class ReportMixin:
             print(f"{blocktype:12s}: ", ", ".join(names))
 
     def report_summary(
-        self, sortby: str = "name", depth: int | None = None, **kwargs: Any
+        self,
+        sortby: str = "name",
+        depth: int | None = None,
+        implicit: bool = True,
+        **kwargs: Any,
     ) -> None:
         """
         Print a summary of block diagram.
@@ -78,8 +82,11 @@ class ReportMixin:
         :type sortby: str, optional
         :param depth: only show blocks with subsystem depth less than or equal to this value, defaults to None (show all)
         :type depth: int, optional
+        :param implicit: show implicit blocks, defaults to True
+        :type implicit: bool, optional
         :param kwargs: options passed to :meth:`ansitable.table.ANSIMatrix.print`
         :type kwargs: dict
+        :raises ValueError: ``sortby`` is not "name" or "type"
 
         Print a table with 4 columns:
 
@@ -89,6 +96,11 @@ class ReportMixin:
         4. The type of value driving this port (if not a source block)
 
         If the block is an event source, add a ``@`` suffix.
+
+        Implicit blocks are those created for the user, such as the constants
+        and gains made by writing ``2 * x`` or ``x + 1``, whose names start with
+        ``_``.  They are listed after all the other blocks, sorted in the same
+        way, or hidden if ``implicit`` is False.
         """
 
         table = ANSITable(
@@ -106,10 +118,18 @@ class ReportMixin:
             sortfunc: Callable[[Block], Any] = lambda x: x.name
         elif sortby == "type":
             sortfunc = lambda x: x.type
+        else:
+            raise ValueError(f"sortby must be 'name' or 'type', not {sortby!r}")
+
+        def is_implicit(b: Block) -> bool:
+            return (b.name or "").startswith("_")
 
         first = True
         legend = None
-        for b in sorted(self.blocklist, key=sortfunc):
+        blocks = sorted(self.blocklist, key=lambda b: (is_implicit(b), sortfunc(b)))
+        for b in blocks:
+            if not implicit and is_implicit(b):
+                continue
             if depth is not None:
                 # show blocks with depth less than or equal to depth
                 skip = b._depth > depth
