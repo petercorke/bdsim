@@ -38,8 +38,10 @@ class NotebooksSmokeTest(unittest.TestCase):
             self.skipTest("nbconvert is not installed; skipping notebook smoke tests")
 
         env = os.environ.copy()
-        # Force a headless backend so plots do not require an interactive display.
+        # Force a headless backend so plots do not require an interactive display,
+        # and turn graphics off in bdsim, which is faster: nothing is drawn.
         env["MPLBACKEND"] = "Agg"
+        env["BDSIM_NO_GRAPHICS"] = "1"
 
         for notebook in NOTEBOOK_FILES:
             if notebook in SKIP_NOTEBOOKS:
