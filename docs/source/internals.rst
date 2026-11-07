@@ -56,6 +56,12 @@ invoke it.
    :show-inheritance:
    :special-members: __init__
 
+The keyword options that :meth:`BDSim.run` takes, for that run only:
+
+.. autoclass:: bdsim.RunOptions
+   :members:
+   :undoc-members:
+
 BDStruct class
 ==============
 
