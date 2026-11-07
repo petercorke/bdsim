@@ -121,14 +121,11 @@ class ReportMixin:
         else:
             raise ValueError(f"sortby must be 'name' or 'type', not {sortby!r}")
 
-        def is_implicit(b: Block) -> bool:
-            return (b.name or "").startswith("_")
-
         first = True
         legend = None
-        blocks = sorted(self.blocklist, key=lambda b: (is_implicit(b), sortfunc(b)))
+        blocks = sorted(self.blocklist, key=lambda b: (b.implicit, sortfunc(b)))
         for b in blocks:
-            if not implicit and is_implicit(b):
+            if not implicit and b.implicit:
                 continue
             if depth is not None:
                 # show blocks with depth less than or equal to depth
@@ -137,7 +134,7 @@ class ReportMixin:
                     skip = False
                 if skip:
                     continue
-            name: str = b.name or ""
+            name: str = b.label
             if isinstance(b, EventSource):
                 name += "@"
                 legend = "Note: @ = event source"
@@ -152,7 +149,7 @@ class ReportMixin:
                 # non source block, list all its inputs, one per row
                 for port, source in enumerate(b.inports):
                     typ = _signature_str(b.insig[port])
-                    src_name = source.block.name or ""
+                    src_name = source.block.label
                     if source.block.nout > 1:
                         src_name += f"[{source.port}]"
                     if port == 0:
@@ -210,7 +207,7 @@ class ReportMixin:
         nstates = 0
         ndstates = 0
         for b in self.blocklist:
-            table.row(b.id, b.name, b.nin, b.nout, b.nstates, b.ndstates, b.type)
+            table.row(b.id, b.label, b.nin, b.nout, b.nstates, b.ndstates, b.type)
             nstates += b.nstates
             ndstates += b.ndstates
         table.rule()
@@ -287,7 +284,7 @@ class ReportMixin:
                     if plug is None:
                         source, signature = "?", None
                     else:
-                        source = f"{plug.block.name}[{plug.port}]"
+                        source = f"{plug.block.label}[{plug.port}]"
                         sigs = getattr(plug.block, "outsig", None)
                         signature = sigs[plug.port] if sigs else None
                     table.row(
@@ -377,7 +374,7 @@ class ReportMixin:
         )
 
         for sequence, group in enumerate(self.plan):
-            table.row(sequence, ", ".join([b.name for b in group]))
+            table.row(sequence, ", ".join([b.label for b in group]))
 
         table.print(**kwargs)
 
@@ -385,7 +382,7 @@ class ReportMixin:
         self, t: float | None = None, simstate: SimulationState | None = None
     ) -> None:
         for b in self.blocklist:
-            print(f"Block {b.name}:")
+            print(f"Block {b.label}:")
             print("  inputs:  ", b.inport_values)
             if b.nout > 0:
                 print("  outputs: ", [b.outport_value(i) for i in range(b.nout)])

@@ -333,6 +333,7 @@ class Gain(FunctionBlock):
 
     nin = 1
     nout = 1
+    _display_param = "K"  # shown in the label of an implicit block
 
     def __init__(
         self,
@@ -418,6 +419,7 @@ class Pow(FunctionBlock):
 
     nin = 1
     nout = 1
+    _display_param = "p"  # shown in the label of an implicit block
 
     def __init__(
         self, p: int | float = 1, matrix: bool = False, **blockargs: Any

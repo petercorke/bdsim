@@ -295,7 +295,7 @@ class SelectionTest(unittest.TestCase):
         np.testing.assert_allclose(first.g([], [10.0, 20.0]), [10.0])
 
     def test_a_number_in_an_expression_is_a_parameter_not_an_input(self):
-        # "+ 1.0" makes a CONSTANT block named _const.0(1) behind the scenes
+        # "+ 1.0" makes a CONSTANT block named _const.0 behind the scenes
         bd = new_diagram()
         step = bd.STEP(1, name="demand")
         offset = step + 1.0
@@ -303,7 +303,7 @@ class SelectionTest(unittest.TestCase):
         bd.compile(verbose=False)
         implicit = [b for b in bd.blocklist if b.type == "constant"]
         self.assertEqual(len(implicit), 1)
-        self.assertTrue(implicit[0]._implicit)
+        self.assertTrue(implicit[0].implicit)
         sysf = bd.functions(full=True)
         self.assertEqual(sysf.uindex.names, ["demand"])
         # y = u + 1 holds for any u: the 1 is not available to be changed
@@ -317,7 +317,7 @@ class SelectionTest(unittest.TestCase):
         gain = bd.CONSTANT(2.0, name="mine")
         bd.connect(gain, bd.NULL(1, name="y"))
         bd.compile(verbose=False)
-        self.assertFalse(bd["mine"]._implicit)
+        self.assertFalse(bd["mine"].implicit)
         self.assertEqual(bd.functions(full=True).uindex.names, ["mine"])
 
     def test_time_cannot_be_an_input(self):
