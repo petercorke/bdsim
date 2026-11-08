@@ -92,6 +92,6 @@ Part of the RVC ecosystem. **Read [rvc-ecosystem/AGENTS.md](https://github.com/p
 Multiple agents often work on the same open issue at once, producing duplicate PRs. Before writing code for an issue:
 
 1. Search for an existing PR for it: `gh pr list --state open --search "#<issue>"`, and check the issue's linked pull requests and assignee. If a PR already exists, or the issue is assigned to someone else, **do not open a competing PR**. Comment on the existing one instead.
-2. Comment on the issue to claim it before starting.
+2. Comment on the issue to ask to be assigned, then **stop**. Do not write code or open a pull request until the issue is assigned to the account you act for. If you cannot wait for a person to answer, do not contribute to this repository. Answer maintainers' questions: a pull request whose author does not reply may be closed.
 3. Disclose AI assistance in the PR description, and state whether the change alters numerical results or public behaviour.
 4. One concern per PR, matching `CONTRIBUTING.md`.
