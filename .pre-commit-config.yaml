@@ -4,7 +4,7 @@
 # CI runs the same hooks (ci.yml, lint job).
 repos:
   - repo: https://github.com/petercorke/rvc-ecosystem
-    rev: 64fedc12dd65251e0435dabedd012875b98d0ac5  # main on 2026-11-08; a tag (v1) once there is one
+    rev: 29a9ec8850591efca8a84ee54d4767fdd7bc76ed  # main on 2026-11-08; a tag (v1) once there is one
     hooks:
       - id: notebooks-clear-outputs
       - id: notebooks-sync-bootstrap
