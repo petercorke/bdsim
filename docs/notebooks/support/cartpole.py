@@ -38,7 +38,6 @@ def cartpole_init(self, fig, ax):
     pole_w, pole_h = 0.1, 2.0
 
     # Pivot point relative to the cart: top-middle
-    pivot_x_rel = cart_w / 2.0
     pivot_y_rel = cart_h
 
     # 3. Create the patches at the origin (0,0)
