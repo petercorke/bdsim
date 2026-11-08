@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import importlib.util
 import os
 import subprocess
 import sys
@@ -38,6 +39,13 @@ class NotebooksSmokeTest(unittest.TestCase):
         except ImportError:
             self.skipTest("nbconvert is not installed; skipping notebook smoke tests")
 
+        # icra2026 uses robotics-toolbox-python, which is not a bdsim dependency
+        skip = dict(SKIP_NOTEBOOKS)
+        if importlib.util.find_spec("roboticstoolbox") is None:
+            skip["icra2026.ipynb"] = (
+                "needs roboticstoolbox-python, which is not installed"
+            )
+
         env = os.environ.copy()
         # Force a headless backend so plots do not require an interactive display,
         # and turn graphics off in bdsim, which is faster: nothing is drawn.
@@ -50,7 +58,7 @@ class NotebooksSmokeTest(unittest.TestCase):
         self.addCleanup(outdir.cleanup)
 
         for notebook in NOTEBOOK_FILES:
-            if notebook in SKIP_NOTEBOOKS:
+            if notebook in skip:
                 continue
 
             with self.subTest(notebook=notebook):

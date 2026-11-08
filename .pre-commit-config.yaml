@@ -1,0 +1,11 @@
+# The checks that keep the notebooks in docs/notebooks in step, from rvc-ecosystem:
+# outputs cleared, the generated bootstrap cell up to date, the first cell well formed.
+# See docs/notebooks/README.md.  Install the hooks once with:  pre-commit install
+# CI runs the same hooks (ci.yml, lint job).
+repos:
+  - repo: https://github.com/petercorke/rvc-ecosystem
+    rev: 29a9ec8850591efca8a84ee54d4767fdd7bc76ed  # main on 2026-11-08; a tag (v1) once there is one
+    hooks:
+      - id: notebooks-clear-outputs
+      - id: notebooks-sync-bootstrap
+      - id: notebooks-first-cell
