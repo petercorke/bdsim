@@ -11,16 +11,17 @@ Please use the issue template and include:
 
 ## Looking for somewhere to start?
 
-Issues labelled [`good first issue`](https://github.com/petercorke/bdsim/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) or [`help wanted`](https://github.com/petercorke/bdsim/issues?q=is%3Aissue+is%3Aopen+label%3A%22help+wanted%22) are a good place to start.
+Issues labelled [`good first issue`](https://github.com/petercorke/bdsim/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) or [`help wanted`](https://github.com/petercorke/bdsim/issues?q=is%3Aissue+is%3Aopen+label%3A%22help+wanted%22) are a good place to start. Issues labelled `good first issue` are meant for people making a first contribution, and are assigned to one person at a time.
 
 ## Before you open a pull request
 
 Several people (and AI coding agents) often pick up the same issue at about the same time, which wastes everyone's effort. To avoid duplicates:
 
 1. **Check for existing work.** Look at the linked pull requests on the issue page, and search open PRs, for example `gh pr list --state open --search "#123"`. If a PR for the same issue already exists, review it or suggest improvements there instead of opening a competing one.
-2. **Claim the issue.** Comment on the issue to say you are working on it. For larger items, the maintainer may assign the issue to you as an "in progress" marker; if you stop working on it, please say so, so someone else can take it.
+2. **Ask to be assigned, and wait.** Comment on the issue to say you would like to work on it, and tell us in a sentence how you use bdsim or what you hope to learn. A comment is a request, not a claim: please do not start, and do not open a pull request, until a maintainer has assigned the issue to you. A pull request for an issue that is not assigned to its author may be closed without review. Small documentation fixes (typos, wording) do not need an issue: just open a pull request. If you stop working on it, please say so, so someone else can take it.
 3. **Say if you used AI assistance.** AI-assisted contributions are welcome, but please state it in the PR description, and make sure you have read, run and understood the change yourself.
 4. **Flag behaviour changes.** If a change alters numerical results or public behaviour, say so explicitly in the PR description, even if it is a bug fix.
+5. **Reply when we ask.** AI-assisted contributions are welcome when a person is responsible for them, reads the discussion and answers questions. If a maintainer asks you something and there is no reply within a week, we may unassign you and close the pull request.
 
 ## Contributing code
 
