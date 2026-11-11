@@ -934,6 +934,27 @@ class LinearizationSSTest(unittest.TestCase):
         bd, _ = lti_diagram()
         self.assertEqual(bd.linearize(full=True).ss(name="plant").name, "plant")
 
+    def test_a_dot_in_a_name_becomes_an_underscore_for_python_control(self):
+        # python-control rejects "." in a signal name, and the names of implicit
+        # blocks, such as _gain.0, have one
+        bd = new_diagram()
+        force = bd.CONSTANT(0.0, name="force")
+        vel = bd.INTEGRATOR(x0=0.0, name="vel")
+        pos = bd.INTEGRATOR(x0=1.0, name="pos.m")
+        bd.connect(force, vel)
+        bd.connect(vel, pos)
+        scaled = pos * 2.0  # an implicit GAIN block
+        bd.connect(scaled, bd.NULL(1, name="y"))
+        bd.compile(verbose=False)
+
+        lin = bd.linearize(outputs=[scaled], full=True)
+        self.assertIn(".", lin.yindex.names[0])  # bdsim's own names are as before
+        self.assertIn(".", lin.xindex.names[1])
+        sys = lin.ss()
+        self.assertEqual(sys.output_labels, [lin.yindex.names[0].replace(".", "_")])
+        self.assertEqual(sys.state_labels[1], lin.xindex.names[1].replace(".", "_"))
+        self.assertFalse(any("." in n for n in sys.output_labels + sys.state_labels))
+
     def test_the_poles_agree(self):
         bd, _ = lti_diagram()
         lin = bd.linearize(full=True)
