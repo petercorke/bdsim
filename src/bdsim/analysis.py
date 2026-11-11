@@ -609,7 +609,10 @@ class Linearization:
             F = -K * bd.STATE()
 
         The signal names carry through, so that systems made this way can be
-        connected by name with :func:`control.interconnect`.
+        connected by name with :func:`control.interconnect`.  python-control does
+        not allow a ``.`` in a signal name, so it is replaced by ``_``: the output of
+        the implicit block ``_gain.0`` is the signal ``_gain_0``.  ``xindex``,
+        ``uindex`` and ``yindex`` keep the names bdsim gave.
 
         python-control is an optional dependency, imported when this method is
         called: ``pip install control``, or install bdsim with the ``control`` extra.
@@ -646,9 +649,9 @@ class Linearization:
             self.C,
             self.D,
             dt=0,
-            states=self.xindex.names,
-            inputs=self.uindex.names,
-            outputs=self.yindex.names,
+            states=[n.replace(".", "_") for n in self.xindex.names],
+            inputs=[n.replace(".", "_") for n in self.uindex.names],
+            outputs=[n.replace(".", "_") for n in self.yindex.names],
             name=name,
         )
 
