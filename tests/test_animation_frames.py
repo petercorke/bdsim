@@ -16,6 +16,7 @@ os.environ.setdefault("MPLBACKEND", "Agg")
 import numpy as np
 
 import bdsim
+from bdsim.display import WidgetDisplayManager
 
 
 def run(T: float = 10, *, animation: bool = True, quiet: bool = True, **options):
@@ -132,12 +133,23 @@ class ReportTest(unittest.TestCase):
 
 class NotebookBackendTest(unittest.TestCase):
     def test_frames_are_counted_when_refreshes_are_rate_limited(self):
-        # a notebook backend redraws at most every 1/6 s of simulated time, however
-        # often the frame callback runs, and only the redraws are counted
-        with mock.patch("matplotlib.get_backend", return_value="widget"):
+        # a notebook backend with no display policy of its own redraws at most every
+        # 1/6 s of simulated time, however often the frame callback runs, and only the
+        # redraws are counted
+        with mock.patch("matplotlib.get_backend", return_value="notebook"):
             stats = run(10, animation_rate=100, max_frames=0)[".stats"]
         self.assertGreater(stats.animation_frames, 0)
         self.assertLess(stats.animation_frames, 100)
+
+    def test_a_widget_backend_honours_animation_rate(self):
+        # ipympl keeps a live canvas, so unlike the generic case it is not limited to
+        # 6 frames per simulated second.  Pacing is switched off so the test is fast.
+        with (
+            mock.patch("matplotlib.get_backend", return_value="widget"),
+            mock.patch.object(WidgetDisplayManager, "speed", None),
+        ):
+            stats = run(10, animation_rate=100, max_frames=0)[".stats"]
+        self.assertGreater(stats.animation_frames, 900)
 
 
 if __name__ == "__main__":

@@ -65,7 +65,7 @@ from bdsim.exceptions import (
 )
 from bdsim.blockdiagram import BlockDiagram
 from bdsim.run_context import SimulationContext, SimulationJob
-from bdsim.display import DisplayManager
+from bdsim.display import DisplayManager, is_widget_backend
 from bdsim.notebook_patches import (
     patch_roboticstoolbox_armplot_for_notebook,
     patch_roboticstoolbox_pyplot_launch_for_notebook,
@@ -1589,6 +1589,7 @@ class BDSim(Runner):
 
             simstate.display_manager = DisplayManager.create(
                 notebook_backend=bool(getattr(simstate, "notebook_backend", False)),
+                backend=str(getattr(simstate, "backend", "")),
             )
 
             # initialize list of time and states
@@ -1690,13 +1691,16 @@ class BDSim(Runner):
                 if simstate.display_manager is None:
                     simstate.display_manager = DisplayManager.create(
                         notebook_backend=notebook_backend,
+                        backend=str(getattr(simstate, "backend", "")),
                     )
                 display_manager = simstate.display_manager
 
                 # Ensure figures are visible before frame callbacks begin.
                 display_manager.show_initial()
                 backend_name = str(getattr(simstate, "backend", "")).lower()
-                if "inline" in backend_name and interactive_dt is not None:
+                if (
+                    "inline" in backend_name or is_widget_backend(backend_name)
+                ) and interactive_dt is not None:
                     notebook_min_refresh_dt = interactive_dt
                 else:
                     notebook_min_refresh_dt = 1.0 / 6.0
@@ -1733,10 +1737,16 @@ class BDSim(Runner):
                         nonlocal last_notebook_refresh_t
                         # Notebook rendering is expensive; limit display updates
                         # to a practical UI frame rate while simulation can run faster.
-                        if t - last_notebook_refresh_t >= notebook_min_refresh_dt:
+                        # Frame times are on a k*dt grid, so t - last is dt only to within
+                        # rounding: 0.03 - 0.02 < 0.01.  Without a tolerance about 40% of
+                        # the frames at the requested rate were skipped.
+                        if t - last_notebook_refresh_t >= notebook_min_refresh_dt * (
+                            1 - 1e-6
+                        ):
                             display_manager.refresh()
                             ss.stats.animation_frames += 1
                             last_notebook_refresh_t = t
+                            display_manager.pace(t)
                             if sys.platform == "emscripten":
                                 # Yield briefly so JupyterLite can process display
                                 # updates instead of coalescing all frames at cell end.

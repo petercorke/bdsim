@@ -3,13 +3,19 @@
 This module keeps all backend-specific display and update logic in one place so
 that simulation loops and graphics blocks can stay focused on data.
 
-Two concrete managers are provided:
+Three concrete managers are provided:
 
 ``MatplotlibDisplayManager``
     Used for interactive GUI backends (Qt, Tk, macOS, …).  Calls
     ``plt.show(block=False)`` once to open windows, drives redraws via
     ``draw_idle()`` / ``flush_events()``, and optionally blocks at the end of
     a run with ``plt.show(block=True)``.
+
+``WidgetDisplayManager``
+    Used for the interactive notebook backends (``%matplotlib widget``, ipympl,
+    nbagg).  Shows each figure's live canvas once and redraws it in place, and
+    leaves it open at the end of the run so the toolbar, zoom and data cursors
+    keep working.
 
 ``NotebookDisplayManager``
     Used when ``%matplotlib inline`` (or any non-interactive IPython backend)
@@ -49,6 +55,8 @@ and calls the three lifecycle methods at the appropriate points:
 
 from __future__ import annotations
 
+import asyncio
+import time
 from typing import Any, Iterable
 
 import matplotlib.pyplot as plt
@@ -72,6 +80,18 @@ def _grab_movie_frame(fig: Any) -> None:
         raise RuntimeError("cannot save movie, please install ffmpeg") from exc
 
 
+def is_widget_backend(backend: str) -> bool:
+    """Return True if *backend* is an interactive notebook backend.
+
+    These keep a live canvas in the cell output (ipympl, nbagg), as opposed to
+    ``inline`` which only renders PNG snapshots.  Matplotlib reports the ipympl
+    backend as ``widget`` or ``module://ipympl.backend_nbagg`` depending on how
+    it was selected.
+    """
+    name = backend.lower()
+    return name == "widget" or "ipympl" in name or "nbagg" in name
+
+
 class DisplayManager:
     """Abstract base class and factory for bdsim display managers.
 
@@ -92,7 +112,9 @@ class DisplayManager:
         self._shown_once = False
 
     @classmethod
-    def create(cls, notebook_backend: bool = False) -> DisplayManager:
+    def create(
+        cls, notebook_backend: bool = False, backend: str = ""
+    ) -> DisplayManager:
         """Return the appropriate ``DisplayManager`` subclass.
 
         Parameters
@@ -102,8 +124,13 @@ class DisplayManager:
             non-interactive IPython backend (detected in ``run_sim.py``).
             Returns a ``NotebookDisplayManager``; otherwise returns a
             ``MatplotlibDisplayManager``.
+        backend:
+            The matplotlib backend name.  With ``notebook_backend`` true, an
+            interactive one (ipympl, nbagg) gives a ``WidgetDisplayManager``.
         """
         if notebook_backend:
+            if is_widget_backend(backend):
+                return WidgetDisplayManager()
             return NotebookDisplayManager()
         return MatplotlibDisplayManager()
 
@@ -130,6 +157,13 @@ class DisplayManager:
     def finalize(self, hold: bool = False) -> None:
         """Perform final display update at end-of-run."""
         raise NotImplementedError()
+
+    def pace(self, t: float) -> None:
+        """Called after each animation frame, at simulation time *t* (s).
+
+        A manager can block here to slow the simulation down to a speed that can
+        be watched.  The default does nothing.
+        """
 
     def refresh_figure(self, fig: Any) -> None:
         """Refresh a specific figure according to backend policy."""
@@ -276,6 +310,170 @@ class NotebookDisplayManager(DisplayManager):
                 plt.close(fig)
             except Exception:
                 pass
+
+
+class WidgetDisplayManager(DisplayManager):
+    """Display policy for the interactive notebook backends, ``%matplotlib widget``.
+
+    With ipympl a figure is a live widget: it has a toolbar, zoom, pan and data
+    cursors.  So unlike :class:`NotebookDisplayManager` there are no snapshots
+    and no ``display_id``; the canvas is displayed once and redrawn in place.
+
+    * ``show_initial()`` displays each figure's canvas, once.
+    * ``refresh()`` calls ``canvas.draw()``, which renders and sends the frame to
+      the browser immediately.  ``draw_idle()`` is not used: with ipympl it only
+      asks the browser to request a draw, and the kernel cannot answer that
+      while it is busy running the simulation.
+    * ``finalize()`` draws the last frame and leaves the figures open, since
+      closing them would discard the live canvas.
+
+    A manager draws only the figures it first saw, since earlier runs' figures
+    are still open.
+
+    Each frame is a full raw RGBA image, over a megabyte for a default figure, and
+    nothing slows the sender down: ipympl's acknowledgements cannot be processed while
+    the kernel is busy running the simulation.  A simulation that runs faster than
+    real time would flood the browser, which then falls behind and shows only the
+    first frames until the end of the run.  So frames are pushed at most every
+    :attr:`min_interval` seconds of wall-clock time; the final frame always is.  The
+    animation is paced to play at :attr:`speed` times real time.
+    """
+
+    notebook_backend = True
+
+    #: shortest wall-clock time between pushed frames (s)
+    min_interval: float = 0.04
+
+    #: simulated seconds per second of wall-clock time while animating, 1 is real
+    #: time, ``None`` runs as fast as the frames can be drawn
+    speed: float | None = 1.0
+
+    #: delay before the final redraw that follows a run (s)
+    settle_delay: float = 1.0
+
+    def __init__(self) -> None:
+        super().__init__()
+        self._last_push: float | None = None
+        self._wall_start: float | None = None
+
+    def _figures(self) -> Iterable[Any]:
+        """The figures of this run.
+
+        Figures are left open at the end of a run, so earlier runs' figures are
+        still open.  A figure belongs to the first manager that sees it, and a
+        manager only draws its own.
+        """
+        for fig in self._iter_display_figures():
+            owner = getattr(fig, "_bdsim_widget_owner", None)
+            if owner is None:
+                fig._bdsim_widget_owner = self
+                owner = self
+            if owner is self:
+                yield fig
+
+    @staticmethod
+    def _show(fig: Any) -> None:
+        """Display the canvas of *fig* in the cell output, once."""
+        if getattr(fig, "_bdsim_widget_shown", False):
+            return
+        fig._bdsim_widget_shown = True
+        manager = fig.canvas.manager
+        if manager is None:
+            return
+        manager.show()  # ipympl: displays the canvas the first time it is called
+        try:
+            # ipympl also queues a new figure to be displayed when the cell ends,
+            # which would give a second view of the same figure
+            from ipympl.backend_nbagg import _Backend_ipympl
+
+            _Backend_ipympl._to_show.remove(fig)
+        except (ImportError, AttributeError, ValueError):
+            pass
+
+    def show_initial(self) -> None:
+        if self._shown_once:
+            return
+        for fig in self._figures():
+            self._show(fig)
+        self._shown_once = True
+
+    def _draw(self, fig: Any) -> None:
+        self._show(fig)  # a no-op, unless the figure was created after show_initial()
+        fig.canvas.draw()
+        _grab_movie_frame(fig)
+
+    def pace(self, t: float) -> None:
+        """Sleep so that the animation plays at :attr:`speed`.
+
+        Simulation is usually far faster than real time, so without this the frames
+        of an animation are all sent within a fraction of a second.
+        """
+        if self.speed is None:
+            return
+        now = time.monotonic()
+        if self._wall_start is None:
+            self._wall_start = now - t / self.speed  # the first frame sets the origin
+        delay = self._wall_start + t / self.speed - now
+        if delay > 0:
+            time.sleep(delay)
+
+    def _due(self) -> bool:
+        """True if enough wall-clock time has passed to push another frame."""
+        now = time.monotonic()
+        if self._last_push is not None and now - self._last_push < self.min_interval:
+            return False
+        self._last_push = now
+        return True
+
+    def refresh(self) -> None:
+        if not self._due():
+            return
+        for fig in self._figures():
+            self._draw(fig)
+
+    def refresh_figure(self, fig: Any) -> None:
+        if self._due():
+            self._draw(fig)
+
+    def finalize(self, hold: bool = False) -> None:
+        figs = list(self._figures())
+        for fig in figs:
+            self._draw(fig)
+        for fig in figs:
+            # The draw above was made while the kernel was busy, possibly before the
+            # browser had created and sized the view.  Ask the browser for a fresh
+            # draw, which it can answer now that the kernel is about to be idle.
+            fig.canvas.draw_idle()
+        self._schedule_final_redraw(figs)
+
+    def _schedule_final_redraw(self, figs: list[Any]) -> None:
+        """Redraw the figures once, after the cell has finished.
+
+        A figure is displayed while the kernel is busy running the simulation, so the
+        browser's start-up handshake (device pixel ratio, size, a request for the
+        image) is queued behind the run and is only answered when the cell ends.  The
+        frames sent in the meantime can be drawn at the wrong size, or lost, and a
+        slow browser may be left with a blank or partly drawn figure.  A full redraw
+        scheduled on the kernel's event loop runs after the queued handshake has been
+        answered.  Without an event loop (not in a kernel) there is nothing to do.
+        """
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            try:
+                loop = asyncio.get_event_loop()
+            except RuntimeError:
+                return
+
+        def redraw() -> None:
+            for fig in figs:
+                if fig.number not in plt.get_fignums():
+                    continue  # closed in the meantime
+                # the browser may have changed the size: send the whole image
+                fig.canvas._force_full = True  # type: ignore[attr-defined]
+                fig.canvas.draw()
+
+        loop.call_later(self.settle_delay, redraw)
 
 
 class MatplotlibDisplayManager(DisplayManager):
