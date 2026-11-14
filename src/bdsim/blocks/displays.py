@@ -1161,32 +1161,66 @@ class Animation(GraphicsBlock):
 
     The animation will run when the block diagram is executed with animation enabled.
     The ``movie`` block option can be used to save the animation to a file as well as displaying it on screen.
+
+    By default ``ax`` is a 2D axes.  For a three-dimensional scene give ``projection="3d"``
+    and ``ax`` is a Matplotlib 3D axes, on which ``init`` can add, for example, polygon
+    collections (``mpl_toolkits.mplot3d.art3d.Poly3DCollection``) that ``update`` moves.  The
+    3D axes have no blitting, and Matplotlib sorts the polygons of a 3D scene by depth as it
+    draws, which can put a large polygon in front of a small one that is really in front of
+    it.  If that matters set ``ax.computed_zorder = False`` in ``init`` and give the artists
+    an explicit ``zorder``, which for a fixed camera is cheap to arrange.
     """
 
     nin = 1
     nout = 0
     TIMESTAMP = True
 
-    def __init__(self, init: Callable, update: Callable, **blockargs: Any) -> None:
+    def __init__(
+        self,
+        init: Callable,
+        update: Callable,
+        projection: Literal["3d"] | None = None,
+        **blockargs: Any,
+    ) -> None:
         """
-        :param init: initialization function with signature init(fig, ax)
+        :param init: initialization function with signature ``init(block, fig, ax)``
         :type init: callable
-        :param update: update function with signature update(frame, fig, ax)
+        :param update: update function with signature ``update(block, t, inports)``
         :type update: callable
+        :param projection: ``"3d"`` to give ``init`` 3D axes, defaults to None for 2D axes
         :param blockargs: |GraphicsBlockOptions|
         :type blockargs: dict
+        :raises ValueError: ``init`` or ``update`` is not callable, or ``projection`` is
+            not None or ``"3d"``
         """
         super().__init__(**blockargs)
         if not callable(init):
             raise ValueError("init must be callable")
         if not callable(update):
             raise ValueError("update must be callable")
+        self._check_projection(projection)
         self.init = init
         self.update = update
+        self.projection = projection
         self.add_param("init", when="setup")
         self.add_param("update")
+        # the axes are made in start(), so the projection can change until then.  Any value
+        # that passes the check is acceptable, whatever the current one, so no coercion
+        self.add_param(
+            "projection",
+            when="setup",
+            validate=self._check_projection,
+            coerce=False,
+        )
+
+    @staticmethod
+    def _check_projection(value: Any) -> None:
+        if value is not None and value != "3d":
+            raise ValueError(f"projection must be None or '3d', not {value!r}")
 
     def start(self, simstate: Any) -> None:
+        # the base class makes the axes, 3D if PLOT3D is true, so set that first
+        self.PLOT3D = self.projection == "3d"
         super().start(simstate)
 
         if not self._enabled:

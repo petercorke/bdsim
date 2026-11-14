@@ -41,14 +41,23 @@ class BlockFactoryStubs:
         )
 
     # bdsim.blocks.displays.Animation
-    def ANIMATION(self, init: Callable, update: Callable, **blockargs: Any) -> Any:
+    def ANIMATION(
+        self,
+        init: Callable,
+        update: Callable,
+        projection: Literal["3d"] | None = None,
+        **blockargs: Any,
+    ) -> Any:
         """
-        :param init: initialization function with signature init(fig, ax)
+        :param init: initialization function with signature ``init(block, fig, ax)``
         :type init: callable
-        :param update: update function with signature update(frame, fig, ax)
+        :param update: update function with signature ``update(block, t, inports)``
         :type update: callable
+        :param projection: ``"3d"`` to give ``init`` 3D axes, defaults to None for 2D axes
         :param blockargs: |GraphicsBlockOptions|
         :type blockargs: dict
+        :raises ValueError: ``init`` or ``update`` is not callable, or ``projection`` is
+            not None or ``"3d"``
         """
         raise NotImplementedError(  # pragma: no cover
             "stub signature -- the real implementation is injected "
