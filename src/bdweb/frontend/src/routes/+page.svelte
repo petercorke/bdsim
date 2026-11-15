@@ -69,7 +69,7 @@
 	let ctxMenu: { x: number; y: number } | null = $state(null);
 
 	// Canvas wrapper ref for props card positioning
-	let canvasEl: HTMLElement | null = $state(null);
+	let canvasEl = $state<HTMLElement | null>(null);
 
 	// Props card position — computed from selected node + viewport transform
 	const propCardPos = $derived(
@@ -462,12 +462,12 @@
 				defaultEdgeOptions={{ type: 'smoothstep' }}
 				panOnDrag={false}
 				selectionOnDrag={true}
-				panActivationKeyCode="Alt"
+				panActivationKey="Alt"
 				panOnScroll={true}
 				zoomOnScroll={false}
-				zoomActivationKeyCode="Alt"
-				multiSelectionKeyCode="Meta"
-				deleteKeyCode={null}
+				zoomActivationKey="Alt"
+				multiSelectionKey="Meta"
+				deleteKey={null}
 				onnodeclick={onNodeClick}
 				onnodecontextmenu={onNodeContextMenu}
 				onpaneclick={onPaneClick}
