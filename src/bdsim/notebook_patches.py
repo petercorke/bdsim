@@ -222,7 +222,7 @@ def patch_roboticstoolbox_armplot_for_notebook() -> None:
 
     ArmPlot.PLOT3D = True
 
-    patch_version = 7
+    patch_version = 8
     if getattr(ArmPlot, "_bdsim_notebook_patch_version", 0) >= patch_version:
         return
 
@@ -241,12 +241,15 @@ def patch_roboticstoolbox_armplot_for_notebook() -> None:
         # Notebook-only step path: keep backend robot reference synchronized,
         # drive env with explicit dt, then coordinate display refresh.
         q = np.array(inports[0], copy=True)
-        self.robot.q = q
-
         env = getattr(self, "env", None)
-        robots = getattr(env, "robots", None)
-        if robots:
-            for robot_wrapper in robots:
+        set_pose = getattr(self, "_set_pose", None)
+        if set_pose is not None:
+            # roboticstoolbox knows how its plots hold a pose
+            set_pose(q)
+        else:
+            # older roboticstoolbox
+            self.robot.q = q
+            for robot_wrapper in getattr(env, "robots", None) or []:
                 backend_robot = getattr(robot_wrapper, "robot", None)
                 if backend_robot is not None:
                     backend_robot.q = q
