@@ -660,9 +660,15 @@ class Linearization:
         """
         The poles of the model, the eigenvalues of ``A``, sorted by real part.
 
-        :return: complex array of length ``nx``
+        :return: array of length ``nx``, real if all the poles are real, otherwise
+            complex
         """
-        return np.sort_complex(np.linalg.eigvals(self.A))
+        # LAPACK gives a real eigenvalue of a real matrix an imaginary part of exactly
+        # zero (and complex ones in exact conjugate pairs), so no tolerance is needed
+        poles = np.linalg.eigvals(self.A)
+        if np.all(poles.imag == 0):
+            return np.sort(poles.real)
+        return np.sort_complex(poles)
 
     def _poles_str(self) -> str:
         poles = self.poles
