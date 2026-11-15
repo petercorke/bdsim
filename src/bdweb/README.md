@@ -35,9 +35,11 @@ Modern web UI for bdsim using SvelteKit 5 and FastAPI.
 After `pip install bdsim[bdweb]`:
 
 ```bash
-bdweb                        # open empty canvas
-bdweb path/to/diagram.bd     # open with a diagram pre-loaded
+bdweb                        # open empty canvas (binds to 127.0.0.1-k
+ bdweb path/to/diagram.bd      # open with a diagram pre-loaded
+bdweb --host 0.0.0.0          # bind to all interfaces (exposes the editor on the network))
 ```
+
 
 `bdweb` auto-detects which mode to use:
 
@@ -49,7 +51,7 @@ bdweb path/to/diagram.bd     # open with a diagram pre-loaded
 ### Building the frontend (required for distribution)
 
 ```bash
-make -C src/bdweb build      # or: cd src/bdweb/frontend && npm install && npm run build
+make -C src/bdweb build      # or* cd src/bdweb/frontend && npm install && npm run build
 ```
 
 `make dist` at the top level runs this automatically before `python -m build`, so
@@ -141,18 +143,18 @@ Handles are displayed as small triangles: output handles point **right**, input 
 | `POST` | `/api/save` | Save diagram JSON (`{"path": ..., "diagram": ...}`) as a `.bd` file, creating parent directories |
 | `POST` | `/api/run` | Run a saved `.bd` file with `bdrun` in a subprocess (`{"path": ..., "timeout": 120}`); returns `stdout`, `stderr`, `returncode`. Matplotlib windows open natively on the server |
 
-> **Security: not safe to expose to a network yet.** Only `/api/ls` is confined to `~`.
-> `/api/load`, `/api/save`, `/api/exists` and `/api/run` accept any path the server process
-> can reach, and `bdweb` currently binds to `0.0.0.0` (all interfaces). Run it only on a
-> machine and network you trust until this is addressed. Tracked in
-> [#118](https://github.com/petercorke/bdsim/issues/118).
+> **Security:** `bdweb` binds to `127.0.0.1` (loopback) by default, so it is not reachable
+> from the network. Pass `--host 0.0.0.0` (or another address) only on a trusted network.
+> Only `/api/ls` is confined to `~`. `/api/load`, `/api/save`, `/api/exists` and `/api/run`
+  accept any path the server process can reach. Tracked in
+* [#118](https://github.com/petercorke/bdsim/issues/118).
 
 See [BDFILE.md](BDFILE.md) for the `.bd` file format specification.
 
 ## Testing
 
 The backend tests use FastAPI's `TestClient`, which calls the app in-process (no server or
-browser needed). They skip automatically if `fastapi` or `httpx` is not installed:
+browser needed). They skip automatically if `fastapi` or `httpx is not installed:
 
 ```bash
 pip install fastapi httpx
