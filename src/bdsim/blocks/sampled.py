@@ -5,6 +5,16 @@ Sampled-time blocks:
 - have discrete-time state variables that are sampled/updated at the times
   specified by the associated clock
 - are a subclass of ``SampledBlock`` |rarr| ``Block``
+
+**Timing.**  At each clock tick :math:`t_k` with :math:`k \ge 1` the block computes its
+next state from the inputs *at that instant* and the previous state, and that new state is
+the block's output until the next tick.  The tick at :math:`t = 0` does not update the
+state, so the output holds ``x0`` for the first sample period.  The block formulas below
+are written for this: :math:`x_k` is the state held over :math:`[t_k, t_{k+1})`,
+and :math:`x_0` is ``x0``.  A block with feedthrough (``DERIV_S``) also sees the current input.
+
+Note that the value *logged* at a tick instant is the one from before that tick's
+update, so it appears one sample late.  It is the logging, not the block, that lags.
 """
 
 from __future__ import annotations
@@ -15,7 +25,16 @@ import spatialmath.base as smb  # type: ignore[import-not-found]
 from typing import Any, Callable
 
 from bdsim.components import SampledBlock, Clock, SubsystemBlock, deprecated_block
-from bdsim.blocks.continuous import _tf2ss
+from bdsim.blocks.continuous import (
+    _NO_D,
+    _NO_I,
+    _as_D,
+    _conform_D,
+    _integral_limits,
+    _old_tf_names,
+    _tf2ss,
+    _TFParams,
+)
 
 Vector1D = int | float | tuple[float, ...] | list[float] | np.ndarray
 
@@ -48,8 +67,10 @@ class ZOH(SampledBlock):
             - float, ndarray
             - :math:`y`
 
-    Output is the input at the previous clock time $y_{k} = x_{k-1}.  The state can be a
-    scalar or a vector, this is given by the type of ``x0``.
+    The output is the input as sampled at the most recent clock tick, :math:`y_k = u_k`
+    for :math:`k \ge 1`, and ``x0`` during the first sample period.  There is no
+    further delay.  The state can be a scalar or a vector, this is given by the type
+    of ``x0``.
 
     .. note:: If input is not a scalar, ``x0`` must have the shape of the
         input signal.
@@ -68,6 +89,8 @@ class ZOH(SampledBlock):
         :type blockargs: dict
         """
         super().__init__(clock=clock, nin=1, nout=1, x0=x0, **blockargs)
+        self.add_param("clock", when="never")
+        self.add_param("x0", when="setup")
 
         # print('nstates', self.nstates)
 
@@ -83,6 +106,185 @@ class ZOH(SampledBlock):
 
 
 # ------------------------------------------------------------------------ #
+
+
+class Hysteresis_S(SampledBlock):
+    r"""
+    :blockname:`HYSTERESIS_S`
+
+    Discrete-time hysteresis (relay with memory, Schmitt trigger).
+
+    :inputs: 1
+    :outputs: 1
+    :states: N
+
+    .. list-table::
+        :header-rows: 1
+
+        *   - Port type
+            - Port number
+            - Types
+            - Description
+        *   - Input
+            - 0
+            - float, ndarray
+            - :math:`u`
+        *   - Output
+            - 0
+            - float, ndarray
+            - :math:`y`
+
+    The state is the output, which switches between two levels.  It switches on
+    when the input reaches ``switch_on`` and off when the input falls to
+    ``switch_off``.  Between the two it keeps its value, which is the memory:
+
+    .. math::
+
+        y_{k+1} = \begin{cases}
+            y_\mathrm{on} & u_k \ge u_\mathrm{on} \\
+            y_\mathrm{off} & u_k \le u_\mathrm{off} \\
+            y_k & \text{otherwise}
+        \end{cases}
+
+    The input is sampled at each tick of the clock and the output is constant between
+    ticks, as for :class:`ZOH`: the output from tick :math:`k` until the next is decided
+    by the input at tick :math:`k`.  Until the first tick after the start of the run the
+    output is ``x0``.  A logged value at a tick instant is the value held *before* that
+    tick's update.
+
+    The state can be a scalar or a vector, given by the shape of ``x0`` and of the
+    parameters.  The switching points and output levels can each be:
+
+        - a scalar, in which case the same value applies to every element, or
+        - a vector, of the same shape as the state, that applies elementwise.
+
+    .. note:: The switching points must satisfy ``switch_off <= switch_on``.  If they
+        are equal the block is an ideal relay with no hysteresis, and the input exactly at
+        the switching point switches on.
+
+    For example, a Schmitt trigger that turns on above 0.6 and off below 0.4::
+
+        clock = bd.clock(0.01)
+        trigger = bd.HYSTERESIS_S(clock, switch_on=0.6, switch_off=0.4)
+
+    :seealso: :class:`ZOH`
+    """
+
+    nin = 1
+    nout = 1
+
+    def __init__(
+        self,
+        clock: Clock,
+        switch_on: Vector1D = 0.5,
+        switch_off: Vector1D = -0.5,
+        output_on: Vector1D = 1.0,
+        output_off: Vector1D = 0.0,
+        x0: Vector1D | None = None,
+        **blockargs: Any,
+    ) -> None:
+        r"""
+        :param clock: clock source
+        :type clock: Clock
+        :param switch_on: input at or above which the output switches on, defaults to 0.5
+        :type switch_on: float or array_like, optional
+        :param switch_off: input at or below which the output switches off, defaults to -0.5
+        :type switch_off: float or array_like, optional
+        :param output_on: output level when on, defaults to 1
+        :type output_on: float or array_like, optional
+        :param output_off: output level when off, defaults to 0
+        :type output_off: float or array_like, optional
+        :param x0: initial output, which must be ``output_on`` or ``output_off``,
+            defaults to ``output_off``
+        :type x0: float or array_like, optional
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
+        :type blockargs: dict
+        :raises ValueError: ``switch_off`` is above ``switch_on``, the two output levels
+            are equal, or ``x0`` is not one of them
+        """
+        parts = [switch_on, switch_off, output_on, output_off]
+        if x0 is not None:
+            parts.append(x0)
+        shape = np.broadcast_shapes(*[np.shape(p) for p in parts])
+        initial = output_off if x0 is None else x0
+        initial = np.array(np.broadcast_to(initial, shape), dtype=float).reshape(-1)
+
+        super().__init__(clock=clock, nin=1, nout=1, x0=initial, **blockargs)
+
+        self.switch_on = switch_on
+        self.switch_off = switch_off
+        self.output_on = output_on
+        self.output_off = output_off
+        self._check_levels(output_on, output_off, initial)
+        self._check_switch(switch_on, switch_off)
+
+        self.add_param("clock", when="never")
+        self.add_param("switch_on", coerce=False, validate=self._check_switch_on)
+        self.add_param("switch_off", coerce=False, validate=self._check_switch_off)
+        self.add_param("output_on", coerce=False, validate=self._check_output_on)
+        self.add_param("output_off", coerce=False, validate=self._check_output_off)
+        self.add_param("x0", when="setup")
+
+    @staticmethod
+    def _check_switch(switch_on: Any, switch_off: Any) -> None:
+        if np.any(np.asarray(switch_off) > np.asarray(switch_on)):
+            raise ValueError("switch_off must not be above switch_on")
+
+    @staticmethod
+    def _check_levels(output_on: Any, output_off: Any, x: Any) -> None:
+        on, off = np.asarray(output_on), np.asarray(output_off)
+        if np.any(on == off):
+            raise ValueError("output_on and output_off must differ")
+        x = np.asarray(x)
+        if not np.all((x == on) | (x == off)):
+            raise ValueError("x0 must be output_on or output_off")
+
+    def _check_switch_on(self, value: Any) -> None:
+        self._check_switch(value, self.switch_off)
+
+    def _check_switch_off(self, value: Any) -> None:
+        self._check_switch(self.switch_on, value)
+
+    def _check_output_on(self, value: Any) -> None:
+        self._check_levels(value, self.output_off, self._x0)
+
+    def _check_output_off(self, value: Any) -> None:
+        self._check_levels(self.output_on, value, self._x0)
+
+    def output(self, t: float, inputs: list[Any], x: np.ndarray) -> list[Any]:
+        if x.size == 1:
+            return [x.item()]
+        return [x]
+
+    def next(self, t: float, inputs: list[Any], x: np.ndarray) -> np.ndarray:
+        u = np.broadcast_to(np.asarray(inputs[0], dtype=float), x.shape)
+        on = np.broadcast_to(np.asarray(self.output_on, dtype=float), x.shape)
+        off = np.broadcast_to(np.asarray(self.output_off, dtype=float), x.shape)
+
+        is_on = np.where(
+            u >= self.switch_on, True, np.where(u <= self.switch_off, False, x == on)
+        )
+        return np.where(is_on, on, off).astype(float)
+
+
+# ------------------------------------------------------------------------ #
+
+
+def _check_enable(value: Any) -> None:
+    """Validator for ``enable``, a function or ``None``."""
+    if value is not None and not callable(value):
+        raise ValueError("enable must be callable")
+
+
+def _band_enable(I_band: float | None) -> Callable[..., bool] | None:
+    """The ``enable`` function of an integrator that only integrates when the error is in a band."""
+    if I_band is None:
+        return None
+
+    def ifunc(t: float, u: list[Any], x: Any) -> bool:
+        return bool(abs(u[0]) < I_band)
+
+    return ifunc
 
 
 class Integrator_S(SampledBlock):
@@ -111,17 +313,25 @@ class Integrator_S(SampledBlock):
             - float, ndarray
             - :math:`y`
 
-    This block implements the dynamics of a discrete-time integrator with gain :math:`k`, which is given by
+    This block implements the dynamics of a discrete-time integrator with gain :math:`g`, which is given by
 
     .. math::
 
         \begin{aligned}
-        x_{k+1} &= x_k + k \cdot u_k \cdot T \\
+        x_k &= x_{k-1} + g \cdot u_k \cdot T \\
         y_k &= x_k
         \end{aligned}
 
+    This is backward-Euler (rectangular) integration: the input at a tick contributes to
+    the output from that tick, and :math:`x_0` is ``x0``.
+
     The state can be a scalar or a vector. The initial state, and type, is given by
     ``x0``.  The shape of the input signal must match ``x0``.
+
+    The gain is applied to the input, before accumulation, as in the update
+    equation above.  The limits ``min`` and ``max`` apply to the resulting state,
+    which is also the output.  They are applied at each sample time, so no crossing
+    events are needed.
 
     The minimum and maximum output values can be:
 
@@ -130,8 +340,9 @@ class Integrator_S(SampledBlock):
         - a vector, of the same shape as ``x0`` that applies elementwise to
           the state.
 
-    .. note:: The minimum and maximum prevent integration outside the limits,
-        but assume that the initial state is within the limits.
+    .. note:: The minimum and maximum clip the next state, so a state that would pass
+        a limit is held at it until the input reverses.  An initial state outside
+        the limits is clipped at the first sample.
 
     Integration can be controlled by an ``enable`` function::
 
@@ -173,11 +384,6 @@ class Integrator_S(SampledBlock):
         """
         super().__init__(clock=clock, x0=x0, **blockargs)
 
-        if min is not None:
-            min = smb.getvector(min, len(self._x0))
-        if max is not None:
-            max = smb.getvector(max, len(self._x0))
-
         self.min = min
         self.max = max
         self.gain: float = gain
@@ -186,6 +392,30 @@ class Integrator_S(SampledBlock):
         self.enable = enable
         if enable is not None and not callable(enable):
             raise ValueError("enable must be callable")
+        self.add_param("clock", when="never")
+        self.add_param("gain")
+        self.add_param("min", coerce=False)
+        self.add_param("max", coerce=False)
+        self.add_param("enable", coerce=False, validate=_check_enable)
+        self.add_param("x0", when="setup")
+
+    @property
+    def min(self) -> np.ndarray | None:
+        """Lower limit of each state, or ``None`` for no limit."""
+        return self._min
+
+    @min.setter
+    def min(self, value: Any) -> None:
+        self._min = None if value is None else smb.getvector(value, len(self._x0))
+
+    @property
+    def max(self) -> np.ndarray | None:
+        """Upper limit of each state, or ``None`` for no limit."""
+        return self._max
+
+    @max.setter
+    def max(self, value: Any) -> None:
+        self._max = None if value is None else smb.getvector(value, len(self._x0))
 
     def output(self, t: float, u: list[Any], x: np.ndarray) -> list[Any]:
         result = x
@@ -237,20 +467,24 @@ class Deriv_S(SampledBlock):
             - float
             - :math:`y`
 
-    Implements the dynamics of a derivative filter, but to be causal (proper) it includes a first-order
-    low-pass filter.  The dynamics are
+    Implements a discrete-time derivative as a backward difference, with transfer function
 
-    .. math:: \frac{1 - z^{-1}}{T}
+    .. math:: g \, \frac{1 - z^{-1}}{T}
 
-    where :math:`T` is the sampling time.
+    where :math:`g` is the gain and :math:`T` is the sampling time.  The block is causal
+    because the output uses the current input and the input at the previous tick, and no
+    filter is needed.
 
-    Unlike the continuous-time derivative blocks, this one includes no smoothing filter.
+    Unlike the continuous-time derivative blocks, this one includes no smoothing filter,
+    so noise on its input is amplified.
 
-    The initial output of the derivative block is given by the initial state ``x0``.
+    The state is the input at the most recent tick, so the output is the difference
+    between the current input and the input at that tick, scaled by the gain and :math:`1/T`.
+    The state is ``x0`` during the first sample period.
 
     .. versionadded:: 1.2.0
 
-    :seealso: :class:`Integrator`
+    :seealso: :class:`Integrator_S`
     """
 
     nin = 1
@@ -275,6 +509,9 @@ class Deriv_S(SampledBlock):
         """
         super().__init__(clock=clock, x0=x0, feedthrough=True, **blockargs)
         self.gain = gain
+        self.add_param("clock", when="never")
+        self.add_param("gain")
+        self.add_param("x0", when="setup")
 
     def output(self, t: float, u: list[Any], x: np.ndarray) -> list[Any]:
         result = self.gain * (u[0] - x) / self.T
@@ -322,20 +559,38 @@ class LTI_SS_S(SampledBlock):
     .. math::
 
         \begin{aligned}
-        x_{k+1} &= A x_k + B u_k \\
-        y_k &= C x_k
+        x_k &= \Phi x_{k-1} + \Gamma u_k \\
+        y_k &= C x_k + D u_k
         \end{aligned}
 
-    A direct passthrough component, typically :math:`D`, is not allowed in order
-    to avoid algebraic loops.
+    where :math:`x_0` is ``x0``.  The input at a tick takes effect in the output from
+    that tick, as it does for all sampled blocks.
+
+    :math:`\Phi` and :math:`\Gamma` are the usual symbols for the discrete-time system
+    and input matrices.  They are given by the arguments ``A`` and ``B``, the names
+    used for the continuous-time ``LTI_SS``, and are also available as the attributes
+    ``Phi`` and ``Gamma`` (or ``Φ`` and ``Γ``), which are synonyms for ``A`` and ``B``.
+
+    ``D`` is optional and defaults to zero.  If it is nonzero the block has direct
+    feedthrough, the output depends on the input at the same instant, which creates an
+    algebraic loop if the output feeds back to the input without a delay.
+
+    The output is a single port: a float if ``C`` has one row, and otherwise an
+    ndarray with one element for each row of ``C``, so a system with several outputs
+    is one wire, which a ``DEMUX`` block can split.  The input has one port for each
+    column of ``B``, each carrying a scalar.
 
     Examples::
 
-        lti = bd.LTI_SS_S(A=-2, B=1, C=-1)
+        lti = bd.LTI_SS_S(
+            clock, A=np.array([[-2.0]]), B=np.array([1.0]), C=np.array([-1.0])
+        )
 
-    is the system :math:`x_{k+1}=-2x_k+u_k, y_k=-x_k`.
+    is the system :math:`x_k=-2x_{k-1}+u_k, y_k=-x_k`.
 
     .. versionadded:: 1.2.0
+
+    :seealso: :class:`~bdsim.blocks.sampled.LTI_SISO_S` :class:`~bdsim.blocks.continuous.LTI_SS`
     """
 
     nin = 1
@@ -354,14 +609,15 @@ class LTI_SS_S(SampledBlock):
         r"""
         :param clock: clock source
         :type clock: Clock
-        :param A: system matrix, defaults to [1,1]
-        :type A: array_like, optional
-        :param B: input matrix, defaults to [1]
-        :type B: array_like, optional
-        :param C: output matrix, defaults to [1]
-        :type C: array_like, optional
-        :param D: feedthrough matrix, defaults to None
-        :type D: array_like, optional
+        :param A: system matrix :math:`\Phi`, also available as the attribute ``Phi``
+        :type A: ndarray(n,n)
+        :param B: input matrix :math:`\Gamma`, also available as the attribute ``Gamma``;
+            a 1D array is a column vector
+        :type B: ndarray(n,m)
+        :param C: output matrix; a 1D array is a row vector
+        :type C: ndarray(p,n)
+        :param D: feedthrough matrix, defaults to zero
+        :type D: ndarray(p,m), optional
         :param x0: initial states, defaults to None
         :type x0: array_like, optional
         :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
@@ -383,52 +639,77 @@ class LTI_SS_S(SampledBlock):
 
         if len(C.shape) == 1:
             # 1D array, assume it's a row vector and reshape to (1,n)
-            nout = 1
+            p = 1
             if C.shape[0] != n:
                 raise ValueError("C must have same number of columns as A")
             C = C.reshape((1, n))
         else:
-            nout = C.shape[0]
+            p = C.shape[0]
             if C.shape[1] != n:
                 raise ValueError("C must have same number of columns as A")
 
-        if D is None:
-            D = np.zeros((nout, nin))
-        elif len(D.shape) == 1:
-            if len(D) != nin * nout:
-                raise ValueError("D must conform to B and C dimensions")
-            D = D.reshape((nout, nin))
-        else:
-            if D.shape != (nout, nin):
-                raise ValueError("D must conform to B and C dimensions")
+        D = _as_D(D, p, nin)
 
         self.A = A
         self.B = B
         self.C = C
 
-        # if D is nonzero then we have feedthrough, which may create an algebraic loop, so flag this to the base class
-        if np.any(D != 0):
-            # flag we have feedthrough, which may create an algebraic loop
-            self.D: np.ndarray | None = D
-            feedthrough = True
-        else:
-            self.D = None
-            feedthrough = False
+        # a nonzero D is direct feedthrough, which may create an algebraic loop, so the
+        # base class is told; without one there is no D to store
+        feedthrough = D is not None and bool(np.any(D != 0))
+        self._D: np.ndarray | None = D if feedthrough else None
 
         super().__init__(
             clock=clock,
             ndstates=n,
             nin=nin,
-            nout=nout,
+            nout=1,  # one output port, whatever the rows of C: see the class docstring
             x0=x0,
             feedthrough=feedthrough,
             **blockargs,
         )
+        self.add_param("clock", when="never")
+        self.add_param("A")
+        self.add_param("B")
+        self.add_param("C")
+        self.add_param("D")
+        self.add_param("x0", when="setup")
+
+    @property
+    def D(self) -> np.ndarray | None:
+        """The feedthrough matrix, ``None`` if it is zero."""
+        return self._D
+
+    @D.setter
+    def D(self, value: Any) -> None:
+        self._D = _conform_D(self, value)
+
+    # the usual names for the discrete-time system and input matrices, as synonyms
+    @property
+    def Phi(self) -> np.ndarray:
+        r"""The system matrix :math:`\Phi`, a synonym for ``A``."""
+        return self.A  # type: ignore[no-any-return]
+
+    @Phi.setter
+    def Phi(self, value: Any) -> None:
+        self.A = value
+
+    @property
+    def Gamma(self) -> np.ndarray:
+        r"""The input matrix :math:`\Gamma`, a synonym for ``B``."""
+        return self.B  # type: ignore[no-any-return]
+
+    @Gamma.setter
+    def Gamma(self, value: Any) -> None:
+        self.B = value
+
+    Φ = Phi
+    Γ = Gamma
 
     def output(self, t: float, u: list[Any], x: np.ndarray) -> list[Any]:
         y = self.C @ x
-        if self.D is not None:
-            y = y + self.D @ np.array(u)
+        if self._D is not None:
+            y = y + self._D @ np.array(u)
         if y.size == 1:
             return [y.item()]
         return [y]
@@ -445,7 +726,7 @@ class LTI_SS_S(SampledBlock):
 # ------------------------------------------------------------------------ #
 
 
-class LTI_SISO_S(LTI_SS_S):
+class LTI_SISO_S(_TFParams, LTI_SS_S):
     r"""
     :blockname:`LTI_SISO_S`
 
@@ -483,13 +764,15 @@ class LTI_SISO_S(LTI_SS_S):
     order, ie. :math:`2z^2 - 4z +3` is ``[2, -4, 3]``, :math:`1 - z^{-1} + 2 z^{-2}` is ``[1, -1, 2]``.
 
     The state-space form can be either controller canonical form or observer canonical
-    form, as specified by the ``form`` argument. For either
+    form, as specified by the ``form`` argument. For either case, the state is the
+    output of a chain of integrators, and the ``order`` argument controls the order in
+    which they are mapped to rows of the state-transition matrix.
 
     Examples::
 
-        lti = bd.LTI_SISO(N=[1, 2], D=[2, 3, -4])
+        lti = bd.LTI_SISO_S(clock, num=[1, 2], den=[2, 3, -4])
 
-    is the transfer function :math:`\frac{s+2}{2s^2+3s-4}`.
+    is the transfer function :math:`\frac{z+2}{2z^2+3z-4}`.
 
     .. note::
       * The state-space realization is not unique. The controller canonical form is more common
@@ -498,7 +781,15 @@ class LTI_SISO_S(LTI_SS_S):
         specified by the ``order`` argument, and results in either 1s on the super-diagonal
         or sub-diagonal of the A matrix for the controller canonical form.
 
+      * This block is single-input single-output.  For a system with more than
+        one input or output, convert the transfer function to state-space form with
+        :func:`scipy.signal.tf2ss`, which takes several numerators with a common
+        denominator, or :func:`control.tf2ss` for a full transfer function matrix,
+        and create the block with :class:`~bdsim.blocks.sampled.LTI_SS_S`.
+
     .. versionadded:: 1.2.0
+
+    :seealso: :class:`~bdsim.blocks.sampled.LTI_SS_S` :class:`~bdsim.blocks.continuous.LTI_SISO`
     """
 
     nin = 1
@@ -507,8 +798,8 @@ class LTI_SISO_S(LTI_SS_S):
     def __init__(
         self,
         clock: Clock,
-        N: Vector1D = 1,
-        D: Vector1D = [1, 1],
+        num: Vector1D = 1,
+        den: Vector1D = [1, 1],
         x0: np.ndarray | None = None,
         form: str = "ccf",
         order: str = "backward",
@@ -518,11 +809,11 @@ class LTI_SISO_S(LTI_SS_S):
         r"""
         :param clock: clock source
         :type clock: Clock
-        :param N: Numerator coefficients in descending powers of :math:`s`.
-        :type N: array_like
-        :param D: Denominator coefficients in descending powers of :math:`s`.
+        :param num: Numerator coefficients in descending powers of :math:`z`.
+        :type num: array_like
+        :param den: Denominator coefficients in descending powers of :math:`z`.
             Does not have to be normalized.
-        :type D: array_like
+        :type den: array_like
         :param form: The canonical form of the realization, defaults to 'ccf'.
         :type form: str, optional
         :param order: The state ordering convention
@@ -532,7 +823,7 @@ class LTI_SISO_S(LTI_SS_S):
         :return: LTI_SISO_S block
         :rtype: ``LTI_SISO_S`` instance
 
-        Coefficients ``N`` and ``D``can be specified in the form of an array of
+        Coefficients ``num`` and ``den`` can be specified in the form of an array of
         coefficients, or an array of factors. The coefficients and factors are arrays of
         coefficients in decreasing powers of :math:`z`, this could be :math:`z^2 + 0.8z
         + 0.15` or :math:`1 + 0.8z^{-1} + 0.15z^{-2}`, both represented as ``[1, 0.8, 0.15]``.
@@ -587,32 +878,39 @@ class LTI_SISO_S(LTI_SS_S):
   
 
         .. note::
-            - The transfer function is assumed to be strictly proper (:math:`deg(N) < deg(D)`).
+            - The transfer function is assumed to be strictly proper (:math:`deg(num) < deg(den)`).
             - The default ``form='ccf', order='backward'`` corresponds to the state-space realization returned by ``scipy.signal.tf2ss`` and MATLAB's ``tf2ss``.
+            - ``num`` and ``den`` are attributes holding the numerator and denominator coefficients (expanded
+              if they were given as factors), and can be changed after the block is created (they are
+              parameters).  The state-space matrices are rebuilt from them.  The order of the system, the
+              length of ``den`` minus one, cannot change.
             - The state-space matrices are available in the ``A``, ``B``, ``C``, and ``D`` attributes of the block.
-            - If D is zero, then the block has no feedthrough and the D matrix is set to None. If D is nonzero, then the block has feedthrough and the D matrix is stored in the D attribute.
-            - The ``_feedthrough`` attribute of the block is set to True if D is nonzero. This can be used to check for feedthrough without having to check the D matrix directly, and is used
+            - If the numerator degree is less than the denominator degree, the block has no feedthrough and ``D`` is None.
+              The ``feedthrough`` attribute of the block is set to True otherwise. It is used
               by the scheduler to ensure correct block evaluation order.
+
+        .. versionchanged:: next
+            The arguments ``N`` and ``D`` are renamed ``num`` and ``den``, because ``D`` is also the feedthrough
+            matrix of the state-space realization.  The old keywords still work, with a ``DeprecationWarning``,
+            and will be removed in a later release.
         """
 
-        A, B, C, _D = _tf2ss(N, D, form=form, order=order, verbose=verbose)
+        num, den = _old_tf_names(num, den, blockargs)
+        A, B, C, _D = _tf2ss(num, den, form=form, order=order, verbose=verbose)
 
         n = A.shape[0]
         if x0 is None:
             x0 = np.zeros((n,))
 
         super().__init__(clock=clock, A=A, B=B, C=C, D=_D, x0=x0, **blockargs)
-
-        # TODO: parameters
-        # def change_param(self, param: str, newvalue: np.ndarray) -> None:
-        #     if param == "num":
-        #         self.num = newvalue
-        #     elif param == "den":
-        #         self.den = newvalue
-        #     self.A, self.B, self.C, self.D = scipy.signal.tf2ss(self.num, self.den)
-
-        # self.add_param("num", change_param)
-        # self.add_param("den", change_param)
+        self._init_tf(num, den, form, order, verbose)
+        self.add_param("num", coerce=False)  # a polynomial may change length
+        self.add_param("den", coerce=False)
+        self.add_param("clock", when="never")
+        self.add_param("form", when="never")
+        self.add_param("order", when="never")
+        self.add_param("verbose", when="never")
+        self.add_param("x0", when="setup")
 
 
 # ------------------------------------------------------------------------ #
@@ -704,8 +1002,27 @@ class PID_S(SubsystemBlock):
 
     Sometimes the gains are written in terms of time constants :math:`T_i = 1/I` and :math:`Td = D`.
 
-    The PID controller is a subsytem comprising a number of blocks. If the I or D gains are
-    zero then a PD or PI controller will be created with fewer blocks.
+    The PID controller is a subsytem comprising a number of blocks.
+
+    **Which terms are built.**  The controller is a subsystem of ordinary blocks, and a
+    term whose gain is zero is normally left out, to save blocks and states.  The
+    proportional term is always built.
+
+    * By default (``terms=None``) the I term is built only if ``I`` is not zero, and the D
+      term only if ``D`` is not zero.  So ``bd.PID_S(clock, P=3, I=1)`` is a PI controller and
+      ``bd.PID_S(clock, P=3)`` is proportional only.
+    * ``terms`` overrides this.  It is one of ``"P"``, ``"PI"``, ``"PD"`` or ``"PID"``, and
+      exactly those terms are built, **even if their gain is zero**.  A term that is
+      built can have its gain changed after the block is created; a term that was left
+      out cannot be added later, because the structure is fixed when the block is
+      created.  For example, a PD controller that starts with no derivative action::
+
+          pid = bd.PID_S(clock, P=3, D=0, terms="PD")
+
+    * A non-zero gain for a term that ``terms`` does not build is an error, not silently
+      ignored.  So is a value of ``terms`` other than the four above.
+    * The cost of building a term at zero gain is its state: an integrator state that
+      stays at zero, or the state of the discrete derivative.
 
     The gain equivalence between the three structures is given by
 
@@ -758,7 +1075,10 @@ class PID_S(SubsystemBlock):
 
     Examples::
 
-        pid = bd.PID_S(P=3, D=2, I=1)
+        pid = bd.PID_S(clock, P=3, D=2, I=1)               # PID
+        pid = bd.PID_S(clock, P=3, I=1)                    # PI, no D block
+        pid = bd.PID_S(clock, P=3)                         # P only
+        pid = bd.PID_S(clock, P=3, D=0, terms="PD")        # PD, with a D block that starts at zero
 
     .. warning::
         This block has a direct feedthrough term (by definition), and depending on how it is used
@@ -782,6 +1102,7 @@ class PID_S(SubsystemBlock):
         I_limit: float | tuple[float, ...] | list[float] | None = None,
         I_band: float | None = None,
         structure: str = "parallel",
+        terms: str | None = None,
         **blockargs: Any,
     ) -> None:
         r"""
@@ -800,6 +1121,9 @@ class PID_S(SubsystemBlock):
         :param I_band: band within which integral action is active
         :type I_band: float
         :param structure: the structure of the PID implementation, "parallel" (default), "series", "standard|ideal"
+        :param terms: the terms to build, one of "P", "PI", "PD" or "PID", even if a gain is zero; the default is P, plus I and D if their gain is not zero
+        :type terms: str, optional
+        :raises ValueError: ``terms`` is not one of those, or a gain is non-zero for a term that is not built
         :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
         """
@@ -808,32 +1132,35 @@ class PID_S(SubsystemBlock):
         subsystem = bd.runtime.blockdiagram(name="PID")
 
         Pblock = subsystem.GAIN(P)  # proportional gain block
-        type = "P"
 
-        if I != 0:
+        if terms is None:
+            # the terms with a non-zero gain; P is always built
+            terms = "P" + ("I" if I != 0 else "") + ("D" if D != 0 else "")
+        elif terms not in ("P", "PI", "PD", "PID"):
+            raise ValueError(
+                f"terms must be one of 'P', 'PI', 'PD' or 'PID', got {terms!r}"
+            )
+        else:
+            for name, gain in (("I", I), ("D", D)):
+                if gain != 0 and name not in terms:
+                    raise ValueError(
+                        f"{name}={gain} but terms={terms!r} does not build the {name} term"
+                    )
+
+        if "I" in terms:
             # if the I term is required, create the block
-            type += "I"
-            integ_args: dict[str, Any] = {}
-            if isinstance(I_limit, float):
-                integ_args["min"] = -I_limit
-                integ_args["max"] = I_limit
-            elif isinstance(I_limit, tuple) and len(I_limit) == 2:
-                integ_args["min"] = I_limit[0]
-                integ_args["max"] = I_limit[1]
-
-            if I_band is not None:
-
-                def ifunc(t: float, u: list[Any], x: Any) -> bool:
-                    return abs(u[0]) < I_band
-
-                integ_args["enable"] = ifunc
+            lo, hi = _integral_limits(I_limit)
 
             Iblock = subsystem.INTEGRATOR_S(
-                clock, gain=I, name="I", **integ_args
+                clock,
+                gain=I,
+                name="I",
+                min=lo,
+                max=hi,
+                enable=_band_enable(I_band),
             )  # integral block with gain I
 
-        if D != 0:
-            type += "D"
+        if "D" in terms:
             # if the D term is required, create the blocks
             Dblock = subsystem.DERIV_S(clock, gain=D)  # derivative block
 
@@ -845,22 +1172,25 @@ class PID_S(SubsystemBlock):
 
         # for each case sum the various terms
         if structure == "parallel":
-            if type == "PID":
+            if terms == "PID":
                 out_sum = subsystem.SUM("+++", name="SUM")
                 subsystem.connect(error_sum, Pblock, Dblock, Iblock)
                 subsystem.connect(Pblock, out_sum[0])
                 subsystem.connect(Iblock, out_sum[1])
                 subsystem.connect(Dblock, out_sum[2])
-            elif type == "PI":
+            elif terms == "PI":
                 out_sum = subsystem.SUM("++", name="SUM")
                 subsystem.connect(error_sum, Pblock, Iblock)
                 subsystem.connect(Pblock, out_sum[0])
                 subsystem.connect(Iblock, out_sum[1])
-            elif type == "PD":
+            elif terms == "PD":
                 out_sum = subsystem.SUM("++", name="SUM")
                 subsystem.connect(error_sum, Pblock, Dblock)
                 subsystem.connect(Pblock, out_sum[0])
                 subsystem.connect(Dblock, out_sum[1])
+            else:  # "P": no summing junction
+                out_sum = Pblock
+                subsystem.connect(error_sum, Pblock)
 
             subsystem.connect(out_sum, outp)
 
@@ -869,7 +1199,7 @@ class PID_S(SubsystemBlock):
 
             subsystem.connect(error_sum, Pblock)
 
-            if "I" in type:
+            if "I" in terms:
                 sum1 = subsystem.SUM("++", name="SUM_I")
 
                 subsystem.connect(Pblock, Iblock, sum1[1])
@@ -878,7 +1208,7 @@ class PID_S(SubsystemBlock):
             else:
                 I_out = Pblock
 
-            if "D" in type:
+            if "D" in terms:
                 sum2 = subsystem.SUM("++", name="SUM_D")
                 subsystem.connect(I_out, Dblock, sum2[1])
                 subsystem.connect(Dblock, sum2[0])
@@ -890,35 +1220,357 @@ class PID_S(SubsystemBlock):
 
         elif structure in ("standard", "ideal"):
             # P in series with parallel D and I
-            if type == "PID":
+            if terms == "PID":
                 out_sum = subsystem.SUM("+++", name="SUM")
                 subsystem.connect(error_sum, Pblock)
                 subsystem.connect(Pblock, out_sum[0], Iblock, Dblock)
                 subsystem.connect(Iblock, out_sum[1])
                 subsystem.connect(Dblock, out_sum[2])
-            elif type == "PI":
+            elif terms == "PI":
                 out_sum = subsystem.SUM("++", name="SUM")
                 subsystem.connect(error_sum, Pblock)
                 subsystem.connect(Pblock, out_sum[0], Iblock)
                 subsystem.connect(Iblock, out_sum[1])
-            elif type == "PD":
+            elif terms == "PD":
                 out_sum = subsystem.SUM("++", name="SUM")
                 subsystem.connect(error_sum, Pblock)
                 subsystem.connect(Pblock, out_sum[0], Dblock)
                 subsystem.connect(Dblock, out_sum[1])
+            else:  # "P": no summing junction
+                out_sum = Pblock
+                subsystem.connect(error_sum, Pblock)
 
             subsystem.connect(out_sum, outp)
 
         super().__init__(subsystem=subsystem, **blockargs)
+        self._Iblock = Iblock if "I" in terms else None
+        self._I_band = I_band
+        self.add_param("P", forward=(Pblock, "K"))
+        if "I" in terms:
+            self.add_param("I", forward=(Iblock, "gain"))
+            self.add_param("I_limit", coerce=False)
+            self.add_param("I_band", coerce=False)
+        else:
+            for name in ("I", "I_limit", "I_band"):
+                self.add_param(name, unavailable=_NO_I)
+        if "D" in terms:
+            self.add_param("D", forward=(Dblock, "gain"))
+        else:
+            self.add_param("D", unavailable=_NO_D)
+        self.add_param("clock", when="never")
+        self.add_param("structure", when="never")
+        self.add_param("terms", when="never")
+
+    @property
+    def I_limit(self) -> float | tuple[float | None, float | None] | None:
+        """
+        Limit on the integral term: ``None`` for none, a number for the limit
+        :math:`\\pm` that number, or a (lower, upper) pair.
+        """
+        if self._Iblock is None:
+            return None
+        lo, hi = self._Iblock.min, self._Iblock.max
+        lo = None if lo is None else float(lo[0])
+        hi = None if hi is None else float(hi[0])
+        if lo is None and hi is None:
+            return None
+        if lo is not None and hi is not None and lo == -hi:
+            return hi
+        return lo, hi
+
+    @I_limit.setter
+    def I_limit(self, value: Any) -> None:
+        if self._Iblock is None:
+            raise ValueError(_NO_I)
+        lo, hi = _integral_limits(value)
+        self._Iblock.set_param("min", lo)
+        self._Iblock.set_param("max", hi)
+
+    @property
+    def I_band(self) -> float | None:
+        """The integral term only integrates while the error is smaller than this, or ``None``."""
+        return self._I_band
+
+    @I_band.setter
+    def I_band(self, value: float | None) -> None:
+        if self._Iblock is None:
+            raise ValueError(_NO_I)
+        if value is not None and not value > 0:
+            raise ValueError("I_band must be positive")
+        self._Iblock.set_param("enable", _band_enable(value))
+        self._I_band = value
 
 
 # ---------------------------------------------------------------------------
 # Compatibility shims
 
 
+# ------------------------------------------------------------------------ #
+
+
+class _NoiseMixin:
+    r"""
+    What ANOISE_S and MNOISE_S share: a noise sample held in the discrete state.
+
+    The sample for tick :math:`k` is drawn in ``next()`` from a generator seeded with
+    ``[seed, k]``, so it is a pure function of the seed and the tick index.  That makes
+    a run repeatable whatever the solver does between ticks, and harmless if ``next()``
+    is also called for ticks of other clocks, where the result is discarded.
+    """
+
+    _mean: float  # mean of each sample
+
+    sigma: Vector1D
+    seed: int | None
+
+    def _check_sigma(self, value: Any) -> None:
+        sigma = np.asarray(value, dtype=float)
+        if sigma.ndim > 1:
+            raise ValueError(
+                f"sigma must be a scalar or a vector, got shape {sigma.shape}"
+            )
+        if np.any(sigma < 0):
+            raise ValueError("sigma must not be negative")
+
+    def _check_seed(self, value: Any) -> None:
+        if value is not None and (int(value) != value or value < 0):
+            raise ValueError(
+                f"seed must be a non-negative integer or None, got {value}"
+            )
+
+    def _check_shapes(self) -> None:
+        shape = np.shape(self.sigma)
+        n = self._x0.size  # type: ignore[attr-defined]
+        if shape not in ((), (n,)):
+            raise ValueError(
+                f"sigma has shape {shape} but the block has {n} state element(s)"
+            )
+
+    def reset(self) -> None:
+        """A seeded block repeats every run, an unseeded one starts each run afresh."""
+        if self.seed is None:
+            self._run_seed = int(np.random.SeedSequence().entropy)  # type: ignore[arg-type]
+        else:
+            self._run_seed = int(self.seed)
+
+    def configure(self) -> None:
+        self._check_shapes()
+        sig = self.insig[0]  # type: ignore[attr-defined]
+        if sig is None or sig.shape is None:
+            return
+        n = self._x0.size  # type: ignore[attr-defined]
+        size = int(np.prod(sig.shape))
+        if n != 1 and tuple(sig.shape) != self._x0.shape:  # type: ignore[attr-defined]
+            raise ValueError(
+                f"{self.name}: input has shape {tuple(sig.shape)} but the noise has "  # type: ignore[attr-defined]
+                f"{n} element(s)"
+            )
+        if n == 1 and size != 1:
+            raise ValueError(
+                f"{self.name}: input has {size} elements but the noise has one "  # type: ignore[attr-defined]
+                "sample per tick.  Give sigma, or x0, one element per input element "
+                "for independent noise on each"
+            )
+
+    def next(self, t: float, u: list[Any], x: np.ndarray) -> np.ndarray:
+        k = int(round((t - self._clock.offset) / self.T))  # type: ignore[attr-defined]
+        rng = np.random.default_rng([self._run_seed, max(k, 0)])
+        return np.atleast_1d(rng.normal(self._mean, self.sigma, size=self._x0.shape))  # type: ignore[attr-defined]
+
+    def _sample(self, x: np.ndarray) -> Any:
+        return x.item() if x.size == 1 else x
+
+
+class Anoise_S(_NoiseMixin, SampledBlock):
+    r"""
+    :blockname:`ANOISE_S`
+
+    Additive noise block.
+
+    :inputs: 1
+    :outputs: 1
+    :states: N
+
+    .. list-table::
+        :header-rows: 1
+
+        *   - Port type
+            - Port number
+            - Types
+            - Description
+        *   - Input
+            - 0
+            - float, ndarray
+            - :math:`u`
+        *   - Output
+            - 0
+            - float, ndarray
+            - :math:`u + n`
+
+    The output is the input plus a sample :math:`n` of zero-mean Gaussian noise with
+    standard deviation ``sigma``.  A new sample is drawn at each tick of the clock
+    and held until the next, so the noise is piecewise constant and the solver sees a
+    function of time.  The input passes through continuously.
+
+    The sample for tick :math:`k` depends only on ``seed`` and :math:`k`, so a seeded
+    block gives the same noise in every run and whatever the solver does.  If ``seed``
+    is ``None`` each run uses a new seed.
+
+    ``sigma`` is a scalar or a vector.  If the input is a vector the noise has one
+    element per input element, independent of each other, so ``sigma`` (or ``x0``) must
+    have that length.  A vector ``sigma`` gives each element its own standard deviation.
+
+    As for all sampled blocks the tick at :math:`t=0` is not applied, so the first
+    sample period carries ``x0`` instead of noise.  It is zero by default.
+
+    For example::
+
+        anoise = bd.ANOISE_S(clock, sigma=0.1, seed=1)
+
+    :seealso: :class:`Mnoise_S` :func:`numpy.random.default_rng`
+    """
+
+    nin = 1
+    nout = 1
+    _mean = 0.0
+
+    def __init__(
+        self,
+        clock: Clock,
+        sigma: Vector1D = 1,
+        seed: int | None = None,
+        x0: Vector1D | None = None,
+        **blockargs: Any,
+    ) -> None:
+        r"""
+        :param clock: clock source
+        :param sigma: standard deviation of the noise, defaults to 1
+        :param seed: seed for the random number generator, defaults to None
+        :param x0: noise during the first sample period, defaults to zero with the
+            length of ``sigma``
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
+        """
+        sigma_array = np.asarray(sigma, dtype=float)
+        if x0 is None:
+            x0 = np.zeros(sigma_array.size)
+        super().__init__(clock=clock, x0=x0, feedthrough=True, **blockargs)
+
+        self.sigma = sigma
+        self.seed = seed
+        self._check_sigma(sigma)
+        self._check_seed(seed)
+        self._check_shapes()
+        self.reset()
+
+        self.add_param("clock", when="never")
+        self.add_param("sigma", coerce=False, validate=self._check_sigma)
+        self.add_param("seed", coerce=False, when="setup", validate=self._check_seed)
+        self.add_param("x0", when="setup")
+
+    def output(self, t: float, u: list[Any], x: np.ndarray) -> list[Any]:
+        return [u[0] + self._sample(x)]
+
+
+class Mnoise_S(_NoiseMixin, SampledBlock):
+    r"""
+    :blockname:`MNOISE_S`
+
+    Multiplicative noise block.
+
+    :inputs: 1
+    :outputs: 1
+    :states: N
+
+    .. list-table::
+        :header-rows: 1
+
+        *   - Port type
+            - Port number
+            - Types
+            - Description
+        *   - Input
+            - 0
+            - float, ndarray
+            - :math:`u`
+        *   - Output
+            - 0
+            - float, ndarray
+            - :math:`u \times n`
+
+    The output is the input times a sample :math:`n` of Gaussian noise with unit mean
+    and standard deviation ``sigma``.  A new sample is drawn at each tick of the clock
+    and held until the next, so the noise is piecewise constant and the solver sees a
+    function of time.  The input passes through continuously.
+
+    The sample for tick :math:`k` depends only on ``seed`` and :math:`k`, so a seeded
+    block gives the same noise in every run and whatever the solver does.  If ``seed``
+    is ``None`` each run uses a new seed.
+
+    ``sigma`` is a scalar or a vector.  If the input is a vector the noise has one
+    element per input element, independent of each other, so ``sigma`` (or ``x0``) must
+    have that length.  A vector ``sigma`` gives each element its own standard deviation.
+
+    As for all sampled blocks the tick at :math:`t=0` is not applied, so the first
+    sample period carries ``x0`` instead of noise.  It is one by default.
+
+    For example::
+
+        mnoise = bd.MNOISE_S(clock, sigma=0.1, seed=1)
+
+    :seealso: :class:`Anoise_S` :func:`numpy.random.default_rng`
+    """
+
+    nin = 1
+    nout = 1
+    _mean = 1.0
+
+    def __init__(
+        self,
+        clock: Clock,
+        sigma: Vector1D = 1,
+        seed: int | None = None,
+        x0: Vector1D | None = None,
+        **blockargs: Any,
+    ) -> None:
+        r"""
+        :param clock: clock source
+        :param sigma: standard deviation of the noise, defaults to 1
+        :param seed: seed for the random number generator, defaults to None
+        :param x0: noise during the first sample period, defaults to one with the
+            length of ``sigma``
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
+        """
+        sigma_array = np.asarray(sigma, dtype=float)
+        if x0 is None:
+            x0 = np.ones(sigma_array.size)
+        super().__init__(clock=clock, x0=x0, feedthrough=True, **blockargs)
+
+        self.sigma = sigma
+        self.seed = seed
+        self._check_sigma(sigma)
+        self._check_seed(seed)
+        self._check_shapes()
+        self.reset()
+
+        self.add_param("clock", when="never")
+        self.add_param("sigma", coerce=False, validate=self._check_sigma)
+        self.add_param("seed", coerce=False, when="setup", validate=self._check_seed)
+        self.add_param("x0", when="setup")
+
+    def output(self, t: float, u: list[Any], x: np.ndarray) -> list[Any]:
+        return [u[0] * self._sample(x)]
+
+
+# ------------------------------------------------------------------------ #
+
+
 @deprecated_block("Integrator_S")
 class DIntegrator(Integrator_S):
-    r"""Deprecated: use ``Integrator_S`` instead."""
+    r"""
+    :blockname:`DINTEGRATOR <INTEGRATOR_S>`
+
+    Deprecated: use ``Integrator_S`` instead.
+    """
 
 
 if __name__ == "__main__":  # pragma: no cover

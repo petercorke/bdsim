@@ -72,6 +72,23 @@ class Wire:
         else:
             self._value = v
 
+    def newstart(self, plug: Plug) -> None:
+        """
+        Change the output port that the wire starts at.
+
+        :param plug: the new start of the wire
+        :type plug: Plug
+        :raises RuntimeError: the wire is already connected to its blocks
+
+        The wire takes a copy of the plug, so that changing one wire can never change
+        another that shares the plug.  It is used while the diagram is being flattened,
+        before :meth:`BlockDiagram.compile` connects the wires to the blocks.
+        """
+        wires = self.start.block.__dict__.get("_output_wires")
+        if wires is not None and any(self in ws for ws in wires):
+            raise RuntimeError(f"{self} is connected to its blocks, its start is fixed")
+        self.start = StartPlug(plug.block, plug.port)
+
     def bind_slot(self, slot: Any) -> None:
         self._slot = slot
         self._value = None
@@ -98,7 +115,7 @@ class Wire:
 
             wire.5: d2goal[0] --> Kv[0]
         """
-        return str(self) + ": " + self.fullname
+        return f"{self}: {self.fullname}"
 
     @property
     def fullname(self) -> str:
@@ -112,11 +129,9 @@ class Wire:
 
             d2goal[0] --> Kv[0]
         """
-        return "{}[{}] --> {}[{}]".format(
-            self.start.block.name,
-            self.start.port,
-            self.end.block.name,
-            self.end.port,
+        return (
+            f"{self.start.block.name}[{self.start.port}] --> "
+            f"{self.end.block.name}[{self.end.port}]"
         )
 
     def __str__(self) -> str:
@@ -200,10 +215,10 @@ class Plug(Port):
         self.type: str = kind or ""
 
     def __str__(self) -> str:
-        return str(self.block) + "[" + str(self.port) + "]"
+        return f"{self.block}[{self.port}]"
 
     def __repr__(self) -> str:
-        return "Plug/" + self.type + ":" + str(self)
+        return f"Plug/{self.type}:{self}"
 
     @property
     def isslice(self) -> bool:
@@ -300,13 +315,13 @@ class Plug(Port):
         elif isinstance(other, Plug):
             bd = self.block.bd
         else:
-            raise ValueError("unsupported operand type for *: " + str(type(other)))
+            raise ValueError(f"unsupported operand type for *: {type(other)}")
 
         if bd is None:
             raise RuntimeError(  # pragma: no cover
                 "left operand of * operator must be a plug connected to a block diagram"
             )
-        name = "_prod.{:d}".format(next(bd.n_auto_prod))
+        name = f"_prod.{next(bd.n_auto_prod)}"
         return Prod("**", matrix=True, name=name, inputs=[self, other], bd=bd)
 
     @oodebug

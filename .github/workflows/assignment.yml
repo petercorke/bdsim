@@ -1,0 +1,51 @@
+# Checks that the author of a pull request is assigned to the issue it addresses, see
+# CONTRIBUTING.md and .github/scripts/assignment_check.py for the rule.
+#
+# SECURITY.  pull_request_target runs this file from the BASE branch with a token that can
+# write, even for a pull request from a fork.  So this workflow must never check out the
+# pull request (the default checkout here is the base branch, keep it so), never build or run
+# anything from it, and never put text from it into a shell command: the script only calls
+# the GitHub API.  There are no secrets here beyond the job's own token.
+#
+# To try it on any pull request without commenting: Actions > Assignment > Run workflow,
+# with the number of the pull request and dry_run left on.
+
+name: Assignment
+
+on:
+  pull_request_target:
+    types: [opened, reopened, edited, synchronize, ready_for_review, labeled, unlabeled]
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: Number of the pull request to check
+        required: true
+      dry_run:
+        description: Print the verdict only, do not comment or label
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: assignment-${{ github.event.pull_request.number || inputs.pr }}
+  cancel-in-progress: true
+
+jobs:
+  assignment:
+    name: PR author is assigned
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Check the author is assigned
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number || inputs.pr }}
+          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run }}
+        run: python3 .github/scripts/assignment_check.py

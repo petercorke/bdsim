@@ -3427,13 +3427,26 @@ class Codegen:
         except AttributeError:
             pass
 
+        # A registered parameter (Block.add_param) may be a property whose value
+        # lives in a private attribute, so it is not in block.__dict__ under its
+        # own name.  Collect those by name as well, or the specializer cannot see
+        # e.g. self.min is None and cannot prune the branch that uses it.
+        attrs = dict(block.__dict__)
+        for name in getattr(block, "_parameters", {}):
+            if name not in attrs and hasattr(block, name):
+                attrs[name] = getattr(block, name)
+
         _self = {}
-        for name, value in block.__dict__.items():
-            if name.startswith("_"):
+        for name, value in attrs.items():
+            if name.startswith("__"):
                 continue
+            # Private names (self._hz, ...) are kept: a block's output() may read
+            # them, e.g. when a public property is derived from a private
+            # attribute.  Bookkeeping that is not representable is skipped below,
+            # and whatever the specialized IR does not read is pruned later.
             try:
                 vt = VarType(value)
-            except ValueError:
+            except (ValueError, TypeError):
                 # Not representable as struct-field data -- e.g. FUNCTION
                 # blocks' self.func (a callable) or self.kwargs (a dict).
                 # Call-mechanics bookkeeping, not real block state; a call
@@ -3726,16 +3739,16 @@ class Codegen:
                 # only stand-in (a settable sim value), never transpiled --
                 # the real implementation is hand-written C++ supplied
                 # elsewhere (see the I/O handling section of the embedded
-                # codegen plan). Keep only fields the block class itself
-                # registered via add_param() (block._parameters) -- the
-                # existing bdsim convention for "this is genuine, user-
-                # facing configuration" (e.g. channel/device/freq), used
-                # elsewhere for live parameter tuning too. Everything else
-                # on self -- generic Block bookkeeping like nin/nout, and
-                # simulator-only sim_value(s) -- was never meant for a
-                # hand-written C++ body and would otherwise show up as
-                # dead struct fields with no meaning there.
-                keep = set(block._parameters.keys())  # noqa: SLF001
+                # codegen plan). Keep only the block's settable parameters,
+                # block.parameters() -- the registry (Block.add_param) is the
+                # bdsim convention for "this is genuine, user-facing
+                # configuration" (e.g. channel/device/freq), and is also what
+                # live and remote parameter setting uses. Fixed parameters
+                # (when="never", e.g. nin/nout) and everything not registered,
+                # such as simulator-only sim_value(s), were never meant for a
+                # hand-written C++ body and would otherwise show up as dead
+                # struct fields with no meaning there.
+                keep = set(block.parameters())
                 cfg.self = {k: v for k, v in cfg.self.items() if k in keep}
                 s, f = CppEmitter(
                     cfg,

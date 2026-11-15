@@ -329,7 +329,7 @@ class Scope(GraphicsBlock):
         :type styles: str or dict, list of strings or dicts; one per line, optional
         :param stairs: force staircase style plot for all lines, defaults to False
         :type stairs: bool, optional
-        :param scale: fixed y-axis scale or defaults to 'auto'
+        :param scale: fixed y-axis scale, or 'auto', defaults to 'auto'
         :type scale: str or array_like(2)
         :param labels: labels for the plotted signals, defaults to block name and port of the source of each signal if not given. Used
             for vertical axis label, legend and cursor readout.
@@ -339,7 +339,7 @@ class Scope(GraphicsBlock):
         :type grid: bool or sequence
         :param title: title of plot
         :type title: str
-        :param loc: location of legend, see :meth:`matplotlib.pyplot.legend`, defaults to "best"
+        :param loc: location of legend, see :func:`matplotlib.pyplot.legend`, defaults to "best"
         :type loc: str
         :param blockargs: |GraphicsBlockOptions|
         :type blockargs: dict
@@ -422,6 +422,15 @@ class Scope(GraphicsBlock):
         self._cursor_text_xy: tuple[float, float] = (0.02, 0.98)
         self._cursor_dragging: bool = False
         self._cursor_drag_offset: tuple[float, float] = (0.0, 0.0)
+        self.add_param("nin", when="never")
+        self.add_param("vector", when="setup")
+        self.add_param("styles", when="setup")
+        self.add_param("stairs", when="setup")
+        self.add_param("scale", when="setup")
+        self.add_param("labels", when="setup")
+        self.add_param("grid", when="setup")
+        self.add_param("title", when="setup")
+        self.add_param("loc", when="setup")
 
         # TODO, wire width
         # inherit names from wires, block needs to be able to introspect
@@ -461,10 +470,10 @@ class Scope(GraphicsBlock):
         # create empty lines with defined styles
         for i in range(0, self.nplots):
             args = []
-            kwargs = {}
+            kwargs: dict[str, Any] = {"linewidth": 2}  # a style dict can override this
             style = self.styles[i]
             if isinstance(style, dict):
-                kwargs = style
+                kwargs |= style  # into our own dict: the caller's is never modified
             elif isinstance(style, str):
                 args = [style]
             if self.stairs:
@@ -474,8 +483,6 @@ class Scope(GraphicsBlock):
                 self.tdata,
                 self.ydata[i],
                 *args,
-                label=self.styles[i],
-                linewidth=2,
                 **kwargs,
             )
 
@@ -553,7 +560,7 @@ class Scope(GraphicsBlock):
         plt.draw()
 
     def record(self, t: float, inports: list[Any]) -> None:
-        """Append one sample. Runs on every accepted sample (see :meth:`step`)."""
+        """Append one sample. Runs on every accepted sample (see :meth:`~bdsim.SinkBlock.step`)."""
         if not self._enabled:
             return
 
@@ -778,7 +785,7 @@ class ScopeXY(GraphicsBlock):
         """
         :param style: line style, defaults to None
         :type style: optional str or dict
-        :param scale: fixed y-axis scale or defaults to 'auto'
+        :param scale: fixed y-axis scale, or 'auto', defaults to 'auto'
         :type scale: str or array_like(2) or array_like(4)
         :param aspect: aspect ratio, defaults to "equal"
         :type aspect: str
@@ -814,6 +821,11 @@ class ScopeXY(GraphicsBlock):
         self._cursor_text_xy: tuple[float, float] = (0.02, 0.98)
         self._cursor_dragging: bool = False
         self._cursor_drag_offset: tuple[float, float] = (0.0, 0.0)
+        self.add_param("style", when="setup")
+        self.add_param("scale", when="setup")
+        self.add_param("aspect", when="setup")
+        self.add_param("labels", when="setup")
+        self.add_param("init", when="setup")
 
     def start(self, simstate: Any) -> None:
         super().start(simstate)
@@ -822,8 +834,6 @@ class ScopeXY(GraphicsBlock):
             return
 
         # create the plot
-        super().reset()
-
         if self.fig is None or self.ax is None:
             raise RuntimeError(
                 "figure not created, step called before start?"
@@ -1085,7 +1095,7 @@ class ScopeXY1(ScopeXY):
         :type indices: array_like(2)
         :param style: line style
         :type style: optional str or dict
-        :param scale: fixed y-axis scale or defaults to 'auto'
+        :param scale: fixed y-axis scale, or 'auto', defaults to 'auto'
         :type scale: str or array_like(2) or array_like(4)
         :param labels: axis labels (xlabel, ylabel)
         :type labels: 2-element tuple or list
@@ -1100,6 +1110,8 @@ class ScopeXY1(ScopeXY):
         if len(indices) != 2:
             raise ValueError("indices must have 2 elements")
         self.indices = [int(x) for x in indices]
+        self.add_param("indices", when="setup")
+        self.add_param("labels", when="setup")
 
     def step(self, t: float, inports: list[Any]) -> None:
         if not self._enabled:
@@ -1149,30 +1161,66 @@ class Animation(GraphicsBlock):
 
     The animation will run when the block diagram is executed with animation enabled.
     The ``movie`` block option can be used to save the animation to a file as well as displaying it on screen.
+
+    By default ``ax`` is a 2D axes.  For a three-dimensional scene give ``projection="3d"``
+    and ``ax`` is a Matplotlib 3D axes, on which ``init`` can add, for example, polygon
+    collections (``mpl_toolkits.mplot3d.art3d.Poly3DCollection``) that ``update`` moves.  The
+    3D axes have no blitting, and Matplotlib sorts the polygons of a 3D scene by depth as it
+    draws, which can put a large polygon in front of a small one that is really in front of
+    it.  If that matters set ``ax.computed_zorder = False`` in ``init`` and give the artists
+    an explicit ``zorder``, which for a fixed camera is cheap to arrange.
     """
 
     nin = 1
     nout = 0
     TIMESTAMP = True
 
-    def __init__(self, init: Callable, update: Callable, **blockargs: Any) -> None:
+    def __init__(
+        self,
+        init: Callable,
+        update: Callable,
+        projection: Literal["3d"] | None = None,
+        **blockargs: Any,
+    ) -> None:
         """
-        :param init: initialization function with signature init(fig, ax)
+        :param init: initialization function with signature ``init(block, fig, ax)``
         :type init: callable
-        :param update: update function with signature update(frame, fig, ax)
+        :param update: update function with signature ``update(block, t, inports)``
         :type update: callable
+        :param projection: ``"3d"`` to give ``init`` 3D axes, defaults to None for 2D axes
         :param blockargs: |GraphicsBlockOptions|
         :type blockargs: dict
+        :raises ValueError: ``init`` or ``update`` is not callable, or ``projection`` is
+            not None or ``"3d"``
         """
         super().__init__(**blockargs)
         if not callable(init):
             raise ValueError("init must be callable")
         if not callable(update):
             raise ValueError("update must be callable")
+        self._check_projection(projection)
         self.init = init
         self.update = update
+        self.projection = projection
+        self.add_param("init", when="setup")
+        self.add_param("update")
+        # the axes are made in start(), so the projection can change until then.  Any value
+        # that passes the check is acceptable, whatever the current one, so no coercion
+        self.add_param(
+            "projection",
+            when="setup",
+            validate=self._check_projection,
+            coerce=False,
+        )
+
+    @staticmethod
+    def _check_projection(value: Any) -> None:
+        if value is not None and value != "3d":
+            raise ValueError(f"projection must be None or '3d', not {value!r}")
 
     def start(self, simstate: Any) -> None:
+        # the base class makes the axes, 3D if PLOT3D is true, so set that first
+        self.PLOT3D = self.projection == "3d"
         super().start(simstate)
 
         if not self._enabled:

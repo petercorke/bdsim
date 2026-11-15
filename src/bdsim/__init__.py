@@ -8,8 +8,8 @@
 from .run_sim import *  # noqa: F401,F403
 
 # from .run_realtime import *
-from .blockdiagram import *  # noqa: F401,F403
-from .components import *  # noqa: F401,F403
+from .blockdiagram import *  # type: ignore[assignment]  # noqa: F401,F403
+from .components import *  # type: ignore[assignment]  # noqa: F401,F403
 from .block_types import GraphicsBlock  # noqa: F401
 from .blockdiagram import bdload  # noqa: F401
 from .bin.bdrun import bdrun  # noqa: F401

@@ -78,6 +78,8 @@ jobs:
           find docs/lite/files/notebooks -name '*.ipynb' -delete
           rm -f docs/lite/files/figs/*
           cp docs/notebooks/*.ipynb docs/lite/files/notebooks/
+          rm -rf docs/lite/files/notebooks/support
+          cp -r docs/notebooks/support docs/lite/files/notebooks/support
           cp docs/figs/*.png docs/figs/*.svg docs/lite/files/figs/
 
       - name: Build JupyterLite content

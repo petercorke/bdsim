@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any, Callable, cast
+from typing import TYPE_CHECKING, Any, Callable, Literal, cast
+import numbers
 import warnings
 
 import numpy as np
@@ -13,6 +14,7 @@ import spatialmath.base as smb
 from bdsim.exceptions import BlockApiError, BlockRuntimeError
 from bdsim.components import Clock, _fixname, oodebug
 from bdsim.connect import Plug, Port, Wire
+from bdsim.signature import Signature, maybe_asarray
 
 if TYPE_CHECKING:
     from bdsim.blockdiagram import BlockDiagram
@@ -22,21 +24,160 @@ Vector1D = int | float | tuple[float, ...] | list[float] | np.ndarray
 
 
 class PortValueSlot:
-    __slots__ = ("value",)
+    """
+    The signal on one wire.
+
+    The slot of an output port is shared with every input port wired to it, so
+    ``value`` and ``signature`` are the producer's and every consumer's view of
+    the same wire.  ``signature`` is ``None`` until compile() has observed the
+    wire.
+    """
+
+    __slots__ = ("value", "signature")
 
     def __init__(self) -> None:
         self.value: Any = None
+        self.signature: Signature | None = None
+
+
+def _collapse_size_one_vector(value: Any) -> Any:
+    """A 1-D ndarray of size 1 is presented as a scalar of the same NumPy type.
+
+    Only ``ndarray`` is affected, and only if it is 1-D: a ``(1, 1)`` matrix
+    stays a matrix.
+    """
+    if isinstance(value, np.ndarray) and value.ndim == 1 and value.size == 1:
+        return value[0]
+    return value
+
+
+_MISSING = object()
+
+
+class Parameter:
+    """
+    A parameter of a block, see :meth:`~bdsim.Block.add_param`.
+
+    :param name: the name, which is the ``__init__`` argument of the block
+    :param when: ``"anytime"``, ``"setup"`` or ``"never"``
+    :param validate: optional check of a new value, which raises if it is not acceptable
+    :param coerce: check the new value against the type of the current one
+    :param forward: ``(block, name)``, the parameter of another block that this one
+        stands for, see :meth:`~bdsim.Block.add_param`
+    :param unavailable: why the parameter cannot be used, for a block that was built
+        without the part it belongs to
+    """
+
+    __slots__ = ("name", "when", "validate", "coerce", "forward", "unavailable")
+
+    def __init__(
+        self,
+        name: str,
+        when: Literal["anytime", "setup", "never"] = "anytime",
+        validate: Callable[[Any], Any] | None = None,
+        coerce: bool = True,
+        forward: tuple[Block, str] | None = None,
+        unavailable: str | None = None,
+    ) -> None:
+        if when not in ("anytime", "setup", "never"):
+            raise ValueError(
+                f"when must be 'anytime', 'setup' or 'never', not {when!r}"
+            )
+        self.name = name
+        self.when = when
+        self.validate = validate
+        self.coerce = coerce
+        self.forward = forward
+        self.unavailable = unavailable
+
+
+def _coerce_parameter(block: Block, name: str, old: Any, new: Any) -> Any:
+    """
+    The new value of a parameter in the type of the old one, or an error.
+
+    The current value says what is acceptable, so no type has to be declared:
+
+    * an ``ndarray`` keeps its shape and dtype; a list of numbers becomes an array,
+      and an array that can be cast safely to the dtype is cast (an integer array
+      into a float one)
+      A one-element array also accepts a number.
+    * a ``bool`` stays a bool
+    * a number may be any other number, and is widened (an integer parameter can
+      become a float, a float parameter stays a float), never narrowed
+    * a callable stays callable
+    * anything else must be the same type
+    * if the current value is ``None`` or does not exist there is nothing to compare
+      with, and the new value is accepted
+    """
+    where = f"block {block.name}: parameter '{name}'"
+    if old is _MISSING or old is None:
+        return maybe_asarray(new)
+
+    if isinstance(old, np.ndarray):
+        if (
+            old.size == 1
+            and isinstance(new, numbers.Number)
+            and not isinstance(new, (bool, np.bool_))
+        ):
+            new = np.full(old.shape, new)  # a number for a one-element array
+        new = maybe_asarray(new)
+        if not isinstance(new, np.ndarray):
+            raise TypeError(f"{where} is {Signature.of(old)}, not {Signature.of(new)}")
+        if new.shape != old.shape:
+            raise ValueError(f"{where} has shape {old.shape}, not {new.shape}")
+        if new.dtype != old.dtype:
+            if not np.can_cast(new.dtype, old.dtype, "same_kind"):
+                raise ValueError(
+                    f"{where} has dtype {old.dtype}, it cannot be set to {new.dtype}"
+                )
+            new = new.astype(old.dtype)
+        return new
+
+    if isinstance(old, (bool, np.bool_)):
+        if not isinstance(new, (bool, np.bool_)):
+            raise TypeError(f"{where} is a bool, not {Signature.of(new)}")
+        return new
+
+    if isinstance(old, numbers.Number):
+        if isinstance(new, (bool, np.bool_)) or not isinstance(new, numbers.Number):
+            raise TypeError(
+                f"{where} is a number ({Signature.of(old)}), not {Signature.of(new)}"
+            )
+        return type(cast(Any, old) + new)(new)  # widen, never narrow
+
+    if callable(old):
+        if not callable(new):
+            raise TypeError(f"{where} is a function, not {Signature.of(new)}")
+        return new
+
+    if type(new) is not type(old):
+        raise TypeError(f"{where} is {Signature.of(old)}, not {Signature.of(new)}")
+    return new
+
+
+def _value_suffix(value: Any) -> str:
+    """The value of an implicit block as it is shown after the name, on one line.
+
+    A number is ``(3)``, a small array ``([[0. 0.]])`` and a longer array, or any
+    other object, is described by its kind: ``<float64 6x6>`` or ``<Foo>``.
+    """
+    if isinstance(value, numbers.Number) and not isinstance(value, np.ndarray):
+        try:
+            return f"({value:.3g})"
+        except (TypeError, ValueError):  # a complex number
+            return f"({value})"
+    if isinstance(value, str):
+        return f"({value[:20]}{'...' if len(value) > 20 else ''})"
+    if isinstance(value, np.ndarray):
+        if value.size <= 6:
+            text = np.array2string(value, precision=3, max_line_width=1000)
+            return "(" + " ".join(text.split()) + ")"
+        return f"<{value.dtype} {'x'.join(str(n) for n in value.shape)}>"
+    return f"<{type(value).__name__}>"
 
 
 class Block(ABC, Port):
-    """_summary_
-
-    :param ABC: _description_
-    :type ABC: _type_
-    :return: _description_
-    :rtype: _type_
-
-    Block is the superclass of all blocks in the simulation environment.  It defines the common properties of all blocks:
+    """Block is the superclass of all blocks in the simulation environment.  It defines the common properties of all blocks:
 
     - ``nin`` the number of input ports
     - ``nout`` the number of output ports
@@ -54,8 +195,12 @@ class Block(ABC, Port):
         - ``output(t, u, x)``: returns the output value of the block at output port ``i`` given the current state and inputs. The outputs are cached and
           can be accessed by ``block.output_value(i)``
         - ``deriv(t, u, x)``: returns the derivative of the state variables for continuous-time blocks
-        - ``reset()``: resets the block to its initial state
+        - ``reset()``: restores the block's own initial state, once per run
+        - ``configure()``: prepares the block for a run using the signatures of its wires, once per run, after ``reset()`` and before ``start()``
         - ``done()``: performs any cleanup at end of the simulation
+        - ``add_param(name, when=, validate=, coerce=)``: registers a parameter, one call per ``__init__`` argument, with when it can be set (``anytime``, ``setup`` or ``never``)
+        - ``set_param(name, value)``: sets a registered parameter, checking that the value is of the same kind as the current one, and returns the old value
+        - ``parameters()``: the parameters that can be set, with their current values
         - ``info()``: displays information about the block for debugging purposes
 
     Ports can be accessed by index, eg. ``block.input_value(i)`` or ``block.output_value(i)``, or by name, eg. ``block.inport("in1")`` or ``block.outport("out1")`` if the block has named ports.
@@ -74,6 +219,7 @@ class Block(ABC, Port):
     #
     # Publish path:
     #   block.output(...) -> Block._publish_output_values(values)
+    #   -> a 1-D ndarray of size 1 is collapsed to a scalar (once, here)
     #   -> cache in block._output_values
     #   -> write each output-port value once to self._outport_slots[port]
     #
@@ -102,7 +248,6 @@ class Block(ABC, Port):
 
     # graphical hints
     _pos: tuple[float, float] | None  # position on canvas, eg. (x,y)
-    _shape: str | None  # passed to graphviz, eg. 'box', 'ellipse', 'diamond'
 
     _initd: bool = False
     _bd: BlockDiagram | None = None
@@ -114,12 +259,16 @@ class Block(ABC, Port):
     _inport_names: list[str] | None
     _outport_names: list[str] | None
     _state_names: list[str] | None
+    _display_param: str | None = (
+        None  # parameter that label shows for an implicit block
+    )
 
     _clocked: bool = False
     _clock: Clock | None
 
     _graphics: bool = False
-    _parameters: dict[str, Any]
+    _parameters: dict[str, Parameter]
+    _running: bool = False  # between start() and done(), see set_param()
 
     # these lists are used to record the wires connected to the block, set by connect()
     # used to build inter-block references at compile time
@@ -240,7 +389,6 @@ class Block(ABC, Port):
             self._pos = (pos[0], pos[1])
         else:
             self._pos = pos
-        self._shape = "block"  # for box
 
         self._initd = True
         self._clocked = False
@@ -298,13 +446,14 @@ class Block(ABC, Port):
         self._outport_names = onames
 
         if snames is not None:
-            if nstates is not None:
-                if len(snames) != nstates:
-                    raise ValueError(
-                        "number of state names must match number of states"
-                    )
-            else:
-                nstates = len(snames)
+            # the names are those of the continuous states, or, for a block that has
+            # only discrete states, such as a sampled block, of those
+            named = nstates if nstates else ndstates
+            if len(snames) != named:
+                raise ValueError(
+                    f"number of state names ({len(snames)}) must match number of "
+                    f"states ({named})"
+                )
         self._state_names = snames
 
         # block inputs can be specified in the constructor for convenience, and are connected here.
@@ -327,7 +476,7 @@ class Block(ABC, Port):
         Initialize a subclass of Block.
 
         :param cls: The subclass being initialized
-        :type cls: class type
+        :type cls: type
         :param kwargs: keyword args passed to subclass definition
         :type kwargs: dict
 
@@ -412,19 +561,176 @@ class Block(ABC, Port):
         ]:
             print("  {:11s}{:s}".format(k + ":", str(v)))
 
-    def add_param(self, param: str, handler: Callable[..., Any] | None = None) -> None:
-        if handler is None:
+    def add_param(
+        self,
+        name: str,
+        *,
+        when: Literal["anytime", "setup", "never"] = "anytime",
+        validate: Callable[[Any], Any] | None = None,
+        coerce: bool = True,
+        forward: tuple[Block, str] | None = None,
+        unavailable: str | None = None,
+    ) -> None:
+        """
+        Register a parameter of the block, one per call.
 
-            def default_handler(self: Block, name: str, newvalue: Any) -> None:
-                setattr(self, name, newvalue)
+        :param name: the name of the parameter, which is the name of the ``__init__``
+            argument.  The block's current value is ``getattr(self, name)``, so it is a
+            plain attribute or a Python ``property``
+        :type name: str
+        :param when: when the parameter can be set, one of
 
-            handler = default_handler
+            * ``"anytime"``: at any time, between evaluations (default)
+            * ``"setup"``: before the run starts, including from ``--set``, but not
+              while it runs, because :meth:`~bdsim.Block.start` has used the value to build something
+              such as an event or a figure
+            * ``"never"``: not after the block is created, for structure such as
+              ``nin`` or ``clock``
 
-        self.__dict__["_parameters"][param] = handler
+        :type when: str, optional
+        :param validate: a function of the new value that raises ``ValueError`` or
+            ``TypeError`` if it is not acceptable, for example a bound method of the
+            block, called after the type has been checked.  If it returns a value that
+            is not ``None`` that replaces the new value, which lets a check that has to
+            keep two parameters consistent promote them together
+        :type validate: callable, optional
+        :param coerce: check the new value against the type of the current one,
+            see :meth:`set_param`, defaults to True.  Give ``False`` for a parameter
+            that legitimately takes several forms or changes shape, such as a
+            polynomial that may be given as coefficients or as factors, and let the
+            ``property`` setter or ``validate`` deal with the value
+        :type coerce: bool, optional
+        :param forward: for a block made of other blocks, such as a subsystem: the
+            parameter of an inner block that this one stands for, as ``(block, name)``.
+            The value lives in the inner block, which does all the checking, so
+            ``set_param`` and the current value are simply passed on.  The inner
+            parameter can itself be forwarded, so subsystems nest.  The block is given
+            as an object, which stays the right one when the subsystem is flattened into
+            its parent diagram and its blocks are renamed.
+        :type forward: tuple(Block, str), optional
+        :param unavailable: for a parameter that belongs to a part the block was built
+            without, such as the integral term of a PID block with ``I=0``: the reason,
+            which is the message if someone tries to set it
+        :type unavailable: str, optional
 
-    def set_param(self, name: str, newvalue: Any) -> None:
-        print(f"setting parameter {name} of block {self.name} to {newvalue}")
-        self._parameters[name](self, name, newvalue)
+        Every ``__init__`` argument of a block is registered, each with a decision
+        about when it can be set.  A parameter whose value is not kept under its own
+        name, because the block built other blocks or derived state from it, is a
+        ``property`` of the class: the getter finds the value and the setter applies it.
+
+        :seealso: :meth:`set_param` :meth:`parameters`
+        """
+        if forward is not None:
+            target, target_name = forward
+            inner = target._parameters.get(target_name)
+            if inner is None or inner.when == "never":
+                raise ValueError(
+                    f"{name} cannot stand for {target.name}:{target_name}, which is not "
+                    "a parameter that can be set"
+                )
+        self.__dict__["_parameters"][name] = Parameter(
+            name, when, validate, coerce, forward, unavailable
+        )
+
+    def _param_when(self, param: Parameter) -> str:
+        """When a parameter can be set; that of the inner parameter if it is forwarded."""
+        if param.unavailable is not None:
+            return "never"
+        if param.forward is not None:
+            target, name = param.forward
+            return target._param_when(target._parameters[name])
+        return param.when
+
+    def _param_value(self, name: str) -> Any:
+        """The current value of a parameter, from the inner block if it is forwarded."""
+        param = self._parameters.get(name)
+        if param is not None and param.forward is not None:
+            target, target_name = param.forward
+            return target._param_value(target_name)
+        return getattr(self, name, None)
+
+    def remove_param(self, name: str) -> None:
+        """
+        Remove a registered parameter, for a subclass whose parent registers one that
+        does not apply to it.
+
+        :param name: the name of the parameter
+        :type name: str
+        """
+        self.__dict__["_parameters"].pop(name, None)
+
+    def _lookup_param(self, name: str) -> Parameter:
+        """The registered parameter, or a ValueError that says what can be set."""
+        param = self._parameters.get(name)
+        if param is None:
+            settable = ", ".join(self.parameters()) or "none"
+            raise ValueError(
+                f"block {self.name} ({self.type}) has no settable parameter '{name}'; "
+                f"settable parameters: {settable}"
+            )
+        if param.unavailable is not None:
+            raise ValueError(
+                f"block {self.name}: parameter '{name}' cannot be set, {param.unavailable}"
+            )
+        if self._param_when(param) == "never":
+            raise ValueError(
+                f"block {self.name}: parameter '{name}' is fixed when the block is "
+                "created and cannot be set"
+            )
+        return param
+
+    def set_param(self, name: str, newvalue: Any) -> Any:
+        """
+        Set a registered parameter of the block.
+
+        :param name: the name of the parameter
+        :type name: str
+        :param newvalue: the new value
+        :return: the old value
+        :raises ValueError: no such parameter, it is fixed, it cannot be set while the
+            run is going, or the value is not acceptable
+        :raises TypeError: the value is of the wrong type
+
+        The new value must be of the same kind as the current one, see
+        ``_coerce_parameter``: an array keeps its shape and dtype, a number can widen
+        from integer to float but not narrow, and so on.  A list of numbers is
+        converted to an array if the parameter is an array.
+
+        :seealso: :meth:`add_param` :meth:`parameters`
+        """
+        param = self._lookup_param(name)
+        if param.forward is not None:
+            target, target_name = param.forward
+            return target.set_param(target_name, newvalue)
+        if param.when == "setup" and self._running:
+            raise ValueError(
+                f"block {self.name}: parameter '{name}' can only be set before the "
+                "run starts, not while it is running"
+            )
+
+        old = getattr(self, name, _MISSING)
+        new = _coerce_parameter(self, name, old, newvalue) if param.coerce else newvalue
+        if param.validate is not None:
+            checked = param.validate(new)
+            if checked is not None:  # the check may normalise the value
+                new = checked
+        setattr(self, name, new)
+        return None if old is _MISSING else old
+
+    def parameters(self) -> dict[str, Any]:
+        """
+        The parameters that can be set, with their current values.
+
+        :return: ``{name: value}`` for every registered parameter that is not fixed
+        :rtype: dict
+
+        :seealso: :meth:`add_param` :meth:`set_param`
+        """
+        return {
+            name: self._param_value(name)
+            for name, param in self._parameters.items()
+            if self._param_when(param) != "never"
+        }
 
     @property
     def id(self) -> int | None:
@@ -509,7 +815,7 @@ class Block(ABC, Port):
 
     @property
     def fullname(self) -> str:
-        return self.blockclass + "." + str(self)
+        return f"{self.blockclass}.{self}"
 
     @property
     def hasstate(self) -> bool:
@@ -545,10 +851,6 @@ class Block(ABC, Port):
         return self._pos
 
     @property
-    def shape(self) -> str | None:
-        return self._shape
-
-    @property
     def initd(self) -> bool:
         return self._initd
 
@@ -578,7 +880,7 @@ class Block(ABC, Port):
         This is determined at compile time by the connections in the block diagram.  It
         is used to determine the order of block execution.
 
-        :seealso: :meth:`Block.inports` :meth:`Block.inputs` :meth:`Block.source_name`
+        :seealso: :meth:`~bdsim.Block.sources` :meth:`~bdsim.Block.source_name`
         """
         sources: list[Block] = []
         for wire in self._input_wires:
@@ -601,7 +903,7 @@ class Block(ABC, Port):
         This is determined at compile time by the connections in the block diagram.  It
         is used to determine the order of block execution.
 
-        :seealso: :meth:`Block.sources` :meth:`Block.inputs`
+        :seealso: :meth:`~bdsim.Block.inports`
         """
         inports: list[Plug] = []
         for wire in self._input_wires:
@@ -750,9 +1052,40 @@ class Block(ABC, Port):
 
     def _publish_output_values(self, out: list[Any] | tuple[Any, ...]) -> None:
         """Cache block outputs and publish each port value once to its slot."""
-        self._output_values = list(out)
+        self._output_values = [_collapse_size_one_vector(value) for value in out]
         for port, value in enumerate(self._output_values):
             self._outport_slots[port].value = value
+
+    @property
+    def outsig(self) -> list[Signature | None]:
+        """
+        Signatures of the output ports.
+
+        An entry is ``None`` until :meth:`BlockDiagram.compile` has observed
+        the wire.
+
+        :seealso: :class:`~bdsim.signature.Signature` :attr:`~bdsim.Block.insig`
+        """
+        slots = self.__dict__.get("_outport_slots")  # created by compile()
+        if slots is None:
+            return [None] * self.nout
+        return [slot.signature for slot in slots]
+
+    @property
+    def insig(self) -> list[Signature | None]:
+        """
+        Signatures of the input ports.
+
+        The input port is bound to the slot of the output port that drives it,
+        so this is that producer's :attr:`~bdsim.Block.outsig`.  An entry is ``None`` if the
+        port is unconnected or the wire has not yet been observed.
+
+        :seealso: :class:`~bdsim.signature.Signature` :attr:`~bdsim.Block.outsig`
+        """
+        slots = self.__dict__.get("_inport_slots")  # created by compile()
+        if slots is None:
+            return [None] * self.nin
+        return [None if slot is None else slot.signature for slot in slots]
 
     def outport_slot(self, i: int) -> PortValueSlot:
         if i >= self.nout:
@@ -863,11 +1196,18 @@ class Block(ABC, Port):
         except Exception as err:
             self._raise_runtime_error("reset", err)
 
+    def configure_safe(self) -> None:
+        try:
+            self.configure()
+        except Exception as err:
+            self._raise_runtime_error("configure", err)
+
     def start_safe(self, simstate: Any) -> None:
         try:
             self.start(simstate)
         except Exception as err:
             self._raise_runtime_error("start", err)
+        self._running = True
 
     def validate_start_safe(self) -> None:
         try:
@@ -880,6 +1220,8 @@ class Block(ABC, Port):
             self.done(**kwargs)
         except Exception as err:
             self._raise_runtime_error("done", err)
+        finally:
+            self._running = False
 
     # ---------------------------------------------------------------------- #
     # methods used for unit testing
@@ -1295,14 +1637,7 @@ class Block(ABC, Port):
                 "block must be connected to a block diagram to create an automatic constant"
             )
 
-        if isinstance(value, (int, float)):
-            name = "_const.{:d}({:.3g})".format(next(self.bd.n_auto_const), value)
-        elif isinstance(value, str):
-            name = "_const.{:d}({})".format(next(self.bd.n_auto_const), value)
-        else:
-            name = "_const.{:d}<{}>".format(
-                next(self.bd.n_auto_const), type(value).__name__
-            )
+        name = f"_const.{next(self.bd.n_auto_const)}"
         return self.bd.CONSTANT(value, name=name)
 
     def _autogain(self, value: int | float | np.ndarray, **kwargs: Any) -> Block:
@@ -1311,14 +1646,11 @@ class Block(ABC, Port):
                 "block must be connected to a block diagram to create an automatic gain"
             )
 
-        if isinstance(value, (int, float)):
-            name = "_gain.{:d}({:.3g})".format(next(self.bd.n_auto_gain), value)
-        elif isinstance(value, np.ndarray):
-            name = "_gain.{:d}({})".format(next(self.bd.n_auto_gain), value)
-        else:
+        if not isinstance(value, (int, float, np.ndarray)):
             raise TypeError(
                 f"automatic gain value must be int, float, or ndarray, got {type(value).__name__}"
             )
+        name = f"_gain.{next(self.bd.n_auto_gain)}"
         return self.bd.GAIN(value, name=name, **kwargs)
 
     def _autopow(self, value: int | float, **kwargs: Any) -> Block:
@@ -1327,7 +1659,7 @@ class Block(ABC, Port):
                 "block must be connected to a block diagram to create an automatic power block"
             )
 
-        name = "_pow.{:d}({:.3g})".format(next(self.bd.n_auto_pow), value)
+        name = f"_pow.{next(self.bd.n_auto_pow)}"
         return self.bd.POW(value, name=name, **kwargs)
 
     @oodebug
@@ -1340,7 +1672,7 @@ class Block(ABC, Port):
         :param other: A signal (block or plug) to be added
         :type other: Block or Plug
         :return: SUM block
-        :rtype: Block subclass
+        :rtype: Block
 
         This method is implicitly invoked by the + operator
         when the right operand is a ``Block``
@@ -1369,7 +1701,7 @@ class Block(ABC, Port):
             raise RuntimeError(  # pragma: no cover
                 "block must be connected to a block diagram to create an automatic sum block"
             )
-        name = "_sum.{:d}".format(next(self.bd.n_auto_sum))
+        name = f"_sum.{next(self.bd.n_auto_sum)}"
         if isinstance(other, (int, float, np.ndarray)):
             # block + constant, create a CONSTANT block
             other = self._autoconstant(other)
@@ -1385,7 +1717,7 @@ class Block(ABC, Port):
         :param other: A signal (block or plug) to be added
         :type other: Block or Plug
         :return: SUM block
-        :rtype: Block subclass
+        :rtype: Block
 
         This method is implicitly invoked by the + operator
         when the right operand is a ``Block``
@@ -1414,7 +1746,7 @@ class Block(ABC, Port):
             raise RuntimeError(  # pragma: no cover
                 "block must be connected to a block diagram to create an automatic sum block"
             )
-        name = "_sum.{:d}".format(next(self.bd.n_auto_sum))
+        name = f"_sum.{next(self.bd.n_auto_sum)}"
         if isinstance(other, (int, float, np.ndarray)):
             # constant + block, create a CONSTANT block
             other = self._autoconstant(other)
@@ -1430,7 +1762,7 @@ class Block(ABC, Port):
         :param other: A signal (block or plug) to be subtracted (subtrahend)
         :type other: Block or Plug
         :return: SUM block
-        :rtype: Block subclass
+        :rtype: Block
 
         This method is implicitly invoked by the - operator when the left operand is a ``Block``
         and the right operand is a ``Plug``, ``Block`` or constant::
@@ -1454,7 +1786,7 @@ class Block(ABC, Port):
             raise RuntimeError(  # pragma: no cover
                 "block must be connected to a block diagram to create an automatic sum block"
             )
-        name = "_sum.{:d}".format(next(self.bd.n_auto_sum))
+        name = f"_sum.{next(self.bd.n_auto_sum)}"
         if isinstance(other, (int, float, np.ndarray)):
             # block - constant, create a CONSTANT block
             other = self._autoconstant(other)
@@ -1470,7 +1802,7 @@ class Block(ABC, Port):
         :param other: A signal (block or plug) to be subtracted (subtrahend)
         :type other: Block or Plug
         :return: SUM block
-        :rtype: Block subclass
+        :rtype: Block
 
         This method is implicitly invoked by the - operator when the left operand is a ``Block``
         and the right operand is a ``Plug``, ``Block`` or constant::
@@ -1499,7 +1831,7 @@ class Block(ABC, Port):
                 "block must be connected to a block diagram to create an automatic sum block"
             )
 
-        name = "_sum.{:d}".format(next(self.bd.n_auto_sum))
+        name = f"_sum.{next(self.bd.n_auto_sum)}"
         if isinstance(other, (int, float, np.ndarray)):
             # constant - block, create a CONSTANT block
             other = self._autoconstant(other)
@@ -1513,7 +1845,7 @@ class Block(ABC, Port):
         :param self: A signal (block) to be negated
         :type self: Block
         :return: GAIN block
-        :rtype: Block subclass
+        :rtype: Block
 
         This method is implicitly invoked by the - operator for unary minus when the operand is a ``Block``::
 
@@ -1536,7 +1868,7 @@ class Block(ABC, Port):
         :param self: A signal (block) to be negated
         :type self: Block
         :return: POW block
-        :rtype: Block subclass
+        :rtype: Block
 
         This method is implicitly invoked by the ** operator for unary power when the operand is a ``Block``::
 
@@ -1561,7 +1893,7 @@ class Block(ABC, Port):
         :param other: A signal (block or plug) to be multiplied
         :type other: Block or Plug
         :return: PROD or GAIN block
-        :rtype: Block subclass
+        :rtype: Block
 
         This method is implicitly invoked by the * operator when the left operand is a ``Block``
         and the right operand is a ``Plug``, ``Block`` or constant::
@@ -1577,7 +1909,7 @@ class Block(ABC, Port):
 
         For the third case, create a ``GAIN(C)`` block named ``_gain.N``.
 
-        .. note:: ``C'' can be a scalar or ndarray.
+        .. note:: ``C`` can be a scalar or ndarray.
 
 
         :seealso: :meth:`Block.__rmul__` :meth:`Plug.__mul__`
@@ -1594,11 +1926,11 @@ class Block(ABC, Port):
             return self._autogain(other, premul=False, inputs=[self])
         else:
             # value * value, create a PROD block
-            name = "_prod.{:d}".format(next(self.bd.n_auto_prod))
+            name = f"_prod.{next(self.bd.n_auto_prod)}"
             return Prod("**", inputs=[self, other], name=name, bd=self.bd)
 
     @oodebug
-    def __rmul__(self, other: Block | Plug | int | float | np.ndarray) -> Block | None:
+    def __rmul__(self, other: int | float | np.ndarray) -> Block | None:
         """
         Overloaded * operator for implicit block creation.
 
@@ -1607,7 +1939,7 @@ class Block(ABC, Port):
         :param other: A signal (block or plug) to be multiplied
         :type other: Block or Plug
         :return: PROD or GAIN block
-        :rtype: Block subclass
+        :rtype: Block
 
         This method is implicitly invoked by the * operator when the right operand is a ``Block``
         and the left operand is a ``Plug``, ``Block`` or constant::
@@ -1623,7 +1955,7 @@ class Block(ABC, Port):
 
         For the third case, create a ``GAIN(C)`` block named ``_gain.N``.
 
-        .. note:: ``C'' can be a scalar or ndarray.
+        .. note:: ``C`` can be a scalar or ndarray.
 
 
         :seealso: :meth:`Block.__mul__` :meth:`Plug.__rmul__`
@@ -1643,7 +1975,7 @@ class Block(ABC, Port):
         :param other: A signal (block or plug) to be divided (divisor)
         :type other: Block or Plug
         :return: PROD or GAIN block
-        :rtype: Block subclass
+        :rtype: Block
 
         This method is implicitly invoked by the / operator when the left operand is a ``Block``
         and the right operand is a ``Plug``, ``Block`` or constant::
@@ -1659,7 +1991,7 @@ class Block(ABC, Port):
 
         For the third case, create a ``GAIN(1/C)`` block named ``_gain.N``.
 
-        .. note:: ``C'' can be a scalar or ndarray.
+        .. note:: ``C`` can be a scalar or ndarray.
 
         :seealso: :meth:`Block.__rtruediv__` :meth:`Plug.__truediv__`
         """
@@ -1671,9 +2003,10 @@ class Block(ABC, Port):
                 "block must be connected to a block diagram to create an automatic product block"
             )
 
-        name = "_prod.{:d}".format(next(self.bd.n_auto_prod))
+        name = f"_prod.{next(self.bd.n_auto_prod)}"
         if isinstance(other, (int, float, np.ndarray)):
             # block / constant, create a GAIN block
+            inverse: np.ndarray | float
             if isinstance(other, np.ndarray):
                 inverse = np.linalg.inv(other)
             else:
@@ -1681,7 +2014,7 @@ class Block(ABC, Port):
             return self._autogain(inverse, premul=False, inputs=[self])
         else:
             # value * value, create a PROD block
-            name = "_prod.{:d}".format(next(self.bd.n_auto_prod))
+            name = f"_prod.{next(self.bd.n_auto_prod)}"
             return Prod("*/", inputs=[self, other], name=name, bd=self.bd)
 
     @oodebug
@@ -1694,7 +2027,7 @@ class Block(ABC, Port):
         :param other: A signal (block or plug) to be divided (divisor)
         :type other: Block or Plug
         :return: PROD block
-        :rtype: Block subclass
+        :rtype: Block
 
         This method is implicitly invoked by the / operator when the right operand is a ``Block``
         and the left operand is a ``Plug``, ``Block`` or constant::
@@ -1709,7 +2042,7 @@ class Block(ABC, Port):
         left and right operands.  For the third case, a new CONSTANT block
         named ``_const.N`` is also created.
 
-        .. note:: ``C'' can be a scalar or ndarray.
+        .. note:: ``C`` can be a scalar or ndarray.
 
 
         :seealso: :meth:`Block.__truediv__` :meth:`Plug.__rtruediv__`
@@ -1722,7 +2055,7 @@ class Block(ABC, Port):
                 "block must be connected to a block diagram to create an automatic product block"
             )
 
-        name = "_prod.{:d}".format(next(self.bd.n_auto_prod))
+        name = f"_prod.{next(self.bd.n_auto_prod)}"
         if isinstance(other, (int, float, np.ndarray)):
             # constant / block, create a CONSTANT block
             other = self._autoconstant(other)
@@ -1731,10 +2064,70 @@ class Block(ABC, Port):
     # ---------------------------------------------------------------------- #
 
     def reset(self) -> None:
-        self._updated = False
-        self._output_values = [None] * self.nout
-        for slot in getattr(self, "_outport_slots", []):
-            slot.value = None
+        """
+        Restore the block's initial internal state.
+
+        Called once per run, before :meth:`~bdsim.Block.start`, so that nothing the
+        compile-time trial evaluation or a previous run did to the block is
+        visible to the run about to start.  A block that keeps state of its own
+        in Python, for example a random number generator or a mode flag, must
+        override this and restore it.  Continuous and discrete state vectors
+        are not part of this: they are restored from ``getstate0``.
+
+        The values on the block's ports are not touched.
+        """
+        pass
+
+    def configure(self) -> None:
+        """
+        Prepare the block for a run, using what compile() learned about its wires.
+
+        Called once per run, after :meth:`~bdsim.Block.reset` and before :meth:`~bdsim.Block.start`.  This
+        is the place to read :attr:`~bdsim.Block.insig` and :attr:`~bdsim.Block.outsig`, for example to
+        size per-element detectors or allocate buffers.  The signatures are those
+        observed by the trial evaluation in ``compile()``.  They are ``None`` if
+        the diagram was compiled with ``evaluate=False``, in which case the block
+        should not assume anything about its wires.
+
+        The default does nothing.  :meth:`~bdsim.Block.start` keeps its meaning: acquire
+        resources and register with the simulation.
+        """
+        pass
+
+    def _default_name_stem(self) -> str:
+        """Stem of the default instance name ``<stem>.<n>``, the block type unless overridden."""
+        return self.type
+
+    @property
+    def implicit(self) -> bool:
+        """True if the block is private, which means its name starts with ``_``.
+
+        bdsim gives this kind of name to the blocks it creates for an expression such
+        as ``x * 3`` or ``x + 1``, and you can give it to a block of your own.  Private
+        blocks are listed last in reports, are left out by ``report_summary(implicit=False)``
+        and are not taken to be inputs by :meth:`~bdsim.BlockDiagram.linearize`.
+
+        Only the last part of the name counts, since a block of a subsystem has the
+        name of the subsystem in front of its own, for example ``sub/_gain.0``.
+        """
+        return (self.name or "").rsplit("/", 1)[-1].startswith("_")
+
+    @property
+    def label(self) -> str:
+        """The name for display: for an implicit block, the name with its value.
+
+        An implicit constant, gain or power block is only known by a counter, for
+        example ``_gain.0``, so its label also shows the value that makes it
+        recognizable, ``_gain.0(3)``.  The value is the current one, not the one the
+        block was created with.  A block with a name of its own has the name as its label.
+
+        The name, not the label, identifies the block: it is what ``bd["_gain.0"]`` and
+        ``--set _gain.0:K=3`` take.
+        """
+        name = self.name or ""
+        if self._display_param is None or not self.implicit:
+            return name
+        return name + _value_suffix(getattr(self, self._display_param, None))
 
     def start(self, simstate: SimulationState) -> None:  # begin a simulation
         pass
@@ -1783,6 +2176,14 @@ class SourceBlock(Block):
     A SourceBlock is a subclass of Block that represents a block that has outputs
     but no inputs.  Its output is a function of parameters and time.
     """
+
+    # A source whose output is determined by the simulation, not chosen by the
+    # user, gives the reason here.  bd.functions() and bd.linearize() do not offer
+    # it as an input, because it is an argument of f and g (TIME, STATE).
+    _not_an_input: str | None = None
+    # The output is a function of the state, so a signal made from it cannot
+    # itself be an input.
+    _reads_state: bool = False
 
     def __init__(self, **blockargs: Any) -> None:
         """
@@ -1890,12 +2291,25 @@ class FunctionBlock(Block):
         raise NotImplementedError
 
 
+def _initial_state(block: Any, value: Any) -> np.ndarray:
+    """An initial state vector for the block, as a float array with one element per state."""
+    x0 = smb.getvector(value, dtype=float)
+    n = len(block._x0)
+    if x0.shape != (n,):
+        raise ValueError(
+            f"x0 must have {n} element{'s' if n != 1 else ''}, one per state, not {len(x0)}"
+        )
+    return x0
+
+
 class ContinuousBlock(Block):
     """
     A ContinuousBlock is a subclass of Block that represents a block with inputs,
     outputs and states. Typically used to describe a continuous-time dynamic
     system, either linear or nonlinear.
     """
+
+    _x0: np.ndarray
 
     def __init__(
         self,
@@ -1938,12 +2352,29 @@ class ContinuousBlock(Block):
         self._feedthrough = feedthrough
         super().__init__(nstates=nstates, ndstates=0, **blockargs)
 
-    def reset(self) -> None:
-        super().reset()
+    @property
+    def feedthrough(self) -> bool:
+        """
+        True if the output depends directly on the input at the same instant.
+
+        Fixed when the block is created, because it decides the block's place in the
+        execution order: a block with feedthrough can be part of an algebraic loop.
+        Read-only, and not a parameter.
+        """
+        return self._feedthrough  # type: ignore[no-any-return]
 
     def setstate(self, x: np.ndarray) -> np.ndarray:
         self._x_view = x[: self.nstates]
         return x[self.nstates :]
+
+    @property
+    def x0(self) -> np.ndarray:
+        """Initial state vector.  It can be set until the run starts."""
+        return self._x0  # type: ignore[no-any-return]
+
+    @x0.setter
+    def x0(self, value: Any) -> None:
+        self._x0 = _initial_state(self, value)
 
     def getstate0(self) -> np.ndarray:
         return self._x0
@@ -2015,12 +2446,29 @@ class SampledBlock(Block):
         self._feedthrough = feedthrough
         clock.add_block(self)
 
-    def reset(self) -> None:
-        super().reset()
+    @property
+    def feedthrough(self) -> bool:
+        """
+        True if the output depends directly on the input at the same instant.
+
+        Fixed when the block is created, because it decides the block's place in the
+        execution order: a block with feedthrough can be part of an algebraic loop.
+        Read-only, and not a parameter.
+        """
+        return self._feedthrough  # type: ignore[no-any-return]
 
     def setstate(self, x: np.ndarray) -> np.ndarray:
         self._x_view = x[: self.ndstates]
         return x[self.ndstates :]
+
+    @property
+    def x0(self) -> np.ndarray:
+        """Initial state vector.  It can be set until the run starts."""
+        return self._x0  # type: ignore[no-any-return]
+
+    @x0.setter
+    def x0(self, value: Any) -> None:
+        self._x0 = _initial_state(self, value)
 
     def getstate0(self) -> np.ndarray:
         return self._x0
@@ -2083,6 +2531,40 @@ class SubsystemBlock(Block):
         self.inport = inports[0]
         self.outport = outports[0]
 
+        # set when the diagram is compiled and the INPORT and OUTPORT blocks are replaced
+        # by wires, see BlockDiagram._elide_subsystem_ports
+        self._ports_elided = False
+        self._source_inports: list[Plug | None] = []
+        self._source_outports: list[Plug | None] = []
+
+    @property
+    def inports(self) -> list[Plug]:
+        """
+        The output ports that feed the inputs of the subsystem.
+
+        :return: one plug per input, the block and port that drives it
+        :rtype: list of Plug
+
+        Like :attr:`Block.inports`, but the subsystem block is not part of the compiled
+        network.  Available after the diagram has been compiled.
+        """
+        return self._source_inports  # type: ignore[return-value]
+
+    @property
+    def outports(self) -> list[Plug]:
+        """
+        The output ports that generate the outputs of the subsystem.
+
+        :return: one plug per output, the block and port inside the subsystem whose value
+            is the output.  Nested subsystems are looked through.
+        :rtype: list of Plug
+
+        This is how the output of a subsystem is watched: ``watch=[pid]`` or
+        ``watch=[pid[0]]`` watch the plug found here.  Available after the diagram has
+        been compiled.
+        """
+        return self._source_outports  # type: ignore[return-value]
+
 
 class EventSource:
     pass
@@ -2111,7 +2593,7 @@ def deprecated_block(new_name: str) -> Callable[[type], type]:
     """
 
     def decorator(cls: type) -> type:
-        orig_init = cls.__init__
+        orig_init = getattr(cls, "__init__")
 
         def __init__(self: Any, *args: Any, **kwargs: Any) -> None:
             warnings.warn(
@@ -2121,7 +2603,7 @@ def deprecated_block(new_name: str) -> Callable[[type], type]:
             )
             orig_init(self, *args, **kwargs)
 
-        cls.__init__ = __init__
+        setattr(cls, "__init__", __init__)
         return cls
 
     return decorator

@@ -3,7 +3,13 @@
 import numpy as np
 import math
 
-from bdsim.blocks.sampled import Integrator_S, LTI_SISO_S, LTI_SS_S, ZOH
+from bdsim.blocks.sampled import (
+    Hysteresis_S,
+    Integrator_S,
+    LTI_SISO_S,
+    LTI_SS_S,
+    ZOH,
+)
 from bdsim import Clock
 
 import unittest
@@ -112,6 +118,98 @@ class DiscreteTest(unittest.TestCase):
         nt.assert_equal(deprecated_block.getstate0(), np.zeros(6))
 
 
+class HysteresisTest(unittest.TestCase):
+    clock = Clock(10, "Hz")
+
+    def block(self, **kw):
+        return Hysteresis_S(self.clock, switch_on=1.0, switch_off=0.0, **kw)
+
+    def test_defaults(self):
+        block = Hysteresis_S(self.clock)
+        self.assertEqual((block.switch_on, block.switch_off), (0.5, -0.5))
+        self.assertEqual((block.output_on, block.output_off), (1.0, 0.0))
+        self.assertEqual(block.ndstates, 1)
+        nt.assert_equal(block.getstate0(), np.r_[0.0])  # initially off
+
+    def test_switches_on_and_off(self):
+        block = self.block()
+        off, on = np.r_[0.0], np.r_[1.0]
+        nt.assert_equal(block.test_next(2.0, x=off), on)
+        nt.assert_equal(block.test_next(-1.0, x=on), off)
+
+    def test_keeps_its_value_between_the_switching_points(self):
+        block = self.block()
+        off, on = np.r_[0.0], np.r_[1.0]
+        nt.assert_equal(block.test_next(0.5, x=off), off)
+        nt.assert_equal(block.test_next(0.5, x=on), on)
+
+    def test_the_switching_points_themselves_switch(self):
+        block = self.block()
+        off, on = np.r_[0.0], np.r_[1.0]
+        nt.assert_equal(block.test_next(1.0, x=off), on)  # at switch_on
+        nt.assert_equal(block.test_next(0.0, x=on), off)  # at switch_off
+
+    def test_equal_switching_points_are_an_ideal_relay(self):
+        block = Hysteresis_S(self.clock, switch_on=0.0, switch_off=0.0)
+        off, on = np.r_[0.0], np.r_[1.0]
+        nt.assert_equal(block.test_next(0.0, x=off), on)  # exactly at it: on
+        nt.assert_equal(block.test_next(-0.1, x=on), off)
+        nt.assert_equal(block.test_next(0.1, x=off), on)
+
+    def test_output_levels(self):
+        block = self.block(output_on=5.0, output_off=-2.0)
+        nt.assert_equal(block.getstate0(), np.r_[-2.0])
+        nt.assert_equal(block.test_next(2.0, x=np.r_[-2.0]), np.r_[5.0])
+        nt.assert_equal(block.test_next(-1.0, x=np.r_[5.0]), np.r_[-2.0])
+        self.assertEqual(block.test_output(0, x=np.r_[5.0])[0], 5.0)
+
+    def test_initial_output(self):
+        block = self.block(x0=1.0)
+        nt.assert_equal(block.getstate0(), np.r_[1.0])
+        # in the band it keeps the initial value
+        nt.assert_equal(block.test_next(0.5, x=block.getstate0()), np.r_[1.0])
+
+    def test_vector_with_elementwise_parameters(self):
+        block = Hysteresis_S(
+            self.clock,
+            switch_on=[1.0, 10.0],
+            switch_off=[0.0, 5.0],
+            x0=[0.0, 1.0],
+        )
+        self.assertEqual(block.ndstates, 2)
+        x = np.r_[0.0, 1.0]
+        # element 0 at 2 switches on; element 1 at 7 is in its band and stays on
+        nt.assert_equal(block.test_next(np.r_[2.0, 7.0], x=x), np.r_[1.0, 1.0])
+        # element 0 at 0.5 stays; element 1 at 4 switches off
+        nt.assert_equal(
+            block.test_next(np.r_[0.5, 4.0], x=np.r_[1.0, 1.0]), np.r_[1.0, 0.0]
+        )
+
+    def test_scalar_state_gives_a_scalar_output(self):
+        out = self.block().test_output(0, x=np.r_[1.0])[0]
+        self.assertNotIsInstance(out, np.ndarray)
+
+    def test_bad_parameters(self):
+        with self.assertRaises(ValueError):
+            Hysteresis_S(self.clock, switch_on=0.0, switch_off=1.0)
+        with self.assertRaises(ValueError):
+            Hysteresis_S(self.clock, output_on=1.0, output_off=1.0)
+        with self.assertRaises(ValueError):
+            self.block(x0=0.5)  # neither output level
+
+    def test_parameters_are_validated_when_set(self):
+        block = self.block()
+        block.set_param("switch_on", 2.0)
+        self.assertEqual(block.switch_on, 2.0)
+        with self.assertRaises(ValueError):
+            block.set_param("switch_off", 3.0)  # above switch_on
+        with self.assertRaises(ValueError):
+            block.set_param("switch_on", -1.0)  # below switch_off
+        with self.assertRaises(ValueError):
+            block.set_param("output_on", 0.0)  # equals output_off
+        self.assertEqual((block.switch_on, block.switch_off), (2.0, 0.0))
+
+
 class DiscreteTransferTest(unittest.TestCase):
     def test_LTI_SS(self):
         clock = Clock(2, "Hz")
@@ -151,27 +249,27 @@ class DiscreteTransferTest(unittest.TestCase):
 
         clock = Clock(2, "Hz")
 
-        block = LTI_SISO_S(clock, N=N, D=D)
+        block = LTI_SISO_S(clock, num=N, den=D)
         n, d = ss2tf(block.A, block.B, block.C, np.zeros((1, 1)), input=0)
         nt.assert_almost_equal(n[0], Nr)
         nt.assert_almost_equal(d, Dr)
 
-        block = LTI_SISO_S(clock, N=N, D=D, form="ocf", order="backward")
+        block = LTI_SISO_S(clock, num=N, den=D, form="ocf", order="backward")
         n, d = ss2tf(block.A, block.B, block.C, np.zeros((1, 1)), input=0)
         nt.assert_almost_equal(n[0], Nr)
         nt.assert_almost_equal(d, Dr)
 
-        block = LTI_SISO_S(clock, N=N, D=D, form="ocf", order="forward")
+        block = LTI_SISO_S(clock, num=N, den=D, form="ocf", order="forward")
         n, d = ss2tf(block.A, block.B, block.C, np.zeros((1, 1)), input=0)
         nt.assert_almost_equal(n[0], Nr)
         nt.assert_almost_equal(d, Dr)
 
-        block = LTI_SISO_S(clock, N=N, D=D, form="ccf", order="backward")
+        block = LTI_SISO_S(clock, num=N, den=D, form="ccf", order="backward")
         n, d = ss2tf(block.A, block.B, block.C, np.zeros((1, 1)), input=0)
         nt.assert_almost_equal(n[0], Nr)
         nt.assert_almost_equal(d, Dr)
 
-        block = LTI_SISO_S(clock, N=N, D=D, form="ccf", order="forward")
+        block = LTI_SISO_S(clock, num=N, den=D, form="ccf", order="forward")
         n, d = ss2tf(block.A, block.B, block.C, np.zeros((1, 1)), input=0)
         nt.assert_almost_equal(n[0], Nr)
         nt.assert_almost_equal(d, Dr)
@@ -414,6 +512,95 @@ class SampledSim(unittest.TestCase):
         nt.assert_almost_equal(out.y[-1, 1], 46.4, decimal=1)
         nt.assert_almost_equal(out.y[0, 2], 0)
         nt.assert_almost_equal(out.y[-1, 2], 43.4, decimal=1)
+
+
+class LTISSSNotationTest(unittest.TestCase):
+    """Phi and Gamma as synonyms for A and B, and D, the feedthrough matrix."""
+
+    def block(self, **kw):
+        args = dict(
+            A=np.array([[0.5, 0.1], [0.0, 0.25]]),
+            B=np.array([1.0, 2.0]),
+            C=np.array([3.0, 4.0]),
+            x0=[0.0, 0.0],
+        )
+        args.update(kw)
+        return LTI_SS_S(Clock(2, "Hz"), **args)
+
+    def test_docstring_example(self):
+        block = LTI_SS_S(
+            Clock(2, "Hz"),
+            A=np.array([[-2.0]]),
+            B=np.array([1.0]),
+            C=np.array([-1.0]),
+            x0=[0.0],
+        )
+        # x_k = -2 x_{k-1} + u_k and y_k = -x_k
+        nt.assert_equal(block.test_next(3.0, x=np.r_[5.0]), [-7.0])
+        nt.assert_equal(block.test_output(0.0, x=np.r_[5.0])[0], -5.0)
+
+    def test_phi_and_gamma_are_a_and_b(self):
+        block = self.block()
+        for name in ("Phi", "Φ"):
+            self.assertIs(getattr(block, name), block.A)
+        for name in ("Gamma", "Γ"):
+            self.assertIs(getattr(block, name), block.B)
+
+    def test_phi_and_gamma_follow_a_change_of_a_and_b(self):
+        block = self.block()
+        new = np.array([[0.1, 0.0], [0.0, 0.2]])
+        block.set_param("A", new)
+        nt.assert_equal(block.Phi, new)
+        nt.assert_equal(block.Φ, new)
+
+    def test_phi_and_gamma_can_be_set(self):
+        block = self.block()
+        new = np.array([[0.7, 0.0], [0.0, 0.8]])
+        block.Phi = new
+        self.assertIs(block.A, new)
+        block.Φ = 2 * new
+        nt.assert_equal(block.A, 2 * new)
+        gamma = np.array([[5.0], [6.0]])
+        block.Gamma = gamma
+        self.assertIs(block.B, gamma)
+        block.Γ = 2 * gamma
+        nt.assert_equal(block.B, 2 * gamma)
+
+    def test_the_names_are_synonyms_of_one_property(self):
+        self.assertIs(LTI_SS_S.Φ, LTI_SS_S.Phi)
+        self.assertIs(LTI_SS_S.Γ, LTI_SS_S.Gamma)
+
+    def test_subclass_has_them_too(self):
+        block = LTI_SISO_S(Clock(2, "Hz"), num=[1.0], den=[1.0, -0.5])
+        self.assertIs(block.Phi, block.A)
+        self.assertIs(block.Gamma, block.B)
+
+    def test_no_d_means_no_feedthrough(self):
+        block = self.block()
+        self.assertFalse(block.feedthrough)
+        self.assertIsNone(block.D)
+        x, u = np.r_[1.0, 2.0], 5.0
+        nt.assert_allclose(block.test_output(u, x=x)[0], 3.0 + 8.0)
+
+    def test_zero_d_means_no_feedthrough(self):
+        block = self.block(D=np.zeros((1, 1)))
+        self.assertFalse(block.feedthrough)
+
+    def test_nonzero_d_is_feedthrough(self):
+        block = self.block(D=np.array([[2.0]]))
+        self.assertTrue(block.feedthrough)
+        x, u = np.r_[1.0, 2.0], 5.0
+        nt.assert_allclose(block.test_output(u, x=x)[0], 3.0 + 8.0 + 2.0 * 5.0)
+        # D does not enter the next state
+        nt.assert_allclose(block.test_next(u, x=x), block.A @ x + (block.B @ np.r_[u]))
+
+    def test_d_can_be_given_as_a_1d_array(self):
+        block = self.block(D=np.array([2.0]))
+        self.assertTrue(block.feedthrough)
+
+    def test_d_of_the_wrong_shape_is_rejected(self):
+        with self.assertRaises(ValueError):
+            self.block(D=np.ones((2, 2)))
 
 
 # ---------------------------------------------------------------------------------------#

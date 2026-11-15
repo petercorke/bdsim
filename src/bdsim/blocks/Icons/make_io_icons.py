@@ -6,48 +6,10 @@ pictogram is the physical/world side.  *Out blocks: bracket -> world.
 """
 
 import math
-from PIL import Image, ImageDraw, ImageFont
 
-S = 4  # supersample
-N = 250
-W = 13  # main stroke width (matches log/watch weight)
-CY = 125
-FONT = "/System/Library/Fonts/Helvetica.ttc"
+from PIL import Image, ImageDraw
 
-
-def canvas():
-    return Image.new("L", (N * S, N * S), 0)
-
-
-def s(v):
-    return int(round(v * S))
-
-
-def poly(d, pts, w=W, round_join=False):
-    """Polyline; axis-aligned corners get square joins, unless round_join."""
-    P = [(s(x), s(y)) for x, y in pts]
-    if round_join:
-        d.line(P, fill=255, width=s(w), joint="curve")
-        r = s(w) / 2
-        for x, y in (P[0], P[-1]):  # round caps
-            d.ellipse([x - r, y - r, x + r, y + r], fill=255)
-        return
-    h = s(w) / 2
-    n = len(P) - 1
-    for i, ((x0, y0), (x1, y1)) in enumerate(zip(P, P[1:])):
-        ex0 = h if i > 0 else 0
-        ex1 = h if i < n - 1 else 0
-        if y0 == y1:  # horizontal
-            xa, xb = (x0 - ex0, x1 + ex1) if x1 > x0 else (x1 - ex1, x0 + ex0)
-            d.rectangle([xa, y0 - h, xb, y0 + h], fill=255)
-        else:  # vertical
-            ya, yb = (y0 - ex0, y1 + ex1) if y1 > y0 else (y1 - ex1, y0 + ex0)
-            d.rectangle([x0 - h, ya, x0 + h, yb], fill=255)
-
-
-def arrow(d, x0, x1, y=CY, w=W, head=22):
-    poly(d, [(x0, y), (x1 - 4, y)], w)
-    poly(d, [(x1 - head, y - head), (x1, y), (x1 - head, y + head)], w, True)
+from _icondraw import CY, W, arrow, canvas, poly, s, save, text
 
 
 def bracket(d, x0, x1, gap_side, y0=28, y1=222, gap=(98, 152), r=30):
@@ -60,20 +22,6 @@ def bracket(d, x0, x1, gap_side, y0=28, y1=222, gap=(98, 152), r=30):
         else (s(x0 - 2), s(x0 + W + 2))
     )
     d.rectangle([gx[0], s(gap[0]), gx[1], s(gap[1])], fill=0)
-
-
-def text(d, xy, t, size, bold=True, spacing=0):
-    f = ImageFont.truetype(FONT, s(size), index=1 if bold else 0)
-    x, y = xy
-    if spacing:  # centred, letter-spaced
-        widths = [d.textlength(c, font=f) for c in t]
-        tot = sum(widths) + s(spacing) * (len(t) - 1)
-        cx = s(x) - tot / 2
-        for c, wd in zip(t, widths):
-            d.text((cx, s(y)), c, font=f, fill=255, anchor="lm")
-            cx += wd + s(spacing)
-    else:
-        d.text((s(x), s(y)), t, font=f, fill=255, anchor="mm")
 
 
 def gear(d, cx, cy, ro=46, rr=35, ri=16, teeth=8):
@@ -110,13 +58,6 @@ def quantised(x0, x1, amp, steps, y=CY):
         v = y - round(3 * math.sin(2 * math.pi * (k + 0.5) / steps)) * amp / 3
         pts += [(xa, v), (xb, v)]
     return pts
-
-
-def save(im, name):
-    im = im.resize((N, N), Image.LANCZOS)
-    out = Image.new("RGBA", (N, N), (0, 0, 0, 0))
-    out.putalpha(im)
-    out.save(name)
 
 
 # ---- geometry: left bracket (out) x 12..96, right bracket (in) x 154..238

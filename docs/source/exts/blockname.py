@@ -1,3 +1,5 @@
+import re
+
 from docutils import nodes
 
 # from docutils.parsers.rst import Directive
@@ -20,13 +22,13 @@ def block_name(name, rawtext, text, lineno, inliner, options={}, content=[]):
 	    <col style="width:20%">
     <tr>
     <td>
-    <p style="border:10px; background-color:#000000; padding: 1em; color: white; font-size: 30px; font-weight: bold;">
+    <p style="border:10px; background-color:{2}; padding: 1em; color: white; font-size: 30px; font-weight: bold;">
     {0}
     </p>
     </td>
     <td></td>
     <td>
-    <img src="{1}" width=80 height=80 style="border:2px solid black; border-radius:10px; padding: 4px">
+    <img src="{1}" width=80 height=80 style="border:2px solid black; border-radius:10px; padding: 4px; {3}">
     </td>
     </tr>
     </table>
@@ -50,8 +52,18 @@ def block_name(name, rawtext, text, lineno, inliner, options={}, content=[]):
     env = inliner.document.settings.env
     depth = env.docname.count("/")
     static_prefix = "../" * depth
-    path = f"{static_prefix}_static/{text.lower()}.png"
-    html_node = nodes.raw(text=html.format(text, path), format="html")
+    #
+    # ``:blockname:`NAME <ICON>``` shows NAME with the icon of block ICON, for a
+    # deprecated alias that has no icon of its own.  That form is only used for
+    # deprecated blocks, so it is also greyed out: grey bar, faded gray icon.
+    m = re.fullmatch(r"(.+?)\s*<(.+)>", text)
+    title, icon = m.groups() if m else (text, text)
+    if m:
+        bar, icon_style = "#777777", "filter: grayscale(1); opacity: 0.45;"
+    else:
+        bar, icon_style = "#000000", ""
+    path = f"{static_prefix}_static/{icon.lower()}.png"
+    html_node = nodes.raw(text=html.format(title, path, bar, icon_style), format="html")
     return [html_node], []
 
 

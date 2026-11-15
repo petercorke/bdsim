@@ -7,7 +7,7 @@ Block library
 .. include:: <isonum.txt>
 
 The block diagrams comprise blocks which belong to one of a number of different categories. These come from
-the package ``bdsim.blocks``, ``roboticstoolbox.blocks``, ``machinevisiontoolbox.blocks``.
+the package ``bdsim.blocks``, `roboticstoolbox.blocks <https://petercorke.github.io/robotics-toolbox-python/blocks.html>`_, `machinevisiontoolbox.blocks <https://petercorke.github.io/machinevision-toolbox-python/blocks.html>`_.
 
 Icons, if shown to the left of the black header bar, are as used with `bdedit <https://github.com/petercorke/bdsim/tree/main/src/bdedit>`_.
 
@@ -16,6 +16,10 @@ Icons, if shown to the left of the black header bar, are as used with `bdedit <h
 
 Source blocks
 =============
+
+Two of the sources output the state of the system rather than a signal:
+:class:`~bdsim.blocks.sources.State` for the continuous-time state and
+:class:`~bdsim.blocks.sources.State_S` for the discrete-time state of the blocks on a clock.
 
 .. automodule:: bdsim.blocks.sources
    :members:
@@ -103,6 +107,8 @@ Continuous-time dynamics
 Sampled-time dynamics
 =====================
 
+The discrete-time state of the blocks on a clock is read by
+:class:`~bdsim.blocks.sources.State_S`, which is listed with the source blocks because it is a source.
 
 .. automodule:: bdsim.blocks.sampled
    :members:
@@ -136,6 +142,6 @@ External Toolbox blocksets
 
 External toolbox block documentation is maintained in each toolbox project.
 
-- Robotics Toolbox for Python: https://github.com/petercorke/robotics-toolbox-python
-- Machine Vision Toolbox for Python: https://github.com/petercorke/machinevision-toolbox-python
+- Robotics Toolbox for Python: https://petercorke.github.io/robotics-toolbox-python/blocks.html
+- Machine Vision Toolbox for Python: https://petercorke.github.io/machinevision-toolbox-python/blocks.html
 

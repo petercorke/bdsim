@@ -266,6 +266,8 @@ class PWMOut(AnalogOut):
             raise ValueError("PWMOut freq must be >= 0 Hz (0 means unspecified)")
         super().__init__(channel=channel, device=device, **blockargs)
         self.freq = freq
+        self.add_param("channel")
+        self.add_param("device")
         self.add_param("freq")
 
 
@@ -318,6 +320,7 @@ class DeviceIn(SourceBlock, IOBlockMixin):
             raise ValueError(
                 f"sim_values must have {nout} elements, got {len(self.sim_values)}"
             )
+        self.add_param("nout", when="never")
         self.add_param("device")
 
     def output(self, t: float, inputs: list[Any], x: np.ndarray) -> list[Any]:
@@ -361,6 +364,7 @@ class DeviceOut(SinkBlock, IOBlockMixin):
         """
         super().__init__(nin=nin, **blockargs)
         self.device = device
+        self.add_param("nin", when="never")
         self.add_param("device")
 
     def step(self, t: float, inputs: list[Any]) -> None:

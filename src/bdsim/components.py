@@ -16,6 +16,7 @@ from typing import TYPE_CHECKING, Any, Callable, Protocol, TypeVar, runtime_chec
 from bdsim.exceptions import SimulationContextError
 
 if TYPE_CHECKING:
+    from bdsim.analysis import Index
     from bdsim.blockdiagram import BlockDiagram
     from bdsim.run_context import SimulationContext
 
@@ -172,30 +173,20 @@ class BDStruct(UserDict):
         maxwidth: int = max([len("_name")] + [len(key) for key in visible.keys()])
         for k, v in sorted(visible.items(), key=lambda x: x[0]):
             if isinstance(v, BDStruct):
-                rows.append("{:s}::".format(v._name.ljust(maxwidth)))
+                rows.append(f"{v._name.ljust(maxwidth)}::")
                 rows.append(
                     "\n".join(
                         [" " * (maxwidth + 3) + line for line in str(v).split("\n")]
                     )
                 )
             elif isinstance(v, str):
-                rows.append(
-                    '{:s} = "{:s}" ({:s})'.format(
-                        k.ljust(maxwidth), str(v), type(v).__name__
-                    )
-                )
+                rows.append(f'{k.ljust(maxwidth)} = "{v}" ({type(v).__name__})')
             elif isinstance(v, np.ndarray):
                 rows.append(
-                    "{:s} = ndarray:{:s} {:s}".format(
-                        k.ljust(maxwidth), v.dtype.type.__name__, str(v.shape)
-                    )
+                    f"{k.ljust(maxwidth)} = ndarray:{v.dtype.type.__name__} {v.shape}"
                 )
             else:
-                rows.append(
-                    "{:s} = {:s} ({:s})".format(
-                        k.ljust(maxwidth), str(v), type(v).__name__
-                    )
-                )
+                rows.append(f"{k.ljust(maxwidth)} = {v} ({type(v).__name__})")
 
         return "\n".join(rows)
 
@@ -238,6 +229,58 @@ class BDStruct(UserDict):
 
         with open(outfile, "w") as f:
             json.dump(_to_dict(self), f, cls=_Encoder, indent=2)
+
+    def dump_npz(self, outfile: str) -> None:
+        """Write the struct to a NumPy ``.npz`` archive.
+
+        :param outfile: path to the output file, used exactly as given
+        :type outfile: str
+
+        Every entry is stored as one array, so the archive is compact, keeps
+        full ``float64`` precision, and can be read without pickle::
+
+            data = np.load("bd.npz", allow_pickle=False)
+            data["t"], data["x"], data["xnames"]
+
+        Nested structs (for example a clock's results) become keys joined by
+        ``/``, such as ``clock0/X``, and hidden fields keep their leading dot,
+        such as ``.stats/ydot_calls``.  A list that makes a rectangular array
+        is stored as one array, a ragged list element by element
+        (``.ywatch/0``, ``.ywatch/1``).  ``None`` and other objects that are not
+        data are left out.
+        """
+        import numpy as np
+
+        flat: dict[str, Any] = {}
+
+        def _add(key: str, value: Any) -> None:
+            if isinstance(value, (BDStruct, dict)):
+                for k, v in value.items():
+                    _add(f"{key}/{k}" if key else str(k), v)
+                return
+            if isinstance(value, (list, tuple)):
+                try:
+                    array = np.asarray(value)
+                except ValueError:  # ragged, newer NumPy refuses
+                    array = np.empty(0, dtype=object)
+                if array.dtype == object:
+                    for i, v in enumerate(value):
+                        _add(f"{key}/{i}", v)
+                    return
+                flat[key] = array
+                return
+            if isinstance(
+                value, (np.ndarray, np.generic, bool, int, float, complex, str)
+            ):
+                array = np.asarray(value)
+                if array.dtype != object:
+                    flat[key] = array
+
+        _add("", self)
+
+        # a file object, so that the name is not changed to end in .npz
+        with open(outfile, "wb") as f:
+            np.savez_compressed(f, **flat)
 
 
 class OptionsBase(UserDict):
@@ -424,8 +467,8 @@ class SimulationState:
         Count of open/allocated graphics figures.
     stop
         Stop-request source (typically a block instance) or ``None``.
-    checkfinite
-        If ``True``, fail fast on NaN/Inf signal values when supported.
+    check
+        If ``True``, check block outputs and derivatives as they are computed.
     debugger
         Legacy debugger enable flag used by some runner/debug paths.
     t_stop
@@ -444,7 +487,7 @@ class SimulationState:
         self.t: float | None = None
         self.fignum: int = 0
         self.stop = None
-        self.checkfinite: bool = True
+        self.check: bool = True
         self.debugger: bool = True
         self.t_stop: float | None = None
         self.eventq: TimeQ = TimeQ()
@@ -491,7 +534,7 @@ class Runner:
         context = self._get_context()
         options = context.options if context is not None else self.options
         if options is not None and debug[0] in options.debug:
-            print(f"DEBUG.{debug:s}: " + fmt.format(*args))
+            print(f"DEBUG.{debug}: " + fmt.format(*args))
 
     def done(self, bd: BlockDiagram, block: bool = False) -> None:
         context = self._require_context()
@@ -550,7 +593,7 @@ class Clock:
         self._compile_fallback_hits: dict[str, int] = {}
 
         if name is None:
-            self.name: str = "clock." + str(len(clocklist))
+            self.name: str = f"clock.{len(clocklist)}"
         else:
             self.name = name
 
@@ -576,6 +619,23 @@ class Clock:
         for b in self.blocklist:
             s += f"    {b.name}\n"
         return s
+
+    @property
+    def index(self) -> Index:
+        """
+        Which elements of the clock's state vector belong to which block.
+
+        :return: an :class:`~bdsim.analysis.Index` of the discrete state of the
+            blocks on this clock, in the order of its state vector
+
+        This is for the discrete state what ``bd.xindex`` is for the continuous state.
+        The names are those a block gave its states, with ``snames``, and otherwise
+        the block's name, or ``name[k]`` for the ``k``-th of several.
+        ``clock.statenames`` names the same elements in the form ``name:X_k``.
+        """
+        from bdsim.analysis import Index
+
+        return Index.of_states(self.blocklist, lambda b: b.ndstates)
 
     def getstate0(self) -> np.ndarray[tuple[Any, ...], np.dtype[Any]]:
         # get the state from each stateful block on this clock
@@ -689,8 +749,8 @@ class Clock:
     def next_event(self, simstate: SimulationState) -> None:
         """Schedule the next event
 
-        :param simstate: _description_
-        :type simstate:
+        :param simstate: the simulation state, which holds the clock's state and the
+            queue of events
 
         The time of the k'th clock tick is
 

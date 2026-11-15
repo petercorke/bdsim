@@ -58,9 +58,11 @@ The available extras are:
 +--------------+-------------------------------------------+
 | Extra        | Purpose                                   |
 +==============+===========================================+
-| ``dev``      | Development and test tools                |
-+--------------+-------------------------------------------+
-| ``docs``     | Documentation build toolchain             |
+| ``control``  | `python-control                           |
+|              | <https://python-control.org>`_ support,   |
+|              | for example                               |
+|              | :meth:`Linearization.ss()                 |
+|              | <bdsim.analysis.Linearization.ss>`        |
 +--------------+-------------------------------------------+
 | ``jupyter``  | Jupyter notebook widgets and plotting     |
 |              | support                                   |
@@ -68,9 +70,19 @@ The available extras are:
 | ``bdedit``   | PySide6 graphic editor support            |
 +--------------+-------------------------------------------+
 | ``all``      | All of the optional runtime extras        |
-|              | (``bdedit`` + ``jupyter``) — not ``dev``  |
-|              | or ``docs``, which are developer-only     |
+|              | (``bdedit`` + ``jupyter`` + ``control``)  |
+|              | — not ``dev`` or ``docs``, which are      |
+|              | developer-only                            |
 +--------------+-------------------------------------------+
+| ``dev``      | Development and test tools, includes      |
+|              | ``control``                               |
++--------------+-------------------------------------------+
+| ``docs``     | Documentation build toolchain             |
++--------------+-------------------------------------------+
+
+python-control is optional: ``bdsim`` imports it only when you call
+:meth:`Linearization.ss() <bdsim.analysis.Linearization.ss>`, and raises an
+``ImportError`` that says what to install if it is missing.
 
 For example, to install the jupyter support extras, you would run:
 

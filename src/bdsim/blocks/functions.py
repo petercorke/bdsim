@@ -13,15 +13,17 @@ import numpy as np
 from scipy import linalg
 import scipy.interpolate
 import math
+import numbers
 import inspect
 import warnings
 import spatialmath.base as smb
-from typing import Any, Union, Callable, Optional
+from typing import Any, Literal, Callable
 from numpy.typing import ArrayLike
 
-Vector1D = Union[int, float, tuple[float, ...], list[float], np.ndarray]
+Vector1D = int | float | tuple[float, ...] | list[float] | np.ndarray
 
 from bdsim.components import FunctionBlock
+from bdsim.crossing import CrossingMixin
 
 # TODO:
 # transform 3D points
@@ -78,7 +80,7 @@ class Sum(FunctionBlock):
     }
 
     def __init__(
-        self, signs: str = "++", mode: Optional[str] = None, **blockargs: Any
+        self, signs: str = "++", mode: str | None = None, **blockargs: Any
     ) -> None:
         """
         :param signs: a string comprising ``+`` or ``-`` characters, defaults to ``++``
@@ -115,7 +117,21 @@ class Sum(FunctionBlock):
         if not all(x in "+-" for x in signs):
             raise ValueError("invalid sign")
         self.signs: str = signs
-        self.mode: Optional[str] = mode
+        self.mode: str | None = mode
+        self.add_param("signs", validate=self._check_signs)
+        self.add_param("mode", validate=self._check_mode)
+
+    def _check_signs(self, value: str) -> None:
+        if not isinstance(value, str) or not all(x in "+-" for x in value):
+            raise ValueError("signs must be a string of + and - characters")
+        if len(value) != self.nin:
+            raise ValueError(
+                f"signs must have {self.nin} characters, one per input, not {len(value)}"
+            )
+
+    def _check_mode(self, value: str | None) -> None:
+        if value is not None and not all(x in "rcCL" for x in value):
+            raise ValueError("mode must be a string of r, c, C or L characters")
 
     def output(self, t: float, inputs: list[Any], x: Any) -> list[Any]:
         for i, input in enumerate(inputs):
@@ -238,6 +254,16 @@ class Prod(FunctionBlock):
                 DeprecationWarning,
                 stacklevel=2,
             )
+        self.add_param("ops", validate=self._check_ops)
+        self.add_param("matrix", when="never")
+
+    def _check_ops(self, value: str) -> None:
+        if not isinstance(value, str) or not all(x in "*/" for x in value):
+            raise ValueError("ops must be a string of * and / characters")
+        if len(value) != self.nin:
+            raise ValueError(
+                f"ops must have {self.nin} characters, one per input, not {len(value)}"
+            )
 
     def output(self, t: float, inputs: list[Any], x: Any) -> list[Any]:
         for i, input in enumerate(inputs):
@@ -307,10 +333,11 @@ class Gain(FunctionBlock):
 
     nin = 1
     nout = 1
+    _display_param = "K"  # shown in the label of an implicit block
 
     def __init__(
         self,
-        K: Union[int, float, np.ndarray] = 1,
+        K: int | float | np.ndarray = 1,
         premul: bool = False,
         **blockargs: Any,
     ) -> None:
@@ -328,6 +355,7 @@ class Gain(FunctionBlock):
         self.premul: bool = premul
 
         self.add_param("K")
+        self.add_param("premul")
 
     def output(self, t: float, inputs: list[Any], x: Any) -> list[Any]:
         input = inputs[0]
@@ -348,7 +376,7 @@ class Gain(FunctionBlock):
 
 
 class Pow(FunctionBlock):
-    """
+    r"""
     :blockname:`POW`
 
     Power block.
@@ -391,14 +419,15 @@ class Pow(FunctionBlock):
 
     nin = 1
     nout = 1
+    _display_param = "p"  # shown in the label of an implicit block
 
     def __init__(
-        self, p: Union[int, float] = 1, matrix: bool = False, **blockargs: Any
+        self, p: int | float = 1, matrix: bool = False, **blockargs: Any
     ) -> None:
         """
         :param p: The exponent value, defaults to 1
         :type p: scalar
-        :param matrix: premultiply by constant, default is postmultiply, defaults to False
+        :param matrix: matrix power, not elementwise exponentiation, defaults to False
         :type matrix: bool, optional
         :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
         :type blockargs: dict
@@ -409,6 +438,7 @@ class Pow(FunctionBlock):
         self.p: int | float = p
         self.matrix: bool = matrix
         self.add_param("p")
+        self.add_param("matrix")
 
     def output(self, t: float, inputs: list[Any], x: Any) -> list[Any]:
         input = inputs[0]
@@ -417,9 +447,9 @@ class Pow(FunctionBlock):
             # input is an array
             if self.matrix:
                 # matrixwise exponentiation
-                if isinstance(self.p, int):
+                if float(self.p).is_integer():
                     # integer case
-                    return [np.linalg.matrix_power(input, self.p)]
+                    return [np.linalg.matrix_power(input, int(self.p))]
                 else:
                     # general fractional case
                     return [linalg.fractional_matrix_power(input, self.p)]
@@ -433,7 +463,190 @@ class Pow(FunctionBlock):
 # ------------------------------------------------------------------------ #
 
 
-class Clip(FunctionBlock):
+class Sqrt(FunctionBlock):
+    r"""
+    :blockname:`SQRT`
+
+    Square root block.
+
+    :inputs: 1
+    :outputs: 1
+    :states: 0
+
+    .. list-table::
+        :header-rows: 1
+
+        * - Port type
+          - Port number
+          - Types
+          - Description
+        * - Input
+          - 0
+          - int, float, ndarray
+          - :math:`x`
+        * - Output
+          - 0
+          - int, float, ndarray
+          - :math:`\operatorname{sgn}(x)\sqrt{|x|}`
+
+    The block computes the signed square root of the input, which is defined for
+    negative inputs: it returns the negative of the square root of the absolute
+    value.  If the input is a Numpy array, this operation is performed elementwise.
+
+    For example::
+
+        sqrt = bd.SQRT()
+
+    Useful for square-root controller.
+
+    :seealso: :class:`Pow`
+    """
+
+    nin = 1
+    nout = 1
+
+    def __init__(self, **blockargs: Any) -> None:
+        """
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
+        :type blockargs: dict
+
+        """
+        super().__init__(**blockargs)
+
+    def output(self, t: float, inputs: list[Any], x: Any) -> list[Any]:
+        input = inputs[0]
+
+        # works for scalars and, elementwise, for arrays
+        return [np.sign(input) * np.sqrt(np.abs(input))]
+
+
+# ------------------------------------------------------------------------ #
+
+
+class Sign(CrossingMixin, FunctionBlock):
+    r"""
+    :blockname:`SIGN`
+
+    Sign block.
+
+    :inputs: 1
+    :outputs: 1
+    :states: 0
+
+    .. list-table::
+        :header-rows: 1
+
+        * - Port type
+          - Port number
+          - Types
+          - Description
+        * - Input
+          - 0
+          - int, float, ndarray
+          - :math:`x`
+        * - Output
+          - 0
+          - int, float, ndarray
+          - :math:`\operatorname{sgn}(x)`
+
+    The output is -1, 0 or +1 according to whether the input is negative, zero
+    or positive.  If the input is a Numpy array, this operation is performed
+    elementwise.
+
+    For example::
+
+        sign = bd.SIGN()
+
+    :seealso: :class:`Sqrt`
+    """
+
+    nin = 1
+    nout = 1
+
+    def __init__(self, **blockargs: Any) -> None:
+        """
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
+        :type blockargs: dict
+
+        """
+        super().__init__(**blockargs)
+
+    def start(self, simstate: Any) -> None:
+        # the output jumps at zero: restart the solver there
+        self.declare_thresholds(simstate, [(i, 0.0) for i in range(self.signal_size())])
+
+    def output(self, t: float, inputs: list[Any], x: Any) -> list[Any]:
+        input = inputs[0]
+
+        # works for scalars and, elementwise, for arrays
+        return [np.sign(input)]
+
+
+# ------------------------------------------------------------------------ #
+
+
+class Abs(CrossingMixin, FunctionBlock):
+    r"""
+    :blockname:`ABS`
+
+    Absolute value block.
+
+    :inputs: 1
+    :outputs: 1
+    :states: 0
+
+    .. list-table::
+        :header-rows: 1
+
+        * - Port type
+          - Port number
+          - Types
+          - Description
+        * - Input
+          - 0
+          - int, float, ndarray
+          - :math:`x`
+        * - Output
+          - 0
+          - int, float, ndarray
+          - :math:`|x|`
+
+    The output is the absolute value of the input.  If the input is a Numpy
+    array, this operation is performed elementwise.
+
+    For example::
+
+        absval = bd.ABS()
+
+    :seealso: :class:`Sign`
+    """
+
+    nin = 1
+    nout = 1
+
+    def __init__(self, **blockargs: Any) -> None:
+        """
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
+        :type blockargs: dict
+
+        """
+        super().__init__(**blockargs)
+
+    def start(self, simstate: Any) -> None:
+        # the output has a corner at zero: restart the solver there
+        self.declare_thresholds(simstate, [(i, 0.0) for i in range(self.signal_size())])
+
+    def output(self, t: float, inputs: list[Any], x: Any) -> list[Any]:
+        input = inputs[0]
+
+        # works for scalars and, elementwise, for arrays
+        return [np.abs(input)]
+
+
+# ------------------------------------------------------------------------ #
+
+
+class Clip(CrossingMixin, FunctionBlock):
     r"""
     :blockname:`CLIP`
 
@@ -494,6 +707,19 @@ class Clip(FunctionBlock):
         super().__init__(**blockargs)
         self.min = min
         self.max = max
+        self.add_param("min")
+        self.add_param("max")
+
+    def start(self, simstate: Any) -> None:
+        # the output is continuous but its slope jumps at each limit: restart the
+        # solver there so that no step straddles the corner
+        n = self.signal_size()
+        lo = np.broadcast_to(np.atleast_1d(self.min), n)
+        hi = np.broadcast_to(np.atleast_1d(self.max), n)
+        self.declare_thresholds(
+            simstate,
+            [(i, lo[i]) for i in range(n)] + [(i, hi[i]) for i in range(n)],
+        )
 
     def output(self, t: float, inputs: list[Any], x: Any) -> list[Any]:
         input = inputs[0]
@@ -580,9 +806,302 @@ class Cast(FunctionBlock):
             )
         super().__init__(**blockargs)
         self.dtype = dtype
+        self.add_param("dtype", when="never")
 
     def output(self, t: float, inputs: list[Any], x: Any) -> list[Any]:
         return [self._NP_TYPE[self.dtype](inputs[0])]
+
+
+class Deadband(CrossingMixin, FunctionBlock):
+    r"""
+    :blockname:`DEADBAND`
+
+    Dead band (dead zone).
+
+    :inputs: 1
+    :outputs: 1
+    :states: 0
+
+    .. list-table::
+        :header-rows: 1
+
+        *   - Port type
+            - Port number
+            - Types
+            - Description
+        *   - Input
+            - 0
+            - int, float, ndarray
+            - :math:`x`
+        *   - Output
+            - 0
+            - int, float, ndarray
+            - :math:`y`
+
+    The output is zero while the input is within the band from :math:`a` to
+    :math:`b` inclusive.  Outside the band the output is the distance of the
+    input from the nearest edge of the band, so the output is continuous:
+
+    .. math::
+
+        y = \begin{cases}
+            x - b & x > b \\
+            0 & a \le x \le b \\
+            x - a & x < a
+        \end{cases}
+
+    The band is specified by ``d`` which can be:
+
+        - a scalar, in which case the band is :math:`-d` to :math:`+d`, or
+        - a 2-element array_like, the lower and upper edges of the band
+          :math:`(a, b)`.
+
+    If the input is a Numpy array the same band is applied to every element.
+
+    For example::
+
+        deadband = bd.DEADBAND(0.1)         # band is -0.1 to 0.1
+        deadband = bd.DEADBAND([-0.1, 0.3]) # band is -0.1 to 0.3
+
+    :seealso: :class:`Clip`
+    """
+
+    nin = 1
+    nout = 1
+
+    def __init__(self, d: float | ArrayLike = 1, **blockargs: Any) -> None:
+        """
+        :param d: Half-width of a symmetric band, or the lower and upper edges
+            of the band, defaults to 1
+        :type d: float or array_like(2)
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
+        :type blockargs: dict
+        :raises ValueError: ``d`` is not a scalar or 2-element array_like, or
+            the band is empty (lower edge above upper edge)
+        """
+        super().__init__(**blockargs)
+
+        self._band(d)  # raises ValueError for a bad band
+        self.d = d
+        self.add_param("d", coerce=False, validate=self._check_d)
+
+    def _check_d(self, d: float | ArrayLike) -> None:
+        self._band(d)  # a validator must return None: a value would replace d
+
+    @staticmethod
+    def _band(d: float | ArrayLike) -> tuple[float, float]:
+        """The lower and upper edges of the band described by ``d``."""
+        arr = np.asarray(d, dtype=float)
+        if arr.ndim == 0:
+            if arr < 0:
+                raise ValueError("scalar deadband d must be non-negative")
+            return -float(arr), float(arr)
+        if arr.shape == (2,):
+            lower, upper = float(arr[0]), float(arr[1])
+            if lower > upper:
+                raise ValueError(
+                    f"deadband lower edge {lower} must not exceed upper edge {upper}"
+                )
+            return lower, upper
+        raise ValueError("d must be a scalar or a 2-element array_like")
+
+    @property
+    def lower(self) -> float:
+        """Lower edge of the band."""
+        return self._band(self.d)[0]
+
+    @property
+    def upper(self) -> float:
+        """Upper edge of the band."""
+        return self._band(self.d)[1]
+
+    def start(self, simstate: Any) -> None:
+        # the output has a corner at each edge of the band: restart the solver there
+        lower, upper = self._band(self.d)
+        self.declare_thresholds(
+            simstate,
+            [(i, lower) for i in range(self.signal_size())]
+            + [(i, upper) for i in range(self.signal_size())],
+        )
+
+    def output(self, t: float, inputs: list[Any], x: Any) -> list[Any]:
+        input = inputs[0]
+
+        lower, upper = self._band(self.d)
+
+        # np.where handles scalars and, elementwise, arrays
+        out = np.where(
+            input > upper,
+            input - upper,
+            np.where(input < lower, input - lower, 0.0),
+        )
+        if np.ndim(input) == 0:
+            out = out.item()
+        return [out]
+
+
+# ------------------------------------------------------------------------ #
+
+
+class Switch(CrossingMixin, FunctionBlock):
+    r"""
+    :blockname:`SWITCH`
+
+    Select one of two signals.
+
+    :inputs: 3
+    :outputs: 1
+    :states: 0
+
+    .. list-table::
+        :header-rows: 1
+
+        * - Port type
+          - Port number
+          - Types
+          - Description
+        * - Input
+          - 0, ``X``
+          - any
+          - signal passed to the output when ``S`` selects it
+        * - Input
+          - 1, ``Y``
+          - same as ``X``
+          - signal passed to the output otherwise
+        * - Input
+          - 2, ``S``
+          - scalar
+          - the selector
+        * - Output
+          - 0, ``Z``
+          - same as ``X``
+          - ``X`` or ``Y``
+
+    The output is ``X`` or ``Y``, whichever ``S`` selects.  ``X`` and ``Y`` can be of any
+    type but must be of the same type and, if they are arrays, of the same shape, which
+    is checked when the diagram is compiled.  An ``int`` and a ``float`` are not the same
+    type, so a ``float`` signal switched against a constant needs ``CONSTANT(0.0)``,
+    not ``CONSTANT(0)``.  The input that is not selected is not used, so a ``nan`` or
+    ``inf`` on it does not reach the output.
+
+    ``S`` is a scalar and selects ``X`` as follows:
+
+    .. list-table::
+        :header-rows: 1
+
+        * - ``S``
+          - ``Z`` is ``X`` when
+          - Notes
+        * - ``bool``
+          - ``S`` is true
+          -
+        * - ``int``
+          - ``S != 0``
+          - unless ``threshold`` is given
+        * - ``float``
+          - ``S >= threshold``
+          - ``threshold`` defaults to 0, so ``S = 0.0`` selects ``X``
+        * - ``int`` or ``float`` with ``threshold`` given
+          - ``S >= threshold``
+          -
+        * - anything else, such as ``None``, a string or a list
+          - ``bool(S)``
+          - an empty list is false
+        * - array with more than one element
+          - error
+          - ``S`` must be a scalar
+
+    A size-1 array counts as a scalar.  A ``nan`` on a ``float`` ``S`` compares false
+    and selects ``Y``.
+
+    The output jumps when ``S`` changes the selection and ``X`` and ``Y`` differ at that
+    instant.  For a numeric ``S`` that changes continuously, the solver is restarted
+    exactly where ``S`` crosses its threshold, so no step straddles the jump.
+
+    For example::
+
+        switch = bd.SWITCH(threshold=0.5)
+        bd.connect(x, switch.X)
+        bd.connect(y, switch.Y)
+        bd.connect(s, switch.S)
+
+    :seealso: :class:`Clip` :class:`Sign`
+    """
+
+    nin = 3
+    nout = 1
+
+    def __init__(self, threshold: float | None = None, **blockargs: Any) -> None:
+        """
+        :param threshold: ``S`` selects ``X`` when ``S >= threshold``; ``None`` (the
+            default) uses the rule for the type of ``S`` in the table above
+        :param blockargs: :meth:`common block options <bdsim.Block.__init__>`
+        :type blockargs: dict
+        :raises ValueError: ``threshold`` is not a real number
+        """
+        super().__init__(inames=("X", "Y", "S"), onames=("Z",), **blockargs)
+        self._check_threshold(threshold)
+        self.threshold = threshold
+        self.add_param(
+            "threshold", coerce=False, when="setup", validate=self._check_threshold
+        )
+
+    @staticmethod
+    def _check_threshold(value: Any) -> None:
+        if value is not None and (
+            isinstance(value, bool)
+            or not isinstance(value, numbers.Real)
+            or np.isnan(float(value))
+        ):
+            raise ValueError(f"threshold must be a real number or None, got {value!r}")
+
+    def _selects_x(self, s: Any) -> bool:
+        """Does the selector ``s`` pass ``X``?  The rule is in the class docstring."""
+        if isinstance(s, np.ndarray):
+            if s.size != 1:
+                raise ValueError(f"S must be a scalar, got an array of shape {s.shape}")
+            s = s.item()
+        if isinstance(s, (bool, np.bool_)):
+            return bool(s)
+        if isinstance(s, numbers.Real):
+            if self.threshold is not None:
+                return bool(float(s) >= self.threshold)
+            if isinstance(s, numbers.Integral):
+                return s != 0
+            return bool(float(s) >= 0.0)
+        return bool(s)
+
+    def configure(self) -> None:
+        sx, sy, ss = self.insig[0], self.insig[1], self.insig[2]
+        if sx is not None and sy is not None and not sx.matches(sy):
+            raise ValueError(
+                f"X and Y must have the same type and shape, got {sx} and {sy}"
+            )
+        if (
+            ss is not None
+            and ss.type is np.ndarray
+            and int(np.prod(ss.shape or ())) != 1
+        ):
+            raise ValueError(f"S must be a scalar, got an array of shape {ss.shape}")
+
+    def start(self, simstate: Any) -> None:
+        # the output jumps where S changes the selection: restart the solver there
+        ss = self.insig[2]
+        kind = None if ss is None else ss.type
+        if kind is not None and issubclass(kind, (bool, np.bool_)):
+            thresholds = [0.5]
+        elif self.threshold is not None:
+            thresholds = [float(self.threshold)]
+        elif kind is not None and issubclass(kind, (int, np.integer)):
+            thresholds = [-0.5, 0.5]  # selection changes between 0 and nonzero
+        elif kind is not None and issubclass(kind, (float, np.floating)):
+            thresholds = [0.0]
+        else:
+            return  # non-numeric, or a signal of unknown type, for which there is nothing to find
+        self.declare_thresholds(simstate, [(0, v) for v in thresholds], port=2)
+
+    def output(self, t: float, inputs: list[Any], x: Any) -> list[Any]:
+        return [inputs[0] if self._selects_x(inputs[2]) else inputs[1]]
 
 
 # ------------------------------------------------------------------------ #
@@ -664,16 +1183,17 @@ class Function(FunctionBlock):
 
     def __init__(
         self,
-        func: Optional[
+        func: (
             Callable[..., Any]
             | list[Callable[..., Any]]
             | tuple[Callable[..., Any], ...]
-        ] = None,
+            | None
+        ) = None,
         nin: int = 1,
         nout: int = 1,
         persistent: bool = False,
-        fargs: Optional[list[Any]] = None,
-        fkwargs: Optional[dict[str, Any]] = None,
+        fargs: list[Any] | None = None,
+        fkwargs: dict[str, Any] | None = None,
         **blockargs: Any,
     ) -> None:
         """
@@ -734,19 +1254,54 @@ class Function(FunctionBlock):
             # self.nout = nout
 
         self.func = func
-        if persistent:
-            self.userdata: dict[Any, Any] | None = dict()
-            fargs += (self.userdata,)
-        else:
-            self.userdata = None
-        self.args = fargs
-        self.kwargs = fkwargs
+        self.userdata: dict[Any, Any] | None = dict() if persistent else None
+        self.fargs = list(fargs)
+        self.fkwargs = fkwargs
+        self.add_param("func", validate=self._check_func)
+        self.add_param("fargs", coerce=False, validate=list)
+        self.add_param("fkwargs", coerce=False, validate=dict)
+        self.add_param("persistent", when="setup")
+        self.add_param("nin", when="never")
+        self.add_param("nout", when="never")
 
     def start(self, simstate: Any) -> None:
         super().start(simstate)
         if self.userdata is not None:
             self.userdata.clear()
-            print("clearing user data")
+
+    @property
+    def persistent(self) -> bool:
+        """Whether the function is passed a dictionary to hold state between calls."""
+        return self.userdata is not None
+
+    @persistent.setter
+    def persistent(self, value: bool) -> None:
+        if value and self.userdata is None:
+            self.userdata = dict()
+        elif not value:
+            self.userdata = None
+
+    @property
+    def args(self) -> list[Any]:
+        """The extra positional arguments, ``fargs`` and then the state dictionary if persistent."""
+        if self.userdata is None:
+            return self.fargs
+        return [*self.fargs, self.userdata]
+
+    @property
+    def kwargs(self) -> dict[str, Any]:
+        return self.fkwargs
+
+    def _check_func(self, value: Any) -> None:
+        if isinstance(value, (list, tuple)):
+            if not all(callable(f) for f in value):
+                raise TypeError("func must be a callable or a list of callables")
+            if len(value) != self.nout:
+                raise ValueError(
+                    f"func must have {self.nout} functions, one per output, not {len(value)}"
+                )
+        elif not callable(value):
+            raise TypeError("func must be a callable or a list of callables")
 
     def output(self, t: float, inputs: list[Any], x: Any) -> list[Any]:
 
@@ -761,13 +1316,13 @@ class Function(FunctionBlock):
             if isinstance(val, (list, tuple)):
                 if len(val) != self.nout:
                     raise RuntimeError(
-                        "Function returns wrong number of arguments: " + str(self)
+                        f"Function returns wrong number of arguments: {self}"
                     )
                 return list(val)
             else:
                 if self.nout != 1:
                     raise RuntimeError(
-                        "Function returns wrong number of arguments: " + str(self)
+                        f"Function returns wrong number of arguments: {self}"
                     )
                 return [val]
         else:
@@ -841,7 +1396,7 @@ class Interpolate(FunctionBlock):
     :note: if ``time=True`` then the block has no
         input ports and acts as a ``Source`` not a ``Function`` block.
 
-    :seealso: :func:`scipy.interpolate.interp1d`
+    :seealso: :class:`scipy.interpolate.interp1d`
     """
 
     nin: int = -1
@@ -849,9 +1404,9 @@ class Interpolate(FunctionBlock):
 
     def __init__(
         self,
-        x: Optional[Union[list[Any], tuple[Any, ...], np.ndarray]] = None,
-        y: Optional[Union[list[Any], tuple[Any, ...], np.ndarray]] = None,
-        xy: Optional[np.ndarray] = None,
+        x: list[Any] | tuple[Any, ...] | np.ndarray | None = None,
+        y: list[Any] | tuple[Any, ...] | np.ndarray | None = None,
+        xy: np.ndarray | None = None,
         time: bool = False,
         kind: str = "linear",
         **blockargs: Any,
@@ -882,34 +1437,83 @@ class Interpolate(FunctionBlock):
             # process separate x and y vectors
             x = np.array(x)
             y = np.array(y)
-            if x.shape[0] != y.shape[0]:
-                raise ValueError("x and y data must be same length")
-        else:
+        elif isinstance(xy, (list, tuple)):
             # process mixed xy data
-            if isinstance(xy, (list, tuple)):
-                x = [_[0] for _ in xy]
-                y = [_[1] for _ in xy]
-                # x = np.array(x).T
-                # y = np.array(y).T
-                print(x, y)
-            elif isinstance(xy, np.ndarray):
-                x = xy[:, 0]
-                y = xy[:, 1:]
-        self.f: scipy.interpolate.interp1d = scipy.interpolate.interp1d(
-            x=x, y=y, kind=kind, axis=0
-        )
-        self.xpts = x
+            x = np.array([_[0] for _ in xy])
+            y = np.array([_[1] for _ in xy])
+        else:
+            x = xy[:, 0]
+            y = xy[:, 1:]
+        self._set_data(x, y, kind)
+
+        # with time=True the data must cover the run, which is checked by start()
+        when: Literal["anytime", "setup"] = "setup" if time else "anytime"
+        self.add_param("x", when=when, coerce=False)
+        self.add_param("y", when=when, coerce=False)
+        self.add_param("xy", when=when, coerce=False)
+        self.add_param("kind", when=when)
+        self.add_param("time", when="never")
+
+    def _set_data(self, x: np.ndarray, y: np.ndarray, kind: str) -> None:
+        """Make the interpolant from new data, or raise and leave the block as it was."""
+        if x.shape[0] != y.shape[0]:
+            raise ValueError(
+                f"x and y data must be same length, not {x.shape[0]} and {y.shape[0]}"
+            )
+        try:
+            f = scipy.interpolate.interp1d(x=x, y=y, kind=kind, axis=0)
+        except NotImplementedError:
+            raise ValueError(f"unknown interpolation kind '{kind}'") from None
+        self.f: scipy.interpolate.interp1d = f
+        self._x, self._y, self._kind = x, y, kind
+
+    @property
+    def x(self) -> np.ndarray:
+        """The x-values of the function."""
+        return self._x
+
+    @x.setter
+    def x(self, value: Any) -> None:
+        self._set_data(np.array(value), self._y, self._kind)
+
+    @property
+    def y(self) -> np.ndarray:
+        """The y-values of the function, one row per x-value."""
+        return self._y
+
+    @y.setter
+    def y(self, value: Any) -> None:
+        self._set_data(self._x, np.array(value), self._kind)
+
+    @property
+    def xy(self) -> np.ndarray:
+        """The x- and y-values together, the first column is x.  Setting it can change the length."""
+        return np.column_stack((self._x, self._y))
+
+    @xy.setter
+    def xy(self, value: Any) -> None:
+        xy = np.array(value)
+        self._set_data(xy[:, 0], xy[:, 1:] if xy.shape[1] > 2 else xy[:, 1], self._kind)
+
+    @property
+    def kind(self) -> str:
+        """The interpolation method, see :class:`scipy.interpolate.interp1d`."""
+        return self._kind
+
+    @kind.setter
+    def kind(self, value: str) -> None:
+        self._set_data(self._x, self._y, value)
 
     def start(self, simstate: Any, **blockargs: Any) -> None:
         super().start(simstate)
 
         if simstate is not None:
             if self.time:
-                if self.xpts[0] < 0:
+                if self._x[0] < 0:
                     raise ValueError("interpolation not defined for t<0")
-                if self.xpts[-1] is np.inf:
-                    self.xpts[-1] = simstate.tf
-                if self.xpts[-1] < simstate.tf:
+                if self._x[-1] is np.inf:
+                    self._x[-1] = simstate.tf
+                if self._x[-1] < simstate.tf:
                     raise ValueError("interpolation not defined for t>T")
 
     def output(self, t: float, inputs: list[Any], x: Any) -> list[Any]:

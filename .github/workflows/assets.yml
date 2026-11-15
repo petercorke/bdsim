@@ -6,6 +6,13 @@ on:
   release:
     types: [published]
   workflow_dispatch:
+    inputs:
+      tag:
+        description: >-
+          Release tag to attach the zips to, such as v1.5.0.  The zips are built from
+          that tag.  Leave blank to build the artifacts only.
+        required: false
+        default: ""
 
 permissions:
   contents: write
@@ -20,6 +27,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+        with:
+          # the tag when attaching to a release, otherwise the ref that triggered this
+          ref: ${{ inputs.tag || github.ref }}
 
       - name: Set up Python
         uses: actions/setup-python@v7
@@ -59,16 +69,23 @@ jobs:
           tag_name: latest-main
           name: "Latest build from main"
           body: "Automatically updated on every push to the main branch."
-          prerelease: false
-          make_latest: true
+          # a rolling build is not a release: it must not be "Latest", which is
+          # what /releases/latest and `gh release view` show
+          prerelease: true
+          make_latest: false
           files: |
             dist/bdsim_examples.zip
             dist/bdsim_notebooks.zip
 
+      # A release made by release-please does not fire the `release` event (events
+      # made with GITHUB_TOKEN start no workflows), so release-please.yml dispatches
+      # this workflow with the tag.  The `release` event still covers a release made
+      # by hand.
       - name: Upload artifacts to release
-        if: github.event_name == 'release'
+        if: github.event_name == 'release' || inputs.tag != ''
         uses: softprops/action-gh-release@v3
         with:
+          tag_name: ${{ inputs.tag || github.event.release.tag_name }}
           files: |
             dist/bdsim_examples.zip
             dist/bdsim_notebooks.zip

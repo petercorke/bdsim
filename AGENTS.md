@@ -14,9 +14,17 @@ Part of the RVC ecosystem. **Read [rvc-ecosystem/AGENTS.md](https://github.com/p
 
 ## Notes specific to this repo
 
+- **Supported Python versions are the classifiers in `pyproject.toml`** (with `requires-python`),
+  not a number written here. CI tests every one of them on Linux, macOS and Windows, so don't use
+  a standard-library function or syntax newer than the oldest (a newer feature passes locally
+  and fails on the oldest job). Type hints use modern syntax, enforced by ruff's `UP` rules.
+
 - Depends on `spatialmath`, `ansitable`. Integrates with `robotics-toolbox-python`
   *optionally* (notebook helpers, examples) — not a hard package dependency, don't add one
   without discussion.
+- `python-control` is optional too (extra `control`, also in `dev` so CI tests it). It is imported
+  only inside `Linearization.ss()`, never at module level, with a clear `ImportError`; a test checks
+  that importing bdsim does not import it. Do not make it a hard dependency.
 - Hardware I/O blocks integrate with `arduIO` (Python client + Arduino sketch).
 - Pure Python — builds with Hatch (`hatchling`) directly.
 - Aspirational direction, in progress on branches, not yet merged: more real-time support,
@@ -28,6 +36,41 @@ Part of the RVC ecosystem. **Read [rvc-ecosystem/AGENTS.md](https://github.com/p
   scaffolds it (optional-dependency group, console script, Hatch wheel target `src/bdweb`),
   but the source is not on `main`. Tracked in
   [#118](https://github.com/petercorke/bdsim/issues/118).
+- **Block factory methods are typing-only stubs.** `bd.GAIN(...)` etc. are bound per instance
+  by `BDSim.blockdiagram()` from the block library; the class attributes in the generated
+  `src/bdsim/_blockfactory_stubs.py` (`BlockFactoryStubs`, a base of `BlockDiagram`) exist only so
+  Pylance and mypy can see them. After adding or changing a bdsim block's constructor run
+  `python src/bdsim/bin/stubgen.py`; CI fails (`stubgen --check`, in the lint job) if you forget.
+  Toolbox blocks are typed by committed snapshots, `_stubs_rtb.py` and `_stubs_mvtb.py`, because a
+  toolbox cannot add methods to `BlockDiagram` for a type checker. They need the toolbox installed
+  to regenerate (the command is in each file's header) and are not checked in bdsim's CI, so a
+  stale one is only a false editor error. Never edit these files by hand.
+- **`BlockDiagram` is being split into mixins.** `blockdiagram.py` is large, so groups of methods
+  that read only a few attributes move to private mixin modules that `BlockDiagram` inherits:
+  `_graph.py` (`GraphMixin`: `graph`, `dotfile`, `schedule_dotfile`, `showgraph`) and
+  `_reports.py` (`ReportMixin`: `report*`, `ls`, `blockvalues`) so far. `analysis.py`
+  (`AnalysisMixin`: `functions()`, `linearize()`) is new code, written as a mixin from the start.
+  Callers are unchanged (`bd.graph()`). A mixin declares the attributes it reads under
+  `if TYPE_CHECKING:` in its class body, because mypy rejects annotating `self` with the subclass.
+  The split is a pure move: compare output before and after, and keep the tests.
+- **A new block needs an icon.** Every block in `bdsim.blocks.*` has a 250x250 PNG in
+  `src/bdsim/blocks/Icons/`, named for its class in lower case (`State_S` -> `state_s.png`), and
+  `tests/test_icons.py` fails for a block without one. Most are made from LaTeX with `bdtex2icon`
+  (add the line to `icons.sh`); the rest come from the `make_*_icons.py` scripts. The README in
+  that folder says how. A toolbox keeps the icons of its own blocks in its own `Icons` folder.
+- **Cross-references to `BlockDiagram` use `bdsim.BlockDiagram`**, the name the docs document it
+  under (`:meth:`~bdsim.BlockDiagram.linearize``), not `bdsim.blockdiagram.BlockDiagram`. Sphinx
+  drops an unresolved reference without a warning, so a wrong path is a dead link nobody sees:
+  check the built HTML for the `href` when a `:seealso:` matters.
+- **`bd.xindex` is the one definition of the continuous state layout**, the blocks that have
+  continuous state in the order they were added (an `Index`, with the names blocks gave their
+  states). `functions()`, `linearize()`, the `STATE` block and `getstate0()` use it; use it
+  rather than filtering `blocklist` for `blockclass == "continuous"` again. `bd.statenames` and
+  `out.xnames` are the same elements in the same order with `name:x_k` strings, which are public
+  and tested, so their format does not change.
+  The discrete state is held clock by clock and named the same way: `clock.statenames` (and
+  `bd.dstatenames`, their concatenation in the order of `bd.clocklist`) with `name:X_k` strings, and
+  `clock.index`, an `Index` like `bd.xindex`. Both honour the names a block gave with `snames`.
 - The current Qt-based editor is a vendored student project — kept working for now, but the
   long-term aim is to make it redundant once the web editor lands, not to invest further in it.
 - **Block discovery is AST-based, not import-based.** `BDSim` builds its block registry
@@ -49,6 +92,6 @@ Part of the RVC ecosystem. **Read [rvc-ecosystem/AGENTS.md](https://github.com/p
 Multiple agents often work on the same open issue at once, producing duplicate PRs. Before writing code for an issue:
 
 1. Search for an existing PR for it: `gh pr list --state open --search "#<issue>"`, and check the issue's linked pull requests and assignee. If a PR already exists, or the issue is assigned to someone else, **do not open a competing PR**. Comment on the existing one instead.
-2. Comment on the issue to claim it before starting.
+2. Comment on the issue to ask to be assigned, then **stop**. Do not write code or open a pull request until the issue is assigned to the account you act for. If you cannot wait for a person to answer, do not contribute to this repository. Answer maintainers' questions: a pull request whose author does not reply may be closed.
 3. Disclose AI assistance in the PR description, and state whether the change alters numerical results or public behaviour.
 4. One concern per PR, matching `CONTRIBUTING.md`.

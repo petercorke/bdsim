@@ -10,7 +10,7 @@ import numpy.testing as nt
 from contextlib import redirect_stdout
 
 from bdsim.blocks import Gain
-from bdsim.block_types import ContinuousBlock
+from bdsim.block_types import ContinuousBlock, FunctionBlock
 
 
 class FeedthroughContinuous(ContinuousBlock):
@@ -143,7 +143,7 @@ class WiringTest(unittest.TestCase):
 
     def test_ports2(self):
         bd = self.sim.blockdiagram()
-        const = bd.CONSTANT([2, 3])
+        const = bd.CONSTANT(np.array([2, 3]))
         src = bd.DEMUX(2)
         bd.connect(const, src)
 
@@ -160,7 +160,7 @@ class WiringTest(unittest.TestCase):
     def test_ports3(self):
         bd = self.sim.blockdiagram()
 
-        const = bd.CONSTANT([2, 3, 4, 5])
+        const = bd.CONSTANT(np.array([2, 3, 4, 5]))
         src = bd.DEMUX(4)
         bd.connect(const, src)
 
@@ -187,7 +187,7 @@ class WiringTest(unittest.TestCase):
     def test_slice2(self):
         bd = self.sim.blockdiagram()
 
-        const = bd.CONSTANT([2, 3, 4, 5])
+        const = bd.CONSTANT(np.array([2, 3, 4, 5]))
         src = bd.DEMUX(4)
         bd.connect(const, src)
 
@@ -200,7 +200,7 @@ class WiringTest(unittest.TestCase):
     def test_slice3(self):
         bd = self.sim.blockdiagram()
 
-        const = bd.CONSTANT([2, 3, 4, 5])
+        const = bd.CONSTANT(np.array([2, 3, 4, 5]))
         src = bd.DEMUX(4)
         bd.connect(const, src)
 
@@ -213,7 +213,7 @@ class WiringTest(unittest.TestCase):
     def test_slice4(self):
         bd = self.sim.blockdiagram()
 
-        const = bd.CONSTANT([2, 3, 4, 5])
+        const = bd.CONSTANT(np.array([2, 3, 4, 5]))
         src = bd.DEMUX(4)
         bd.connect(const, src)
 
@@ -226,7 +226,7 @@ class WiringTest(unittest.TestCase):
     def test_slice5(self):
         bd = self.sim.blockdiagram()
 
-        const = bd.CONSTANT([2, 3, 4, 5])
+        const = bd.CONSTANT(np.array([2, 3, 4, 5]))
         src = bd.DEMUX(4)
         bd.connect(const, src)
 
@@ -240,7 +240,7 @@ class WiringTest(unittest.TestCase):
     def test_slice5a(self):
         bd = self.sim.blockdiagram()
 
-        const = bd.CONSTANT([2, 3, 4, 5])
+        const = bd.CONSTANT(np.array([2, 3, 4, 5]))
         src = bd.DEMUX(4)
         bd.connect(const, src)
 
@@ -254,7 +254,7 @@ class WiringTest(unittest.TestCase):
     def test_slice6(self):
         bd = self.sim.blockdiagram()
 
-        const = bd.CONSTANT([2, 3, 4, 5])
+        const = bd.CONSTANT(np.array([2, 3, 4, 5]))
         src = bd.DEMUX(4)
         bd.connect(const, src)
 
@@ -294,7 +294,7 @@ class WiringTest(unittest.TestCase):
     def test_assignment3(self):
         bd = self.sim.blockdiagram()
 
-        const = bd.CONSTANT([2, 3, 4, 5])
+        const = bd.CONSTANT(np.array([2, 3, 4, 5]))
         src = bd.DEMUX(4)
         bd.connect(const, src)
 
@@ -332,7 +332,7 @@ class WiringTest(unittest.TestCase):
         connected to dst's named port)."""
         bd = self.sim.blockdiagram()
 
-        const = bd.CONSTANT([2, 3, 4, 5])
+        const = bd.CONSTANT(np.array([2, 3, 4, 5]))
         src = bd.DEMUX(4)
         bd.connect(const, src)
 
@@ -369,7 +369,7 @@ class WiringTest(unittest.TestCase):
     def test_chain3(self):
         bd = self.sim.blockdiagram()
 
-        const = bd.CONSTANT([2, 3])
+        const = bd.CONSTANT(np.array([2, 3]))
         src = bd.DEMUX(2)
         bd.connect(const, src)
 
@@ -952,8 +952,159 @@ class ImportTest(unittest.TestCase):
 
         bd.compile(verbose=False)
 
-        self.assertEqual(len(bd.blocklist), 5)
-        self.assertEqual(len(bd.wirelist), 4)
+        # the INPORT and OUTPORT blocks are replaced by wires:
+        #   const -> function -> scope
+        self.assertEqual(len(bd.blocklist), 3)
+        self.assertEqual(len(bd.wirelist), 2)
+
+
+class DefaultNamingTest(unittest.TestCase):
+    """Blocks without an explicit name get ``<type>.<n>``; names are unique."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.sim = bdsim.BDSim(animation=False)
+
+    def _subsystem(self, **kwargs):
+        """A diagram that passes its input straight to its output."""
+        ss = self.sim.blockdiagram(**kwargs)
+        inp = ss.INPORT(1)
+        outp = ss.OUTPORT(1)
+        f = ss.FUNCTION(lambda x: x)
+        ss.connect(inp, f)
+        ss.connect(f, outp)
+        return ss
+
+    def _two_instances(self, ss):
+        """Instantiate ss twice in a main diagram; return (bd, inst1, inst2)."""
+        bd = self.sim.blockdiagram()
+        const = bd.CONSTANT(1)
+        s1 = bd.SUBSYSTEM(ss)
+        s2 = bd.SUBSYSTEM(ss)
+        bd.connect(const, s1, s2)
+        bd.connect(s1, bd.NULL(1))
+        bd.connect(s2, bd.NULL(1))
+        return bd, s1, s2
+
+    def test_default_names_count_per_type(self):
+        bd = self.sim.blockdiagram()
+        g1, g2 = bd.GAIN(2), bd.GAIN(3)
+        c1 = bd.CONSTANT(1)
+        self.assertEqual(
+            [g1.name, g2.name, c1.name], ["gain.0", "gain.1", "constant.0"]
+        )
+
+    def test_default_name_skips_a_name_already_taken(self):
+        # the user picks the name the counter would hand out next
+        bd = self.sim.blockdiagram()
+        a = bd.GAIN(2, name="gain.0")
+        b = bd.GAIN(3)
+        self.assertEqual(b.name, "gain.1")
+        self.assertEqual(len(bd.blocknames), 2)
+        self.assertIs(bd["gain.0"], a)
+        self.assertIs(bd["gain.1"], b)
+
+    def test_explicit_duplicate_name_raises_helpful_error(self):
+        bd = self.sim.blockdiagram()
+        src = bd.CONSTANT(2, name="myblock")
+        with self.assertRaises(ValueError) as cm:
+            bd.add_block(src)
+        msg = str(cm.exception)
+        self.assertIn("myblock", msg)
+        self.assertIn("unique", msg)
+        self.assertIn("name=", msg)
+
+    def test_diagram_name_defaults_to_none(self):
+        self.assertIsNone(self.sim.blockdiagram().name)
+
+    def test_compile_names_an_unnamed_top_level_diagram_main(self):
+        bd = self.sim.blockdiagram()
+        bd.connect(bd.CONSTANT(1), bd.NULL(1))
+        bd.compile(verbose=False)
+        self.assertEqual(bd.name, "main")
+        self.assertIn("main", repr(bd))
+
+    def test_compile_keeps_an_explicit_diagram_name(self):
+        bd = self.sim.blockdiagram(name="plant")
+        bd.connect(bd.CONSTANT(1), bd.NULL(1))
+        bd.compile(verbose=False)
+        self.assertEqual(bd.name, "plant")
+
+    def _compile_output(self, bd):
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            bd.compile(verbose=True)
+        return buf.getvalue()
+
+    def test_compile_message_for_unnamed_diagram(self):
+        # compile() names the diagram before it prints anything, so even the
+        # first message shows "main"
+        bd = self.sim.blockdiagram()
+        bd.connect(bd.CONSTANT(1), bd.NULL(1))
+        self.assertIn("Compiling blockdiagram 'main':", self._compile_output(bd))
+        self.assertIn("Recompiling blockdiagram 'main':", self._compile_output(bd))
+
+    def test_compile_message_for_named_diagram(self):
+        bd = self.sim.blockdiagram(name="plant")
+        bd.connect(bd.CONSTANT(1), bd.NULL(1))
+        self.assertIn("Compiling blockdiagram 'plant':", self._compile_output(bd))
+        self.assertIn("Recompiling blockdiagram 'plant':", self._compile_output(bd))
+
+    def test_top_level_name_does_not_rename_its_blocks(self):
+        # a top-level diagram is not a block: its name is only a label, so
+        # the blocks in it keep their ordinary <type>.<n> default names
+        for name in (None, "plant", "gain"):
+            with self.subTest(diagram_name=name):
+                bd = self.sim.blockdiagram(name=name)
+                g1, g2 = bd.GAIN(2), bd.GAIN(3)
+                bd.connect(bd.CONSTANT(1), g1)
+                bd.connect(g1, g2)
+                bd.connect(g2, bd.NULL(1))
+                bd.compile(verbose=False)
+                self.assertEqual([g1.name, g2.name], ["gain.0", "gain.1"])
+
+    def test_compile_does_not_name_a_subsystem_main(self):
+        # the instance stem comes from the diagram's name, so compiling a
+        # subsystem must leave an unnamed one unnamed
+        ss = self._subsystem()
+        bd = self.sim.blockdiagram()
+        s = bd.SUBSYSTEM(ss)
+        bd.connect(bd.CONSTANT(1), s)
+        bd.connect(s, bd.NULL(1))
+        bd.compile(verbose=False)
+        self.assertIsNone(ss.name)
+        self.assertEqual(s.name, "subsystem.0")
+
+    def test_unnamed_diagram_prints_without_a_name(self):
+        bd = self.sim.blockdiagram()
+        bd.CONSTANT(1)
+        self.assertNotIn("None", repr(bd))
+
+    def test_two_instances_of_unnamed_subsystem(self):
+        bd, s1, s2 = self._two_instances(self._subsystem())
+        self.assertEqual([s1.name, s2.name], ["subsystem.0", "subsystem.1"])
+        bd.compile(verbose=False)
+        names = [b.name for b in bd.blocklist]
+        self.assertTrue(any(n.startswith("subsystem.0/") for n in names))
+        self.assertTrue(any(n.startswith("subsystem.1/") for n in names))
+
+    def test_two_instances_of_named_subsystem(self):
+        bd, s1, s2 = self._two_instances(self._subsystem(name="thing"))
+        self.assertEqual([s1.name, s2.name], ["thing.0", "thing.1"])
+        bd.compile(verbose=False)
+
+    def test_explicit_subsystem_name_wins(self):
+        ss = self._subsystem(name="thing")
+        bd = self.sim.blockdiagram()
+        self.assertEqual(bd.SUBSYSTEM(ss, name="mine").name, "mine")
+
+    def test_subsystem_named_like_a_block_type_shares_its_counter(self):
+        # a diagram called "gain" must not produce a name a GAIN block holds
+        bd = self.sim.blockdiagram()
+        g = bd.GAIN(2)
+        s = bd.SUBSYSTEM(self._subsystem(name="gain"))
+        self.assertEqual(g.name, "gain.0")
+        self.assertEqual(s.name, "gain.1")
 
 
 #     def test_import2(self):
@@ -1124,7 +1275,7 @@ class ConnectVariantsTest(SetUpMixin, unittest.TestCase):
     def test_connect_block_to_wide_slice_plug(self):
         """connect(Block_nout2, Plug_slice_width2): multi-output -> matching slice."""
         bd = self.sim.blockdiagram()
-        const = bd.CONSTANT([7, 8])
+        const = bd.CONSTANT(np.array([7, 8]))
         demux = bd.DEMUX(2)
         dst = bd.NULL(2)
         bd.connect(const, demux)
@@ -1150,7 +1301,7 @@ class ConnectVariantsTest(SetUpMixin, unittest.TestCase):
     def test_connect_slice_to_block_raises(self):
         """connect(Plug_slice, Block) raises ValueError due to if/elif bug in source."""
         bd = self.sim.blockdiagram()
-        const = bd.CONSTANT([3, 4])
+        const = bd.CONSTANT(np.array([3, 4]))
         demux = bd.DEMUX(2)
         dst1 = bd.NULL(1)
         bd.connect(const, demux)
@@ -1162,7 +1313,7 @@ class ConnectVariantsTest(SetUpMixin, unittest.TestCase):
     def test_connect_slice_to_plug_raises(self):
         """connect(Plug_slice, non-slice Plug) falls through to ValueError."""
         bd = self.sim.blockdiagram()
-        const = bd.CONSTANT([5, 6])
+        const = bd.CONSTANT(np.array([5, 6]))
         demux = bd.DEMUX(2)
         dst = bd.NULL(2)
         bd.connect(const, demux)
@@ -1703,6 +1854,62 @@ class AddDeleteBlockTest(unittest.TestCase):
         bd.delete_block(dst1)
         bd.connect(src, dst2)
         self.assertNotEqual(bd.wirelist[0].id, w_id)
+
+
+class ResetLifecycleTest(unittest.TestCase):
+    """reset() restores a block's own state once per run, before start()."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.sim = bdsim.BDSim(graphics=None, progress=False, banner=False)
+
+    def _diagram(self):
+        calls = []
+
+        class Probe(FunctionBlock):
+            nin = 1
+            nout = 1
+
+            def output(self, t, inputs, x):
+                return [inputs[0]]
+
+            def reset(self):
+                calls.append("reset")
+
+            def start(self, simstate):
+                calls.append("start")
+
+        bd = self.sim.blockdiagram()
+        probe = Probe(bd=bd)
+        bd.connect(bd.CONSTANT(1), probe)
+        bd.connect(probe, bd.NULL(1))
+        return bd, probe, calls
+
+    def test_compile_and_evaluate_do_not_reset(self):
+        bd, probe, calls = self._diagram()
+        bd.compile(verbose=False)
+        bd.evaluate(bd.initial_state_map(), 0.0)
+        self.assertEqual(calls, [])
+
+    def test_evaluate_keeps_the_values_on_the_wires(self):
+        bd, probe, calls = self._diagram()
+        bd.compile(verbose=False)
+        slot = probe.outport_slot(0)
+        self.assertEqual(slot.value, 1)
+        slot.value = "sentinel"
+        bd.evaluate(bd.initial_state_map(), 0.0, sinks=False)
+        # every block in the plan is recomputed, so the slot is overwritten
+        # rather than first cleared
+        self.assertEqual(slot.value, 1)
+
+    def test_run_resets_once_before_start(self):
+        bd, probe, calls = self._diagram()
+        bd.compile(verbose=False)
+        self.sim.run(bd, T=0.1)
+        self.assertEqual(calls, ["reset", "start"])
+        calls.clear()
+        self.sim.run(bd, T=0.1)  # a second run resets again
+        self.assertEqual(calls, ["reset", "start"])
 
 
 if __name__ == "__main__":

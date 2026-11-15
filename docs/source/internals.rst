@@ -9,19 +9,41 @@ that are used to build and simulate block diagrams.
 BlockDiagram class
 ===================
 
-A collection of blocks and wires that can be "executed" by :meth:`BDSim.run`. See the wiki's
+A collection of blocks and wires that can be "executed" by :meth:`~bdsim.BDSim.run`. See the wiki's
 `Connecting blocks <https://github.com/petercorke/bdsim/wiki/Connecting-blocks>`_ and `Blocks, wires
 and plugs <https://github.com/petercorke/bdsim/wiki/Blocks%2C-Wires-and-Plugs>`_ pages for how this
 fits together conceptually.
 
 .. autoclass:: bdsim.BlockDiagram
-   :members: compile, connect, report_summary, report_lists, dotfile, showgraph
+   :members: compile, connect, functions, linearize, xindex, report_summary, report_lists, report_params, report_schedule, report_subsystems, graph, schedule_dotfile, dotfile, showgraph
    :undoc-members:
    :show-inheritance:
 
 
+Functions and linearization
+---------------------------
+
+:meth:`~bdsim.BlockDiagram.functions` returns a compiled diagram as the non-linear functions :math:`f` and :math:`g`, and
+:meth:`~bdsim.BlockDiagram.linearize` estimates its local linear model :math:`(A, B, C, D)`.
+
+.. autoclass:: bdsim.analysis.SystemFunctions
+   :members:
+   :member-order: bysource
+   :show-inheritance:
+
+.. autoclass:: bdsim.analysis.Linearization
+   :members:
+   :special-members: __str__, __iter__
+   :member-order: bysource
+   :show-inheritance:
+
+.. autoclass:: bdsim.analysis.Index
+   :members:
+   :member-order: bysource
+   :show-inheritance:
+
 BDSim class
------------
+===========
 
 The run-time environment for executing a block diagram. See the wiki's
 `Running <https://github.com/petercorke/bdsim/wiki/Running>`_ and `Runtime options
@@ -29,15 +51,21 @@ The run-time environment for executing a block diagram. See the wiki's
 invoke it.
 
 .. autoclass:: bdsim.BDSim
-   :members: blockdiagram, run, blocks, block_library, report, done
+   :members: blockdiagram, run, blocks, block_library, report, done, set_globals
    :undoc-members:
    :show-inheritance:
    :special-members: __init__
 
-BDStruct class
----------------
+The keyword options that :meth:`~bdsim.BDSim.run` takes, for that run only:
 
-A struct-like container for storing simulation data, returned by :meth:`BDSim.run`. See the wiki's
+.. autoclass:: bdsim.RunOptions
+   :members:
+   :undoc-members:
+
+BDStruct class
+==============
+
+A struct-like container for storing simulation data, returned by :meth:`~bdsim.BDSim.run`. See the wiki's
 `Simulation results <https://github.com/petercorke/bdsim/wiki/Simulation-results>`_ page for the full
 layout — continuous vs. discrete/clocked state, watched signals, and the deprecated per-signal
 accessors — rather than duplicating that explanation here.
@@ -88,7 +116,7 @@ Full member listing for ``BlockDiagram`` — see its description and wiki links 
 `Simulation-user API`_ above.
 
 .. autoclass:: bdsim.BlockDiagram
-   :members: compile, connect, report_summary, report_lists, dotfile, showgraph
+   :members: compile, connect, functions, linearize, xindex, report_summary, report_lists, report_params, report_schedule, report_subsystems, graph, schedule_dotfile, dotfile, showgraph
    :undoc-members:
    :show-inheritance:
    :no-index:
@@ -115,6 +143,61 @@ Plug
    :show-inheritance:
    :special-members:
    :exclude-members: __dict__, __weakref__, __array_ufunc__, __module__
+
+Port
+-----
+
+.. autoclass:: bdsim.connect.Port
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Signal slot
+------------
+
+.. autoclass:: bdsim.block.PortValueSlot
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Signal signature
+-----------------
+
+.. autoclass:: bdsim.signature.Signature
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Event source and crossing detection
+------------------------------------
+
+.. autoclass:: bdsim.block.EventSource
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. autoclass:: bdsim.crossing.CrossingMixin
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Simulation state and jobs
+--------------------------
+
+.. autoclass:: bdsim.components.Runner
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. autoclass:: bdsim.components.SimulationState
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. autoclass:: bdsim.run_context.SimulationJob
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 Blocks
 -------
@@ -163,7 +246,7 @@ Continuous-time block
    :special-members:
 
 Discrete-time block
-"""""""""""""""""""""
+^^^^^^^^^^^^^^^^^^^^
 
 See the wiki's `Time stepping <https://github.com/petercorke/bdsim/wiki/Time-stepping>`_ page for how
 ``Clock``/``TimeQ`` drive the scheduled-event queue that also carries animation/movie frames.
@@ -205,5 +288,30 @@ Graphics block
    :special-members: 
 
 
+Block parameters
+=================
 
+.. autoclass:: bdsim.block.Parameter
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
+Options
+========
+
+.. autoclass:: bdsim.run_sim.Options
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. autoclass:: bdsim.components.OptionsBase
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Exceptions
+===========
+
+.. automodule:: bdsim.exceptions
+   :members:
+   :show-inheritance:

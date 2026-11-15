@@ -170,7 +170,8 @@ class TestLTISSOutput(unittest.TestCase):
         self.assertEqual(blk.nout, 1)
 
     def test_mimo_nout(self):
-        self.assertEqual(self._mimo().nout, 2)
+        # one vector port, as test_mimo_returns_ndarray expects: see issue #201
+        self.assertEqual(self._mimo().nout, 1)
 
     def test_mimo_returns_ndarray(self):
         result = self._mimo().output(t=0.0, u=[1.0], x=np.array([4.0, 5.0]))
@@ -239,7 +240,8 @@ class TestLTISSSOutput(unittest.TestCase):
         self.assertEqual(blk.nout, 1)
 
     def test_mimo_nout(self):
-        self.assertEqual(self._mimo().nout, 2)
+        # one vector port, as test_mimo_returns_ndarray expects: see issue #201
+        self.assertEqual(self._mimo().nout, 1)
 
     def test_mimo_returns_ndarray(self):
         result = self._mimo().output(t=0.0, u=[1.0], x=np.array([3.0, 7.0]))

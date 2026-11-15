@@ -9,7 +9,7 @@ from pathlib import Path
 
 _MODULE_TEST_OVERRIDES: dict[str, str] = {
     "__init__": "bdsim",
-    "_blockdiagram_mixin": "blockdiagram",
+    "_blockfactory_stubs": "blockdiagram",
     "block": "blockdiagram",
     "block_types": "graphics",
     "connect": "blockdiagram",

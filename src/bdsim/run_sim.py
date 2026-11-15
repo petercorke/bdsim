@@ -15,20 +15,37 @@ import sys
 import importlib
 import importlib.util
 import argparse
+import difflib
 import types
 import time
 import traceback as tb
 import warnings
-from typing import Any, Callable, NoReturn, Sequence
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Mapping,
+    NoReturn,
+    Sequence,
+    TypedDict,
+    cast,
+)
+
+if TYPE_CHECKING:
+    # typing.Unpack is 3.11+, and typing_extensions is not a dependency: only the
+    # type checker needs it, annotations are not evaluated at run time
+    from typing_extensions import Unpack
 
 import matplotlib
 
 import matplotlib.pyplot as plt
+import numbers
 import numpy as np
 import scipy.integrate as integrate
 import spatialmath.base as smb  # type: ignore[import-not-found]
 from colored import attr, fg
 
+from bdsim.literals import NOT_A_LITERAL, parse_literal
 from bdsim.components import (  # noqa: F401  (TimeQ: re-exported for tests/test_run_sim.py)
     BDStruct,
     Block,
@@ -80,7 +97,7 @@ class Progress:
         fill: str = "█",
         printEnd: str = "\r",
     ) -> None:
-        percent: str = ("{0:." + str(decimals) + "f}").format(fraction * 100)
+        percent: str = f"{fraction * 100:.{decimals}f}"
         filledLength = int(length * fraction)
         bar: str = fill * filledLength + "-" * (length - filledLength)
         print(f"\r{prefix} |{bar}| {percent}% {suffix}", end=printEnd)
@@ -155,7 +172,7 @@ def _store_watch_output(
 ) -> None:
     """Save watched-signal data into ``out.y``/``out.ynames``.
 
-    :param out: results struct being built for :meth:`BDSim.run`
+    :param out: results struct being built for :meth:`~bdsim.BDSim.run`
     :type out: BDStruct
     :param watchlist: watched plugs, in column order
     :type watchlist: list of Plug
@@ -200,20 +217,24 @@ class _LazyBlockClass:
         return self._module_name
 
     def _resolve(self) -> type[Block]:
-        if self._resolved is None:
+        resolved = self._resolved
+        if resolved is None:
             if os.getenv("BDSIM_DEBUG_LAZY_LOAD"):
                 print(
                     f"[bdsim] lazy-resolve {self._module_name}.{self._class_name}",
                     flush=True,
                 )
             module = importlib.import_module(self._module_name)
-            resolved = getattr(module, self._class_name)
-            if not inspect.isclass(resolved) or Block not in inspect.getmro(resolved):
+            resolved_class = getattr(module, self._class_name)
+            if not inspect.isclass(resolved_class) or Block not in inspect.getmro(
+                resolved_class
+            ):
                 raise TypeError(
                     f"{self._module_name}.{self._class_name} is not a Block class"
                 )
+            resolved = cast(type[Block], resolved_class)
             self._resolved = resolved
-        return self._resolved
+        return resolved
 
     def __call__(self, *args: Any, **kwargs: Any) -> Any:
         return self._resolve()(*args, **kwargs)
@@ -245,6 +266,51 @@ class _LazyBlockClass:
         return f"<LazyBlockClass {self._module_name}.{self._class_name}>"
 
 
+class RunOptions(TypedDict, total=False):
+    """Options that :meth:`~bdsim.BDSim.run` accepts as keyword arguments.
+
+    These are the options that can differ from one run to the next.  Each one
+    overrides the value given to :class:`BDSim` (or the default) for that run only,
+    unless it was set on the command line, which always wins.
+
+    ``dt``, ``max_step``, ``check`` and ``debug`` are also options, but are named
+    parameters of :meth:`~bdsim.BDSim.run`, and ``block`` is the same setting as ``hold``.
+    """
+
+    animation: bool
+    animation_rate: float
+    max_frames: int
+    movies: bool | str | os.PathLike[str] | None
+    graphics: bool
+    hold: bool
+    progress: bool
+    quiet: bool
+    atol: float | None
+    rtol: float | None
+    backend: str | None
+    tiles: str | None
+    shape: str | None
+    altscreen: bool
+    outfile: str | None
+    jsonfile: str | None
+    npzfile: str | None
+    setparam: dict[str, Any]
+
+
+# Options that can only be set when BDSim is constructed, with the reason; run()
+# raises TypeError for these rather than ignoring them
+_CONSTRUCTION_ONLY_OPTIONS: dict[str, str] = {
+    "blocks": "the block library is loaded when BDSim is constructed",
+    "verbose": "the block library is loaded when BDSim is constructed",
+    "param": "the table of parameters is printed when the diagram is compiled",
+    "setglob": "global variables are changed by set_globals(), not by run()",
+    "banner": "the banner is printed when BDSim is constructed",
+    "sysargs": "the command line is read when BDSim is constructed",
+    "simtime": "pass the simulation time as T (and dt) to run()",
+    "method": "pass the integration method as solver to run()",
+}
+
+
 @dataclass
 class RunIntervalStats:
     """Runtime counters and timings accumulated during simulation."""
@@ -254,6 +320,7 @@ class RunIntervalStats:
     integrator_wall_time: float = 0.0
     events_detected_total: int = 0
     events_detected_by_source: Counter[str] = field(default_factory=Counter)
+    animation_frames: int = 0  # figure refreshes during the run
 
 
 class BDSimState(SimulationState):
@@ -264,7 +331,7 @@ class BDSimState(SimulationState):
     each time run() is called. This keeps BDSim.run() reentrant.
 
     Inherited attributes from ``SimulationState``:
-    ``x``, ``tf``, ``t``, ``fignum``, ``stop``, ``checkfinite``, ``debugger``,
+    ``x``, ``tf``, ``t``, ``fignum``, ``stop``, ``check``, ``debugger``,
     ``t_stop``, ``eventq``, ``options``, ``clock_states``.
 
     Additional attributes
@@ -323,6 +390,11 @@ class BDSimState(SimulationState):
         RunIntervalStats counters for interval/solver diagnostics.
     """
 
+    tiled_figure: Any
+    tile_gridspec: Any
+    _warned_nomove: bool
+    _graphics_slot_claims: list[dict[str, Any]]
+
     def __init__(self) -> None:
         super().__init__()
         # offline-specific fields
@@ -345,7 +417,7 @@ class BDSimState(SimulationState):
         self.backend: str = ""
         self.notebook_backend: bool = False
         self.screensize_pix: tuple = ()
-        self.ntiles: list = []
+        self.ntiles: list[int] | None = []
         self.xoffset: int = 0
         self.display_manager: DisplayManager | None = None
         # Crossing detectors: zero-crossing detection callbacks for solve_ivp.
@@ -382,6 +454,15 @@ class BDSimState(SimulationState):
         Distinct from scheduled discrete events; these are detected during integration.
         """
         self.crossing_detectors.append((detector, block))
+
+    def at_event_interval_start(self, t: float) -> bool:
+        """True if ``t`` is the first point of the active solve_ivp interval.
+
+        solve_ivp evaluates every detector there before it takes a step, and a
+        crossing already passed at that point can only be reported from it.
+        """
+        t0 = self._event_probe_interval_start
+        return t0 is not None and t <= t0
 
     def reset_event_probe_cache(self) -> None:
         """Invalidate cached solve_ivp event-probe evaluation state."""
@@ -496,33 +577,6 @@ class BDSim(Runner):
             return resolved
         return cls_obj
 
-    @staticmethod
-    def _is_notebook_frontend() -> bool:
-        """Return True when running under a notebook/IPython frontend.
-
-        This is used to suppress startup docstring banners that are noisy in
-        IPython/Jupyter (for example: "Automatically created module for
-        IPython interactive environment").
-        """
-        try:
-            backend = str(matplotlib.get_backend()).lower()
-        except Exception:
-            backend = ""
-
-        if any(token in backend for token in ("inline", "widget", "ipympl", "nbagg")):
-            return True
-
-        try:
-            from IPython.core.getipython import get_ipython
-
-            shell = get_ipython()
-            if shell is not None and getattr(shell, "kernel", None) is not None:
-                return True
-        except Exception:
-            pass
-
-        return False
-
     def __init__(
         self,
         banner: bool = True,
@@ -571,14 +625,17 @@ class BDSim(Runner):
         ``--altscreen``, ``+A``             altscreen       True     display plots on second monitor
         ``--no-altscreen``, ``-A``          altscreen       True     do not display plots on second monitor
         ``--no-progress``                   progress        True     do not display simulation progress bar
+        ``--no-check``                      check           True     do not check block outputs and derivatives during the run (faster)
         ``--backend BE``, ``-b BE``         backend         None     matplotlib backend
         ``--tiles SPEC``, ``-t SPEC``       tiles           None     arrange figure tiles as RxC or square/wide/tall
         ``--shape WxH``                     shape           None     window size (default: matplotlib default)
         ``--movies [DIR]``, ``-m [DIR]``    movies          None     record all graphics blocks to MP4 files in DIR (default: .), sampled at ``animation_rate``
         ``--no-movies``                     movies          None     disable automatic movie recording
         ``--blocks``                        blocks          False    display block list at startup
+        ``--param``                         param           False    display the parameters of all blocks, as used by ``--set``, and their values after compiling
         ``--debug F``, ``-d F``             debug           ``''``   debug flags: p/ropagate, s/tate, d/eriv, i/nteractive, g/raphics-diagnostics
-        ``--animation-rate R``              animation_rate  20.0     target update rate for animation/debugger (Hz)
+        ``--animation-rate R``              animation_rate  20.0     target update rate for animation/debugger, per second of simulated time (Hz)
+        ``--max-frames N``                  max_frames      1000     most frames a live animation shows in one run, 0 for no limit
         ``--simtime T[,dt]``, ``-S``        simtime         None     simulation time as T or T,dt
         ``--dt DT``                         dt              None     output sample interval (build solve_ivp t_eval)
         ``--max-step DT``                   max_step        None     maximum solve_ivp integration step
@@ -590,6 +647,7 @@ class BDSim(Runner):
         ``-p [FILE]``, ``--pickle [FILE]``  outfile         None     output pickled results (default: bd.out)
         ``-o [FILE]``, ``--out [FILE]``     outfile         None     *(deprecated, use -p/--pickle)*
         ``-j [FILE]``, ``--json [FILE]``    jsonfile        None     output JSON results (default: bd.json)
+        ``--npz [FILE]``                    npzfile         None     output results as a NumPy ``.npz`` archive (default: bd.npz)
         ``--set P``, ``-s P``               setparam        ``[]``   override block parameter: ``block:param=value``
         ``--global G``                      setglob         ``[]``   override global parameter: ``var=value``
         ==================================  ==============  =======  ==========================================================================================
@@ -601,7 +659,7 @@ class BDSim(Runner):
             the simulation, while ``animation=True`` will animate the graphs
             during simulation.
 
-        :seealso: :meth:`set_globals()`
+        :seealso: :meth:`~bdsim.BDSim.set_globals`
         """
 
         super().__init__()
@@ -621,7 +679,7 @@ class BDSim(Runner):
         # self.blockdict: dict[str, Any] = {}
 
         # print docstring as a startup banner
-        if banner and not self.options.quiet and not self._is_notebook_frontend():
+        if banner and not self.options.quiet and not smb.isnotebook():
             current_frame: types.FrameType | None = inspect.currentframe()
             calling_frame: types.FrameType | None = (
                 current_frame.f_back if current_frame is not None else None
@@ -653,7 +711,7 @@ class BDSim(Runner):
         ``url``, ``class``, ``module``, ``package``, ``params``, ``inputs``,
         ``outputs``, ``nin``, ``nout``, ``blockclass``.
 
-        Deprecated blocks (decorated with :func:`deprecated_block`) are
+        Deprecated blocks (decorated with ``deprecated_block``) are
         excluded so they don't appear in editor menus.  They remain in the
         internal registry and are still accessible as factory methods on a
         :class:`BlockDiagram`.
@@ -700,14 +758,16 @@ class BDSim(Runner):
         context: SimulationContext | None = self._get_context()
         if self.options is None:
             raise RuntimeError("options not initialised")  # pragma: no cover
-        options: OptionsBase = context.options if context is not None else self.options
+        options = cast(
+            OptionsBase, context.options if context is not None else self.options
+        )
         s: str = (
             f"BDSim: Block diagram simulation runtime, {len(self._blocklibrary)} blocks"
             " imported to library.\n"
         )
         s += "simulation options:\n"
         for k, v in options.items():
-            s += "  {:s}: {}\n".format(k, v)
+            s += f"  {k}: {v}\n"
         return s
 
     def _get_context(self) -> SimulationContext | None:
@@ -734,6 +794,34 @@ class BDSim(Runner):
             options.animation = False
             options.hold = False
         return options
+
+    @staticmethod
+    def _check_run_options(options: Mapping[str, object]) -> None:
+        """Raise TypeError for a keyword argument that run() cannot take as an option.
+
+        :param options: the extra keyword arguments given to :meth:`run`
+        :raises TypeError: for an option that can only be set when :class:`BDSim` is
+            constructed, an unknown name, or a value of the wrong kind
+        """
+        for name in options:
+            if name in _CONSTRUCTION_ONLY_OPTIONS:
+                raise TypeError(
+                    f"run() cannot take the option {name!r}: "
+                    f"{_CONSTRUCTION_ONLY_OPTIONS[name]}"
+                )
+            if name not in RunOptions.__annotations__:
+                close = difflib.get_close_matches(name, RunOptions.__annotations__)
+                hint = f", did you mean {close[0]!r}?" if close else ""
+                raise TypeError(
+                    f"run() got an unexpected keyword argument {name!r}{hint}"
+                )
+        setparam = options.get("setparam")
+        if setparam is not None and not isinstance(setparam, dict):
+            raise TypeError(
+                "run(setparam=) takes a dict {'block:param': value}, not "
+                f"{type(setparam).__name__}; the 'block:param=value' text form is "
+                "for the command line"
+            )
 
     @staticmethod
     def _sanitize_movie_stem(raw: str) -> str:
@@ -943,11 +1031,19 @@ class BDSim(Runner):
         y_crossing: Any,
         simstate: BDSimState,
         state_map: dict[Block, np.ndarray],
+        tag: Any = None,
     ) -> None:
         """Invoke a crossing event handler if one is defined on the block.
 
-        Called when a zero-crossing is detected by the solver.
+        Called when a zero-crossing is detected by the solver.  A detector with a
+        ``tag`` (see :class:`~bdsim.crossing.CrossingMixin`) is routed to the
+        block's ``crossing_event``, which is told which detector fired.
         """
+        if tag is not None:
+            block.crossing_event(  # type: ignore[attr-defined]
+                tag, t_crossing, y_crossing, state_map, simstate
+            )
+            return
         for handler_name in ("event_handler", "on_event", "handle_event"):
             handler = getattr(block, handler_name, None)
             if callable(handler):
@@ -1039,6 +1135,33 @@ class BDSim(Runner):
 
         return False
 
+    def _record_event_sample(
+        self, bd: Any, simstate: BDSimState, t: float, y: np.ndarray
+    ) -> None:
+        """Log one sample at a crossing event that falls between output grid points.
+
+        :param bd: system block diagram
+        :type bd: BlockDiagram
+        :param simstate: per-run simulation state
+        :type simstate: BDSimState
+        :param t: the crossing time
+        :type t: float
+        :param y: continuous state after the event handlers ran
+        :type y: ndarray
+
+        Records what a sample of the run holds, the time, the state, the watched
+        signals and the data logged by sink blocks, so that all of the logs stay the
+        same length.  It does not run the graphics, progress or debugger hooks, which
+        belong to the regular samples.
+        """
+        simstate.t = t
+        bd.evaluate(bd.state_map(y, simstate), t, sinks=False)
+        simstate.tlist.append(t)
+        simstate.xlist.append(np.array(y, copy=True))
+        for i, p in enumerate(simstate.watchlist):
+            simstate.plist[i].append(p.block.outport_value(p.port))
+        bd.record(t)
+
     def run(
         self,
         bd: Any,
@@ -1049,10 +1172,12 @@ class BDSim(Runner):
         solver_args: dict[str, Any] | None = None,
         debug: str = "",
         block: bool | None = None,
-        checkfinite: bool = True,
+        check: bool | None = None,
+        checkfinite: bool | None = None,
         minstepsize: float = 1e-12,
         watch: Any = None,
         threaded: bool = False,
+        **options: Unpack[RunOptions],
     ) -> BDStruct:
         """Run a compiled block diagram.
 
@@ -1071,18 +1196,55 @@ class BDSim(Runner):
         :type debug: str, optional
         :param block: matplotlib block-at-end behaviour, default False
         :type block: bool
-        :param checkfinite: error if inf or nan on any wire, default True
-        :type checkfinite: bool
+        :param check: check block outputs and derivatives as they are computed
+            (output form, ``NaN`` or ``Inf``, change of signature, derivative shape),
+            defaults to the ``check`` option which is True.  ``--no-check`` turns
+            it off, which is faster.
+        :type check: bool, optional
+        :param checkfinite: deprecated, use ``check``
+        :type checkfinite: bool, optional
         :param minstepsize: minimum step length guard, default 1e-12
         :type minstepsize: float
         :param watch: list of signals to log (see below)
         :type watch: list, optional
         :param threaded: run in a worker thread (disables graphics), default False
         :type threaded: bool, optional
+        :param options: any of the options of :class:`RunOptions`, for this run only,
+            for example ``animation=True`` or ``progress=False``
         :return: simulation results container
         :rtype: BDStruct
+        :raises TypeError: for an option that is unknown, or that can only be set
+            when :class:`BDSim` is constructed, such as ``blocks`` or ``verbose``
+        :raises RuntimeError: for a ``backend`` that matplotlib cannot switch to
 
         The system is simulated from time 0 to ``T``.
+
+        **Options.** The keyword arguments after ``threaded`` are options, the same
+        ones that :class:`BDSim` takes and that the command line sets.  Each overrides
+        the value given to :class:`BDSim` for this run only.  An option given on the
+        command line always wins, including ``dt``, ``max_step``, ``check`` and
+        ``block``, and a message says that the value from the code was ignored.  The
+        options that cannot differ from run to run, such as ``blocks`` or ``verbose``,
+        raise ``TypeError``.
+
+        .. warning::
+            ``setparam`` **changes the parameters of the blocks, and they stay
+            changed after the run**.  It is not a setting for this run only, unlike
+            the other options: a second ``run`` without ``setparam`` uses the values
+            the first one set.  ``setparam={"gain:K": 3}`` is the same as calling
+            ``set_param("K", 3)`` on the block named ``gain`` before the run, but is
+            done after the command line has been read, and so can be overridden by
+            ``-s gain:K=4``.  The keys are ``"block:param"``, with the block's name
+            or its ``id`` as for ``-s``, and the values are Python objects, not text.
+            Each change is reported, old value to new, unless ``quiet``.
+            This is new and may change.
+
+        .. versionchanged:: next
+            The options of :class:`RunOptions` can be given to ``run`` as keyword
+            arguments, and to ``submit``, which passes them on.  An option given on
+            the command line now also wins over ``dt``, ``max_step``, ``check`` and
+            ``block`` given to ``run``, which used to override it, and a message says
+            that the value from the code was ignored.
 
         The integration backend is always ``scipy.integrate.solve_ivp``.  The
         ``solver`` argument selects the method (e.g. ``RK45``, ``DOP853``,
@@ -1109,7 +1271,7 @@ class BDSim(Runner):
           ``watch``
         - ``.stats`` — :class:`BDStruct` with integration statistics:
           ``integration_time_points``, ``run_interval_calls``,
-          ``ydot_calls``, ``integrator_wall_time``,
+          ``ydot_calls``, ``integrator_wall_time``, ``animation_frames``,
           ``events_detected_total``, ``events_detected_by_source``
 
         The ``watch`` argument is a list of one or more signals whose value
@@ -1143,7 +1305,49 @@ class BDSim(Runner):
         if watch is None:
             watch = []
 
-        run_options: OptionsBase = self._make_run_options(threaded=threaded)
+        if checkfinite is not None:
+            warnings.warn(
+                "run(checkfinite=...) is deprecated, use check=",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            if check is None:
+                check = checkfinite
+
+        # Everything that run() can set for this run only goes through
+        # OptionsBase.set(), so an option given on the command line wins over it,
+        # for the named parameters and the keyword options alike.
+        self._check_run_options(options)
+        setparam: dict[str, Any] = options.get("setparam") or {}
+        overrides: dict[str, Any] = {
+            k: v for k, v in options.items() if k != "setparam"
+        }
+        for key, value in (
+            ("dt", dt),
+            ("max_step", max_step),
+            ("check", check),
+            ("hold", block),
+        ):
+            if value is not None:
+                overrides[key] = value
+
+        run_options: OptionsBase = self._make_run_options(
+            threaded=threaded, **overrides
+        )
+        dt = run_options.dt
+        max_step = run_options.max_step
+        check = bool(run_options.check)
+
+        # Fail here with the reason rather than from inside the first graphics
+        # block to start, where the error is reported as a failed block start.
+        backend = overrides.get("backend")
+        if backend is not None and run_options.graphics:
+            try:
+                matplotlib.use(backend)
+            except Exception as exc:
+                raise RuntimeError(
+                    f"can't select matplotlib backend {backend!r}: {exc}"
+                ) from exc
 
         # get simulation time
         #  --simtime=T  or --simtime=T,dt
@@ -1168,13 +1372,9 @@ class BDSim(Runner):
         simstate.T = tf
         simstate.tf = tf
 
-        if dt is None:
-            dt = getattr(run_options, "dt", None)
         movies_enabled = getattr(run_options, "movies", None) is not None
         if movies_enabled and dt is None:
             dt = 1.0 / float(getattr(run_options, "animation_rate", 20.0))
-        if max_step is None:
-            max_step = getattr(run_options, "max_step", None)
 
         if dt is not None and float(dt) <= 0:
             raise ValueError("dt must be > 0")
@@ -1190,7 +1390,8 @@ class BDSim(Runner):
         simstate.solver_args = solver_args
         simstate.minstepsize = minstepsize
         simstate.stop = None  # allow any block to stop.BlockDiagram by setting this to the block's name
-        simstate.checkfinite = checkfinite
+        simstate.check = check
+        bd.check = check
         simstate.options = run_options
         simstate.t_stop = None
 
@@ -1223,8 +1424,6 @@ class BDSim(Runner):
             # turn off progress bar if any debug options are given
             if simstate.hasdebug():
                 simstate.options.progress = False
-            if block is not None:
-                simstate.options.hold = block
 
             # Compute the animation / debugger frame interval from --animation-rate.
             # Animation uses Option-A eventq callables for frame pacing.
@@ -1250,6 +1449,29 @@ class BDSim(Runner):
             ):
                 interactive_rate_hz = float(simstate.options.animation_rate)
                 interactive_dt = 1.0 / interactive_rate_hz
+                # animation_rate is per second of *simulated* time, so a long
+                # simulation of a slow system would show thousands of frames, each
+                # ending an integration interval and redrawing the figures.  Bound
+                # the number of frames.  Only a live animation is limited: for a
+                # movie, the debugger or a stateless diagram the frame grid is what
+                # was asked for, or the grid the results are sampled on.
+                max_frames = getattr(simstate.options, "max_frames", None)
+                if (
+                    max_frames
+                    and simstate.options.animation
+                    and not (
+                        simstate.isdebug("i") or _stateless_no_clock or _movies_active
+                    )
+                    and tf * interactive_rate_hz > max_frames
+                ):
+                    interactive_dt = tf / max_frames
+                    if not simstate.options.quiet:
+                        print(
+                            f"  animation: limiting to {max_frames} frames, one every"
+                            f" {interactive_dt:.3g}s of simulated time"
+                            f" ({interactive_rate_hz:g} Hz would be"
+                            f" {int(tf * interactive_rate_hz)} frames)"
+                        )
             if simstate.isdebug("i") and interactive_dt is not None and bd.nstates > 0:
                 current_max_step = simstate.solver_args.get("max_step")
                 if current_max_step is None or float(current_max_step) > interactive_dt:
@@ -1281,7 +1503,7 @@ class BDSim(Runner):
                     port_group = m.group("port")
                     port = 0 if port_group is None else int(port_group)
 
-                    b = bd.blocknames[name]
+                    b = bd[name]  # a subsystem block is found by name too
                     plug = b[port]
                 elif isinstance(w, Block):
                     # a block was given, defaults to port 0
@@ -1290,16 +1512,23 @@ class BDSim(Runner):
                     # a plug was given
                     plug: Plug = w  # type: ignore[no-redef]
 
+                watch_plug = plug
                 if plug.block.blockclass == "subsystem":
                     # subsystem blocks no longer exist in the wirelist, and don't have
-                    # their own outputs, so watch the corresponding port of the subsystem's
-                    # OUTPORT block instead.
-                    plug.block = plug.block.outport
+                    # their own outputs, so watch the output port inside the subsystem
+                    # that generates the value.  The name stays that of the subsystem.
+                    watch_plug = plug.block.outports[plug.port]
+                    if watch_plug is None:
+                        raise ValueError(f"cannot watch {plug}, nothing drives it")
 
-                watchlist.append(plug)
+                watchlist.append(watch_plug)
                 watchnamelist.append(str(plug))
             simstate.watchlist = watchlist
             simstate.watchnamelist = watchnamelist
+
+            # update block parameters given on command line; this must come before the
+            # initial state is collected, which a setup parameter such as x0 changes
+            self.update_parameters(bd, setparam)
 
             x0 = bd.getstate0()
 
@@ -1333,9 +1562,6 @@ class BDSim(Runner):
 
             if not simstate.options.quiet:
                 print(attr(0))
-
-            # update block parameters given on command line
-            self.update_parameters(bd)
 
             if bool(getattr(simstate, "notebook_backend", False)):
                 patch_roboticstoolbox_pyplot_launch_for_notebook()
@@ -1432,6 +1658,7 @@ class BDSim(Runner):
                     stats["run_interval_calls"] = simstate.stats.run_interval_calls
                     stats["ydot_calls"] = simstate.stats.ydot_calls
                     stats["integrator_wall_time"] = simstate.stats.integrator_wall_time
+                    stats["animation_frames"] = simstate.stats.animation_frames
                     stats["events_detected_total"] = (
                         simstate.stats.events_detected_total
                     )
@@ -1501,12 +1728,19 @@ class BDSim(Runner):
                     # Keep figure outputs current for the active backend.
                     if not notebook_backend:
                         display_manager.refresh()
+                        ss.stats.animation_frames += 1
                     else:
                         nonlocal last_notebook_refresh_t
                         # Notebook rendering is expensive; limit display updates
                         # to a practical UI frame rate while simulation can run faster.
-                        if t - last_notebook_refresh_t >= notebook_min_refresh_dt:
+                        # Frame times are on a k*dt grid, so t - last is dt only to within
+                        # rounding: 0.03 - 0.02 < 0.01.  Without a tolerance 13-40% of the
+                        # frames at the requested rate were skipped.
+                        if t - last_notebook_refresh_t >= notebook_min_refresh_dt * (
+                            1 - 1e-6
+                        ):
                             display_manager.refresh()
+                            ss.stats.animation_frames += 1
                             last_notebook_refresh_t = t
                             if sys.platform == "emscripten":
                                 # Yield briefly so JupyterLite can process display
@@ -1546,6 +1780,7 @@ class BDSim(Runner):
                     simstate.options.animation or _movies_active
                 ) and simstate.display_manager is not None:
                     simstate.display_manager.refresh()
+                    simstate.stats.animation_frames += 1
                 if simstate.stop is not None:
                     # Stop triggered at t=0: clamp the run horizon so the
                     # interval loop below is skipped entirely. The existing
@@ -1667,6 +1902,11 @@ class BDSim(Runner):
                     f"  (simulated {simstate.T:.3g}s in {run_wall_time * 1000:.1f} ms)"
                 )
                 print(f"  integration time points:   {len(simstate.tlist)}")
+                if simstate.stats.animation_frames:
+                    print(
+                        f"  animation frames:          {simstate.stats.animation_frames}"
+                        f"  (scheduled every {interactive_dt:.3g}s of simulated time)"
+                    )
                 # Scheduled events (clock ticks, explicit declare_event calls) are
                 # the interval boundaries; nintervals = number of interval-handler calls.
                 print(
@@ -1716,6 +1956,7 @@ class BDSim(Runner):
             stats["run_interval_calls"] = simstate.stats.run_interval_calls
             stats["ydot_calls"] = simstate.stats.ydot_calls
             stats["integrator_wall_time"] = simstate.stats.integrator_wall_time
+            stats["animation_frames"] = simstate.stats.animation_frames
             stats["events_detected_total"] = simstate.stats.events_detected_total
             stats["events_detected_by_source"] = dict(
                 simstate.stats.events_detected_by_source
@@ -1725,6 +1966,7 @@ class BDSim(Runner):
             # command line output options:
             #  -o/--out [FILE] writes pickle (default filename: bd.out)
             #  -j/--json [FILE] writes JSON (default filename: bd.json)
+            #  --npz [FILE] writes a NumPy archive (default filename: bd.npz)
             #
             # we can visualize a pickle output file by
             #
@@ -1745,6 +1987,12 @@ class BDSim(Runner):
 
                 if not simstate.options.quiet:
                     print("simulation results JSON --> ", simstate.options.jsonfile)
+
+            if simstate.options.npzfile is not None:
+                out.dump_npz(simstate.options.npzfile)
+
+                if not simstate.options.quiet:
+                    print("simulation results npz --> ", simstate.options.npzfile)
 
             # pause until all graphics blocks close
 
@@ -1775,9 +2023,18 @@ class BDSim(Runner):
         future: Future[BDStruct] = BDSim._executor.submit(self.run, bd, **kwargs)
         return SimulationJob(future)
 
-    def update_parameters(self, bd: Any) -> None:
+    def update_parameters(self, bd: Any, values: dict[str, Any] | None = None) -> None:
         """
-        Set value of parameters according to command line arguments
+        Set value of parameters according to arguments to the run and the command line
+
+        :param bd: the compiled block diagram
+        :param values: parameter values from code, ``{"block:param": value}``, the
+            ``setparam`` argument of :meth:`run`
+
+        The values from code are set first, then those from the command line, so the
+        command line has the last word.  A value from code is used as it is, the text
+        of a command line value is read according to the kind of the current value.
+        The parameters are changed in the blocks and stay changed after the run.
 
         Command line arguments of the form:
 
@@ -1791,59 +2048,92 @@ class BDSim(Runner):
         - the block's name as a string, either user assigned or bdsim assigned
         - the block ``id`` as displayed by the ``report`` method
 
-        ``param`` is the name of the parameter used in the constructor
+        ``param`` is the name of the parameter used in the constructor.  It must be
+        a registered parameter that can be set before the run starts, see
+        :meth:`~bdsim.Block.add_param`, and the new value must be of the same kind as the
+        current one, see :meth:`~bdsim.Block.set_param`.  :meth:`~bdsim.BlockDiagram.report_params`
+        lists the parameters and their current values.
 
-        ``value`` is the new value of the variable
+        ``value`` is the new value of the variable: an integer, a float, a matrix
+        written ``1 2; 3 4``, or a NumPy dtype literal such as ``float32([1, 2])``
+        or ``uint16(5)``, see ``bdsim.literals``
         """
 
         context: SimulationContext | None = self._get_context()
         if self.options is None:
             raise RuntimeError("options not initialised")  # pragma: no cover
         options: OptionsBase = context.options if context is not None else self.options
-        re_set: re.Pattern[str] = re.compile(
-            r"(?P<block>[\w\.]+):(?P<param>[\w]+)=(?P<value>.*)"
+        re_address: re.Pattern[str] = re.compile(
+            r"(?P<block>[\w\./]+):(?P<param>[\w]+)"
         )
+        re_set: re.Pattern[str] = re.compile(
+            r"(?P<block>[\w\./]+):(?P<param>[\w]+)=(?P<value>.*)"
+        )
+        quiet = bool(options.get("quiet", False))
+        for address, value in (values or {}).items():
+            m: re.Match[str] | None = (
+                re_address.fullmatch(address) if isinstance(address, str) else None
+            )
+            if m is None:
+                raise ValueError(f"bad set parameter, want 'block:param': {address!r}")
+            self._set_parameter(bd, m["block"], m["param"], value=value, quiet=quiet)
+
         for s in options.setparam:
-            m: re.Match[str] | None = re_set.match(s)
+            m = re_set.match(s)
             if m is None:
                 raise ValueError("bad set parameter: " + s)
-
-            # get block reference
-            blockname: str | int | None = m["block"]
-            if blockname is not None:
-                try:
-                    blockname = int(blockname)
-                except ValueError:
-                    pass
-            block = bd[blockname]
-
-            param: str | Any = m["param"]
-            try:
-                prev_value = getattr(block, param)
-            except ValueError:
-                raise ValueError(f"block {block.name} has no parameter '{param}'")
-
-            # get the parameter
-            value: str | Any = m["value"]
-            new_value = None
-
-            try:
-                if ";" in value:
-                    new_value = smb.str2array(value)
-                else:
-                    try:
-                        new_value = int(value)
-                    except ValueError:
-                        new_value = float(value)
-            except ValueError:
-                raise ValueError("cannot parse value " + value)
-
-            # change the value
-            setattr(block, param, new_value)
-            print(
-                f"changed value of {block.name}:{param} from {prev_value} ->"
-                f" {new_value}"
+            self._set_parameter(
+                bd, m["block"], m["param"], text=m["value"], quiet=quiet
             )
+
+    @staticmethod
+    def _set_parameter(
+        bd: Any,
+        blockref: str,
+        param: str,
+        *,
+        value: Any = None,
+        text: str | None = None,
+        quiet: bool = False,
+    ) -> None:
+        """Set one block parameter from a value, or from text read as the kind of the current value.
+
+        The change is reported unless ``quiet``.
+        """
+        # get block reference
+        blockname: str | int = blockref
+        try:
+            blockname = int(blockref)
+        except ValueError:
+            pass
+        block = bd[blockname]
+
+        try:
+            block._lookup_param(param)  # is there such a parameter, can it be set?
+        except ValueError as err:
+            raise ValueError(f"cannot set {block.name}:{param}: {err}") from err
+
+        if text is not None:
+            if callable(block._param_value(param)):
+                raise ValueError(
+                    f"cannot set {block.name}:{param} from text: it is a function, "
+                    "set it from code with block.set_param"
+                )
+            # the type of the current value says how to read the text
+            try:
+                value = _parse_param_text(text, block._param_value(param))
+            except ValueError as err:
+                raise ValueError(
+                    f"cannot set {block.name}:{param}: cannot read {text!r}: {err}"
+                ) from err
+
+        # change the value; the old value decides what types are acceptable
+        try:
+            prev_value = block.set_param(param, value)
+        except (TypeError, ValueError) as err:
+            raise ValueError(f"cannot set {block.name}:{param}: {err}") from err
+        if not quiet:
+            print(f"changed value of {block.name}:{param} from {prev_value} -> {value}")
 
     def _interval_hybrid(
         self, bd: Any, t0: float, t1: float, x0: np.ndarray, simstate: BDSimState
@@ -1927,6 +2217,8 @@ class BDSim(Runner):
             ivp_args["events"] = [
                 detector for detector, _ in simstate.crossing_detectors
             ]
+            # the step boundaries are needed to refine the state at a crossing
+            ivp_args["dense_output"] = True
 
         # ---------------------------------------------------------------------
         # INTEGRATOR CORE (single solve_ivp call for this interval)
@@ -1954,6 +2246,9 @@ class BDSim(Runner):
                 status=int(result.status),
                 message=str(result.message),
             )
+
+        if len(simstate.crossing_detectors) > 0:
+            self._refine_crossing_state(ydot, result, ivp_args)
 
         # remove time overlap between integration segments
         #
@@ -2005,14 +2300,17 @@ class BDSim(Runner):
         crossing_times_all = result.t_events if result.t_events is not None else []
         crossing_states = result.y_events if result.y_events is not None else []
         crossing_handled = False
+        t_crossed = float(t0)  # time of the last crossing, the end of this interval
         for i, crossing_times in enumerate(crossing_times_all):
             if len(crossing_times) == 0:
                 continue
-            _, block = simstate.crossing_detectors[i]
+            detector, block = simstate.crossing_detectors[i]
+            tag = getattr(detector, "tag", None)
             source_name = getattr(block, "name", str(block))
             state_list = crossing_states[i] if i < len(crossing_states) else []
             for j, t_crossing in enumerate(crossing_times):
                 crossing_handled = True
+                t_crossed = max(t_crossed, float(t_crossing))
                 y_crossing = state_list[j] if j < len(state_list) else None
                 crossing_state_map = bd.state_map(y_crossing, simstate)
                 bd.evaluate(crossing_state_map, float(t_crossing), sinks=False)
@@ -2024,14 +2322,22 @@ class BDSim(Runner):
                     y_crossing,
                     simstate,
                     crossing_state_map,
+                    tag,
                 )
 
         # return final continuous state and actual end time reached.
         # `result.t[-1]` is the last OUTPUT sample, not the integrator's
         # reach; on natural completion it can undershoot t1 and trigger a
         # spurious residual call. Use t1 directly when status == 0.
+        #
+        # An interval stopped by a crossing ends at the crossing, which is not
+        # `result.t[-1]` when there is an output grid (`t_eval`): that is the last
+        # grid point before it.  Restarting from there would run the next segment
+        # from the post-event state but at an earlier time, displacing it.
         if result.status == 0:
             t_final = float(t1)
+        elif crossing_handled:
+            t_final = t_crossed
         else:
             t_final = float(result.t[-1]) if len(result.t) > 0 else float(t0)
         if len(result.t) > 0:
@@ -2040,7 +2346,19 @@ class BDSim(Runner):
 
                 # Ensure logged trajectory reflects any state mutation performed by
                 # crossing handlers (for example STOP handlers that rewrite state).
-                if len(simstate.xlist) > 0:
+                #
+                # Without an output grid the last sample is the crossing itself, and
+                # holds the state before the handler ran: replace it.  With a grid the
+                # last sample is a grid point before the crossing, and is correct as
+                # it stands: the crossing is an interval boundary, so add a sample at
+                # the crossing with the state the next segment starts from.
+                if (
+                    len(simstate.tlist) > 0
+                    and simstate.tlist[-1] < t_final - 1e-12
+                    and simstate.dt is not None
+                ):
+                    self._record_event_sample(bd, simstate, t_final, x_final)
+                elif len(simstate.xlist) > 0:
                     simstate.xlist[-1] = np.array(x_final, copy=True)
 
                 # Move just beyond the crossing so restart does not re-trigger the same event.
@@ -2060,6 +2378,67 @@ class BDSim(Runner):
 
         # if integration produced no points, return initial state
         return np.array(x0), t_final
+
+    @staticmethod
+    def _refine_crossing_state(
+        ydot: Callable[[float, np.ndarray], np.ndarray],
+        result: Any,
+        ivp_args: dict[str, Any],
+    ) -> None:
+        """
+        Recompute the state at a crossing that stopped the solver.
+
+        :param ydot: the right-hand side that was integrated
+        :param result: the ``solve_ivp`` result, with ``dense_output=True``; its
+            ``y`` and ``y_events`` are corrected in place
+        :param ivp_args: the keyword arguments given to ``solve_ivp``
+
+        solve_ivp finds the crossing time accurately, but takes the state there
+        from the interpolant of the step that contained it.  If the right-hand side
+        has a corner or a jump at the crossing, the stages of that step straddled
+        it, and the interpolant, and so the state, is wrong by an amount set by the
+        tolerance.  Everything the solver accepted before that step is sound, so
+        integrate again from the start of that step to the crossing, where the
+        right-hand side is smooth.  Output samples that fell inside the step on a
+        fixed grid (``t_eval``) are replaced too.
+
+        If the second integration fails the interpolant is kept.
+        """
+        sol = getattr(result, "sol", None)
+        if result.status != 1 or sol is None or len(sol.ts) < 2:
+            return  # not stopped by an event
+
+        t_c = float(sol.ts[-1])
+        t_s = float(sol.ts[-2])
+        if t_c <= t_s:
+            return
+
+        # Stop a hair short of the crossing.  A Runge-Kutta method evaluates the
+        # right-hand side at its endpoint, and at the crossing a jump (SIGN) is
+        # ambiguous: just short of it the evaluation is on the pre-crossing side.
+        # The state differs from that at the crossing by the rate times this gap,
+        # about 1e-12 of the step.
+        t_end = t_c - 1e-12 * (t_c - t_s)
+        inside = [float(t) for t in result.t if t_s < t < t_end]
+        t_eval = np.array(sorted({*inside, t_end}))
+        args = {
+            k: v
+            for k, v in ivp_args.items()
+            if k not in ("events", "t_eval", "dense_output", "first_step")
+        }
+        fine = integrate.solve_ivp(ydot, (t_s, t_end), sol(t_s), t_eval=t_eval, **args)
+        if not fine.success or fine.y.shape[1] != len(t_eval):
+            return
+
+        for k, t in enumerate(result.t):
+            if t_s < t < t_end:
+                result.y[:, k] = fine.y[:, np.searchsorted(t_eval, t)]
+            elif t_end <= t <= t_c:
+                result.y[:, k] = fine.y[:, -1]
+        for crossings, states in zip(result.t_events, result.y_events):
+            for j, t in enumerate(crossings):
+                if abs(float(t) - t_c) <= 1e-12 * max(1.0, abs(t_c)):
+                    states[j] = fine.y[:, -1]
 
     def _interval_discrete(
         self, bd: Any, t0: float, t1: float, x0: np.ndarray, simstate: BDSimState
@@ -2103,16 +2482,49 @@ class BDSim(Runner):
         t_final = float(t1)
         return np.array(x0), t_final
 
-    def blockdiagram(self, name: str = "main") -> BlockDiagram:
+    def blockdiagram(self, name: str | None = None) -> BlockDiagram:
         """
         Instantiate a new block diagram object.
 
-        :param name: diagram name, defaults to 'main'
+        :param name: diagram name, defaults to None.  See below for how the
+            name is used.
         :type name: str, optional
         :return: parent object for blockdiagram
         :rtype: BlockDiagram
 
         This object describes the connectivity of a set of blocks and wires.
+
+        A diagram is used in one of two ways, and ``name`` means something
+        different in each.
+
+        **Main diagram.**  The top-level diagram that is compiled and run.  It
+        is not a block, so its name cannot clash with a block name.  The name
+        is only a label that appears in messages and reports.  If none is given
+        the diagram is named ``main`` when it is first compiled::
+
+            bd = sim.blockdiagram()  # bd.name is None until compile() gives it "main"
+            bd = sim.blockdiagram(name="plant")  # shown as 'plant'
+
+        **Subsystem.**  A diagram, containing ``INPORT`` and ``OUTPORT`` blocks,
+        that is instantiated inside another diagram by the ``SUBSYSTEM`` block.
+        Each instance is a block, so it needs a name that is unique within the
+        parent diagram.  The diagram's name is the stem of the default instance
+        name, in the same way that the block type is the stem of ``gain.0``,
+        ``gain.1`` and so on::
+
+            ss = sim.blockdiagram(name="thing")
+            ...
+            a = bd.SUBSYSTEM(ss)  # named "thing.0"
+            b = bd.SUBSYSTEM(ss)  # named "thing.1"
+
+        If the subsystem diagram has no name, the stem is ``subsystem``, giving
+        ``subsystem.0``, ``subsystem.1`` and so on.  A subsystem loaded from a
+        ``.bd`` file uses the file name without its extension, and one imported
+        from a module uses the variable name of the diagram.  Passing ``name=``
+        to ``SUBSYSTEM`` overrides the default, but must be unique in the
+        parent diagram.  The instance name becomes the prefix of the names of
+        the blocks cloned from the subsystem into the parent when it is
+        compiled, for example ``thing.0/gain.0``.
 
         It is an instantiation of the ``BlockDiagram`` class with a factory
         method for every dynamically loaded block which returns
@@ -2133,7 +2545,7 @@ class BDSim(Runner):
         """
 
         # instantiate a new blockdiagram
-        #  it includes stubs for factory methods defined in the BlockDiagramMixin class
+        #  it includes stubs for factory methods defined in the BlockFactoryStubs class
         bd = BlockDiagram(name=name)
         bd.runtime = self
 
@@ -2207,7 +2619,7 @@ class BDSim(Runner):
             raise RuntimeError("options not initialised")  # pragma: no cover
         options: OptionsBase = context.options if context is not None else self.options
         if debug[0] in options.debug:
-            print(f"DEBUG.{debug:s}: " + fmt.format(*args))
+            print(f"DEBUG.{debug}: " + fmt.format(*args))
 
     def done(self, bd: Any, block: bool = False) -> None:
         """Enter the matplotlib event loop and clean up after simulation.
@@ -2232,7 +2644,9 @@ class BDSim(Runner):
             ``hold`` option is read from ``sim.options`` directly.
         """
         context: SimulationContext | None = self._get_context()
-        options: OptionsBase = context.options if context is not None else self.options
+        options = cast(
+            OptionsBase, context.options if context is not None else self.options
+        )
         if options.hold:
             block = options.hold
 
@@ -2846,7 +3260,7 @@ class BDSim(Runner):
 
         :param bd: the block diagram to be reported
         :type bd: :class:`BlockDiagram`
-        :param type: report type, one of: "summary" (default), "lists", "schedule"
+        :param type: report type, one of: "summary" (default), "lists", "schedule", "params", "subsystems"
         :type type: str, optional
         :param style: table style, one of: ansi (default), markdown, latex
         :type style: str
@@ -2854,7 +3268,7 @@ class BDSim(Runner):
         Single method wrapper for various block diagram reports.  Obeys the ``-q``
         option to suppress all reports at runtime.
 
-        :seealso: :meth:`BlockDiagram.report_summary` :meth:`BlockDiagram.report_lists` :meth:`BlockDiagram.report_schedule`
+        :seealso: :meth:`~bdsim.BlockDiagram.report_summary` :meth:`~bdsim.BlockDiagram.report_lists` :meth:`~bdsim.BlockDiagram.report_schedule` :meth:`~bdsim.BlockDiagram.report_params` :meth:`~bdsim.BlockDiagram.report_subsystems`
         """
         context: SimulationContext | None = self._get_context()
         if self.options is None:
@@ -2869,6 +3283,91 @@ class BDSim(Runner):
             bd.report_summary(**kwargs)
         elif type == "schedule":
             bd.report_schedule(**kwargs)
+        elif type == "params":
+            bd.report_params(**kwargs)
+        elif type == "subsystems":
+            bd.report_subsystems(**kwargs)
+
+
+def _parse_param_text(text: str, current: Any) -> Any:
+    """
+    Read the text of a ``--set`` value according to the type of the current value.
+
+    :param text: the text after the ``=``
+    :param current: the current value of the parameter, or ``None`` if there is none
+    :return: the value, which :meth:`~bdsim.Block.set_param` then checks against the current one
+    :raises ValueError: the text cannot be read as that type
+
+    * a bool: ``true``, ``false``, ``yes``, ``no``, ``on``, ``off``, ``1`` or ``0``
+    * a string: the text as it is, without surrounding quotes
+    * a number: an integer, a float or a complex number
+    * a NumPy dtype literal, such as ``float32([1, 2])`` or ``uint16(5)``, for a number
+      or an array
+    * an array: a vector, ``1 2 3`` or ``1,2,3``, or a matrix, ``1 2; 3 4``, with
+      integers kept as integers if the current array is of integers
+    * nothing to compare with (the current value is ``None``): a number if it looks
+      like one, otherwise the text
+    * anything else, such as a list, a dict or a function, cannot be set from text
+    """
+    text = text.strip()
+
+    if current is None:
+        literal = parse_literal(text)
+        if literal is not NOT_A_LITERAL:
+            return literal
+        for convert in (int, float):
+            try:
+                return convert(text)
+            except ValueError:
+                pass
+        return text
+
+    if isinstance(current, (bool, np.bool_)):
+        low = text.lower()
+        if low in ("true", "yes", "on", "1"):
+            return True
+        if low in ("false", "no", "off", "0"):
+            return False
+        raise ValueError("expected true or false")
+
+    if isinstance(current, str):
+        if len(text) >= 2 and text[0] == text[-1] and text[0] in "'\"":
+            text = text[1:-1]
+        return text
+
+    if isinstance(current, (numbers.Number, np.ndarray)):
+        # a NumPy dtype literal such as float32([1, 2]) or uint16(5), see bdsim.literals;
+        # it is checked against the current value like any other, so a literal cannot
+        # change the type or shape of a parameter, only say which dtype the value has
+        literal = parse_literal(text)
+        if literal is not NOT_A_LITERAL:
+            return literal
+
+    if isinstance(current, numbers.Number):
+        for convert_number in (int, float, complex):
+            try:
+                return convert_number(text)
+            except ValueError:
+                pass
+        raise ValueError("expected a number")
+
+    if isinstance(current, np.ndarray):
+        try:
+            if ";" in text:
+                array = np.asarray(smb.str2array(text), dtype=float)
+            else:
+                array = np.array(text.replace(",", " ").split(), dtype=float)
+        except ValueError:
+            raise ValueError(
+                "expected numbers, such as '1 2 3' or '1 2; 3 4'"
+            ) from None
+        if current.dtype.kind in "iu" and np.all(array == np.round(array)):
+            array = array.astype(current.dtype)
+        return array
+
+    raise ValueError(
+        f"a {type(current).__name__} cannot be set from text, use block.set_param in code"
+    )
 
 
 class Options(OptionsBase):
@@ -2901,6 +3400,7 @@ class Options(OptionsBase):
             "animation": False,
             "movies": None,
             "animation_rate": 20.0,
+            "max_frames": 1000,
             "dt": None,
             "atol": None,
             "rtol": None,
@@ -2914,9 +3414,12 @@ class Options(OptionsBase):
             "debug": "",
             "simtime": None,
             "blocks": False,
+            "param": False,
             "outfile": None,
             "jsonfile": None,
+            "npzfile": None,
             "quiet": False,
+            "check": True,
             "setparam": [],
             "setglob": [],
         }
@@ -2947,6 +3450,7 @@ class Options(OptionsBase):
                 effective_defaults[key] = value
 
         unknownargs: list[str] = []
+        parser: argparse.ArgumentParser | None = None
         if sysargs:
             raw_argv = list(sys.argv[1:])
 
@@ -3119,6 +3623,14 @@ class Options(OptionsBase):
                 metavar="HZ",
                 help="target interactive update cadence for animation/debugger",
             )
+            gfx.add_argument(
+                "--max-frames",
+                type=int,
+                default=effective_defaults["max_frames"],
+                metavar="N",
+                help="most frames a live animation shows in one run, "
+                "0 for no limit; a long simulation is animated more sparsely",
+            )
 
             sim = parser.add_argument_group("Simulation Control")
             sim.add_argument(
@@ -3154,6 +3666,14 @@ class Options(OptionsBase):
                 help="Display blocks at startup",
             )
             sim.add_argument(
+                "--param",
+                action="store_const",
+                const=True,
+                default=effective_defaults["param"],
+                dest="param",
+                help="Display the block parameters and their values after compiling",
+            )
+            sim.add_argument(
                 "--verbose",
                 "-v",
                 action="store_const",
@@ -3168,6 +3688,14 @@ class Options(OptionsBase):
                 const=True,
                 default=effective_defaults["quiet"],
                 help="suppress reports and progress bar",
+            )
+            sim.add_argument(
+                "--no-check",
+                action="store_const",
+                const=False,
+                default=effective_defaults["check"],
+                dest="check",
+                help="do not check block outputs during the run (faster)",
             )
             sim.add_argument(
                 "--no-progress",
@@ -3219,6 +3747,15 @@ class Options(OptionsBase):
                 metavar="FILE",
                 dest="jsonfile",
                 help="output simulation results as JSON (default filename: bd.json)",
+            )
+            out.add_argument(
+                "--npz",
+                nargs="?",
+                const="bd.npz",
+                default=effective_defaults["npzfile"],
+                metavar="FILE",
+                dest="npzfile",
+                help="output simulation results as a NumPy .npz archive (default filename: bd.npz)",
             )
 
             sol = parser.add_argument_group("Solver")
@@ -3277,7 +3814,6 @@ class Options(OptionsBase):
                 altscreen=effective_defaults["altscreen"],
             )
 
-            self._parser = parser
             argv0 = sys.argv[0] if len(sys.argv) > 0 else ""
             args, unknownargs = parser.parse_known_args()
 
@@ -3331,7 +3867,8 @@ class Options(OptionsBase):
                 raise SystemExit(0)
         else:
             cmdline_options = dict()  # empty dictionary
-            self._parser = None
+
+        self._parser = parser
 
         # BDSIM_NO_GRAPHICS: unconditional override that forces graphics off,
         # taking precedence over everything else -- code (BDSim(graphics=True)),
@@ -3432,6 +3969,9 @@ class Options(OptionsBase):
 
         if "animation_rate" in options and float(options["animation_rate"]) <= 0:
             raise ValueError("animation_rate must be > 0")
+
+        if options.get("max_frames") is not None and int(options["max_frames"]) < 0:
+            raise ValueError("max_frames must be >= 0")
 
         if options.get("dt") is not None and float(options["dt"]) <= 0:
             raise ValueError("dt must be > 0")

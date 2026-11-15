@@ -103,7 +103,7 @@ def patch_roboticstoolbox_pyplot_launch_for_notebook() -> None:
         _plt.ioff()
         _orig_ion = _plt.ion
         # Also suppress plt.ion() so the launch body cannot re-enable it.
-        _plt.ion = lambda: None
+        setattr(_plt, "ion", lambda: None)
 
         # If the caller supplied a matplotlib Figure that already has 3D axes
         # (because bdsim's create_figure() created them via PLOT3D=True),
@@ -123,7 +123,7 @@ def patch_roboticstoolbox_pyplot_launch_for_notebook() -> None:
         try:
             original_launch(self, name=name, fig=fig, limits=limits, **kwargs)
         finally:
-            _plt.ion = _orig_ion
+            setattr(_plt, "ion", _orig_ion)
 
         # Force display-id path even on JupyterLite (_inline_is_jl is set to
         # True inside original_launch on emscripten).  This ensures that the
@@ -146,8 +146,8 @@ def patch_roboticstoolbox_pyplot_launch_for_notebook() -> None:
         # before show_initial() has a chance to register it.
         _orig_show = _plt.show
         _orig_draw = _plt.draw
-        _plt.show = lambda block=None: None
-        _plt.draw = lambda: None
+        setattr(_plt, "show", lambda block=None: None)
+        setattr(_plt, "draw", lambda: None)
         try:
             # Compatibility with older roboticstoolbox backends: some
             # PyPlot.add() versions do not accept an ``ax`` keyword.
@@ -167,11 +167,11 @@ def patch_roboticstoolbox_pyplot_launch_for_notebook() -> None:
                         pass
                 return original_add(self, ob, **kwargs_no_ax)
         finally:
-            _plt.show = _orig_show
-            _plt.draw = _orig_draw
+            setattr(_plt, "show", _orig_show)
+            setattr(_plt, "draw", _orig_draw)
 
-    PyPlot.launch = patched_launch
-    PyPlot.add = patched_add
+    setattr(PyPlot, "launch", patched_launch)
+    setattr(PyPlot, "add", patched_add)
     setattr(PyPlot, "_bdsim_launch_patch_version", patch_version)
 
 
@@ -222,7 +222,7 @@ def patch_roboticstoolbox_armplot_for_notebook() -> None:
 
     ArmPlot.PLOT3D = True
 
-    patch_version = 7
+    patch_version = 8
     if getattr(ArmPlot, "_bdsim_notebook_patch_version", 0) >= patch_version:
         return
 
@@ -241,12 +241,15 @@ def patch_roboticstoolbox_armplot_for_notebook() -> None:
         # Notebook-only step path: keep backend robot reference synchronized,
         # drive env with explicit dt, then coordinate display refresh.
         q = np.array(inports[0], copy=True)
-        self.robot.q = q
-
         env = getattr(self, "env", None)
-        robots = getattr(env, "robots", None)
-        if robots:
-            for robot_wrapper in robots:
+        set_pose = getattr(self, "_set_pose", None)
+        if set_pose is not None:
+            # roboticstoolbox knows how its plots hold a pose
+            set_pose(q)
+        else:
+            # older roboticstoolbox
+            self.robot.q = q
+            for robot_wrapper in getattr(env, "robots", None) or []:
                 backend_robot = getattr(robot_wrapper, "robot", None)
                 if backend_robot is not None:
                     backend_robot.q = q
@@ -288,9 +291,19 @@ def patch_roboticstoolbox_armplot_for_notebook() -> None:
         _orig_pause = _plt.pause
         _orig_draw = _plt.draw
         _orig_sleep = _time.sleep
-        _plt.pause = lambda _dt=None: None
-        _plt.draw = lambda: None
-        _time.sleep = lambda _dt=None: None
+
+        def _no_pause(_dt: float | None = None) -> None:
+            pass
+
+        def _no_draw() -> None:
+            pass
+
+        def _no_sleep(_dt: Any) -> None:
+            pass
+
+        setattr(_plt, "pause", _no_pause)
+        setattr(_plt, "draw", _no_draw)
+        _time.sleep = _no_sleep
         try:
             if env is not None:
                 try:
@@ -298,8 +311,8 @@ def patch_roboticstoolbox_armplot_for_notebook() -> None:
                 except TypeError:
                     env.step()
         finally:
-            _plt.pause = _orig_pause
-            _plt.draw = _orig_draw
+            setattr(_plt, "pause", _orig_pause)
+            setattr(_plt, "draw", _orig_draw)
             _time.sleep = _orig_sleep
             if _orig_push is not None and env is not None:
                 env._push_inline_frame = _orig_push
@@ -328,6 +341,6 @@ def patch_roboticstoolbox_armplot_for_notebook() -> None:
         return None
 
     setattr(ArmPlot, "_bdsim_original_step", original_step)
-    ArmPlot.step = patched_step
+    setattr(ArmPlot, "step", patched_step)
     setattr(ArmPlot, "_bdsim_notebook_patch_applied", True)
     setattr(ArmPlot, "_bdsim_notebook_patch_version", patch_version)
