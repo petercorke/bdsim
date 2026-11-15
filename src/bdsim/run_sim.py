@@ -1733,7 +1733,12 @@ class BDSim(Runner):
                         nonlocal last_notebook_refresh_t
                         # Notebook rendering is expensive; limit display updates
                         # to a practical UI frame rate while simulation can run faster.
-                        if t - last_notebook_refresh_t >= notebook_min_refresh_dt:
+                        # Frame times are on a k*dt grid, so t - last is dt only to within
+                        # rounding: 0.03 - 0.02 < 0.01.  Without a tolerance 13-40% of the
+                        # frames at the requested rate were skipped.
+                        if t - last_notebook_refresh_t >= notebook_min_refresh_dt * (
+                            1 - 1e-6
+                        ):
                             display_manager.refresh()
                             ss.stats.animation_frames += 1
                             last_notebook_refresh_t = t

@@ -131,6 +131,15 @@ class ReportTest(unittest.TestCase):
 
 
 class NotebookBackendTest(unittest.TestCase):
+    def test_inline_draws_every_frame_at_animation_rate(self):
+        # frame times are on a k*dt grid, so t - last is dt only to within rounding
+        # (0.03 - 0.02 < 0.01); a bare comparison dropped 13-40% of the frames
+        for rate, T in [(20, 6), (25, 5), (10, 10), (50, 10), (100, 10)]:
+            with self.subTest(rate=rate, T=T):
+                with mock.patch("matplotlib.get_backend", return_value="inline"):
+                    stats = run(T, animation_rate=rate, max_frames=0)[".stats"]
+                self.assertEqual(stats.animation_frames, rate * T + 1)
+
     def test_frames_are_counted_when_refreshes_are_rate_limited(self):
         # a notebook backend redraws at most every 1/6 s of simulated time, however
         # often the frame callback runs, and only the redraws are counted
