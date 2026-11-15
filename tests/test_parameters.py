@@ -891,5 +891,25 @@ class EveryParameterIsAccountedForTest(unittest.TestCase):
         self.assertEqual(gone, [], "not a block parameter")
 
 
+# Names that every block has and that a block can also take as an argument, because they
+# are the same thing: the number of ports is both.
+SHARED_WITH_BLOCK: set[str] = {"nin", "nout"}
+
+
+class ParametersDoNotHideBlockAttributesTest(unittest.TestCase):
+    """A parameter is an attribute of the block, so it must not be one that Block has.
+
+    ``self.shape = shape`` failed for a toolbox block, because ``shape`` was a read-only
+    property of ``Block``, and an assignment to a property with no setter is an error.
+    """
+
+    def test_no_parameter_has_the_name_of_a_block_attribute(self):
+        from bdsim.block import Block
+
+        taken = {n for n in dir(Block) if not n.startswith("_")} - SHARED_WITH_BLOCK
+        clash = sorted(k for k in block_parameters() if k.split(".", 1)[1] in taken)
+        self.assertEqual(clash, [], "rename the argument, or the attribute of Block")
+
+
 if __name__ == "__main__":
     unittest.main()
