@@ -30,7 +30,7 @@ bdsim it found.
 ### Colab and the development version
 
 On Colab a notebook comes from `main` but bdsim from PyPI, so a notebook can use what the next release will have
-(`linearization` and `cart-pole` use `functions()`, `linearize()` and `STATE`). With `min_version` set, the cell
+(`analysis` and `cart-pole` use `functions()`, `linearize()` and `STATE`). With `min_version` set, the cell
 installs the development version from GitHub if the release on PyPI is older, and says so. Once the release
 catches up the fallback is never used. In JupyterLite there is nothing to check: the site's bdsim is built from
 the same commit as the notebooks.
