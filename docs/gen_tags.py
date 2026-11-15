@@ -48,6 +48,8 @@ TAGS: dict[str, str] = {
     # the kind of system
     "linear": "#E69F00",
     "non-linear": "#D55E00",
+    "hybrid-system": "#56B4E9",
+    "discrete-time": "#CC79A7",
 }
 
 _FONT = FontProperties(family="DejaVu Sans", weight="bold")
