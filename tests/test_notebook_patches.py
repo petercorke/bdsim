@@ -271,6 +271,37 @@ def test_armplot_patch_notebook_syncs_robot_q(monkeypatch):
     assert np.allclose(instance.env.robots[0].robot.q, q)
 
 
+def test_armplot_patch_notebook_moves_the_pose_through_the_block(monkeypatch):
+    """roboticstoolbox knows how its plots hold a pose; the patch asks the block."""
+    import numpy as np
+
+    poses = []
+
+    class ArmPlotWithPose(_FakeArmPlot):
+        def _set_pose(self, q):
+            poses.append(q)
+
+    cls = type("ArmPlot", (ArmPlotWithPose,), {})
+    _install_fake_armplot(monkeypatch, cls)
+
+    nbp = _fresh_nbp()
+    nbp.patch_roboticstoolbox_armplot_for_notebook()
+
+    simstate = _make_simstate(notebook_backend=True)
+    simstate.display_manager = SimpleNamespace(refresh=MagicMock())
+    instance = cls()
+    instance._simstate = simstate
+    instance.env.step = MagicMock()
+
+    q = np.array([0.1, 0.2, 0.3, 0.4, 0.5, 0.6])
+    instance.step(0.0, [q])
+
+    assert len(poses) == 1 and np.allclose(poses[0], q)
+    # the patch no longer reaches into the plots itself
+    assert instance.robot.q is None
+    assert instance.env.robots[0].robot.q is None
+
+
 def test_armplot_patch_notebook_refresh_nontiled(monkeypatch):
     """Non-tiled notebook mode: patched step calls display_manager.refresh() so
     that SCOPE and other bdsim-managed pyplot figures get updated.  RTB manages
