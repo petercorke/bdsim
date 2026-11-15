@@ -3,6 +3,20 @@
 ## [1.5.0](https://github.com/petercorke/bdsim/compare/v1.4.1...v1.5.0) (2026-11-15)
 
 
+### Highlights
+
+* System analysis: `bd.functions()` turns a block diagram into the functions f(x,u) and g(x,u), and `bd.linearize()` gives the A, B, C, D matrices and poles at an operating point; `Linearization.ss()` hands the result to python-control
+* Type checking: every wire has a signature recorded at compile time, source blocks emit one type, and the run-time checks catch an output that changes type
+* New blocks: `STATE`, `STATE_S`, `SWITCH`, `SQRT`, `SIGN`, `ABS`, `DEADBAND`, `HYSTERESIS_S`, `ANOISE_S` and `MNOISE_S`
+* Event handling for discontinuous blocks: zero-crossing events for `INTEGRATOR` limits and enable, and for `CLIP`, `DEADBAND`, `SIGN`, `ABS` and `SWITCH`, so the simulation lands on the discontinuity
+* Block parameters: one registry (`Block.set_param`, `parameters()`, `--set` and `--param`) with type enforcement, and subsystems forward their parameters to the blocks inside
+* Subsystem `INPORT` and `OUTPORT` blocks are replaced by wires, which fixes #84
+* A complete set of notebooks for classic control problems: Furuta pendulum, ball and beam, cart and pole, coupled tanks, temperature control, and system analysis; and an index with tags
+
+### Behaviour change
+
+* A list of numbers is now an ndarray by default, with `asarray=False` to opt out
+
 ### Features
 
 * --npz writes the results as a NumPy archive ([#154](https://github.com/petercorke/bdsim/issues/154)) ([6ee2a19](https://github.com/petercorke/bdsim/commit/6ee2a193232d5b995021d851af203e799146b3dd))
