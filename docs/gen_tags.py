@@ -18,12 +18,16 @@ The vocabulary is :data:`TAGS`, a tag and its fill color.  To add a tag, add it 
     python docs/gen_tags.py
 
 ``--check`` writes nothing and exits with status 1 if a committed file is missing, stale or has
-no tag any more.  ``tests/test_notebook_tags.py`` runs it.
+no tag any more.  ``tests/test_notebook_tags.py`` runs it.  The outlines of the letters are not
+compared: Matplotlib versions differ in the last digit of them, and in a curve or two, for the same
+text and font, so a check of the whole file fails on one version for a file made on another.  What
+is checked is everything else, the size, color and label, which come from the vocabulary.
 """
 
 from __future__ import annotations
 
 import argparse
+import re
 import sys
 from pathlib import Path
 
@@ -129,6 +133,11 @@ def svg(tag: str, fill: str) -> str:
     )
 
 
+def _without_outlines(text: str) -> str:
+    """The SVG without the path data of the letters, which varies with Matplotlib."""
+    return re.sub(r' d="[^"]*"', ' d=""', text)
+
+
 def main(argv: list[str] | None = None) -> int:
     """Write the capsules, or with ``--check`` verify the committed ones."""
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
@@ -143,7 +152,10 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.check:
         bad = [
-            p for p, text in expected.items() if not p.exists() or p.read_text() != text
+            p
+            for p, text in expected.items()
+            if not p.exists()
+            or _without_outlines(p.read_text()) != _without_outlines(text)
         ]
         bad += [p for p in OUT.glob("*.svg") if p not in expected]
         for p in sorted(bad):
