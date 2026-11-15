@@ -760,7 +760,7 @@ class LinearizationDisplayTest(unittest.TestCase):
     def test_the_poles_are_the_eigenvalues_of_a(self):
         lin = self.lin()
         np.testing.assert_allclose(lin.poles, [-2.0, -1.0], atol=1e-6)
-        self.assertEqual(lin.poles.dtype, complex)
+        self.assertEqual(lin.poles.dtype, float)
 
     def test_real_poles_are_printed_without_padding_or_zero_imaginary_parts(self):
         self.assertIn("poles: [-2, -1]", str(self.lin()))
@@ -778,6 +778,7 @@ class LinearizationDisplayTest(unittest.TestCase):
         bd.connect(system, bd.NULL(1, name="y"))
         bd.compile(verbose=False)
         lin = bd.linearize(full=True)
+        self.assertEqual(lin.poles.dtype, complex)
         np.testing.assert_allclose(sorted(lin.poles.imag), [-2.0, 2.0], atol=1e-6)
         line = [ln for ln in str(lin).splitlines() if ln.startswith("poles:")][0]
         self.assertRegex(line, r"-0\.1(0000)?[+-]2j")
