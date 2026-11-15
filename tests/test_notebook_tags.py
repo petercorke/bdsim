@@ -45,6 +45,10 @@ class NotebookTagsTest(unittest.TestCase):
         self.assertTrue(used, "the index has no tag capsules")
         for tag in used:
             self.assertIn(tag, tags, f"index uses a tag not in gen_tags.TAGS: {tag}")
+        # a tag is centered on the line of text, else its bottom edge sits on the baseline
+        # and it looks high.  GitHub strips style, so it has to be the align attribute
+        for img in re.findall(r"<img [^>]*docs/figs/tags/[^>]*>", source):
+            self.assertIn('align="absmiddle"', img)
         # the width of an image is the width of its file, else it is scaled
         for tag, width in re.findall(
             r'tags/([\w-]+)\.svg" alt="[\w-]+" title="[\w-]+" width="(\d+)"', source
