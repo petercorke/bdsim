@@ -2,8 +2,9 @@
 bdweb — start backend + frontend dev server and open the browser.
 
 Usage:
-    bdweb                  # empty canvas
-    bdweb path/to/file.bd  # canvas pre-loaded with the given diagram
+    bdweb                        # empty canvas, binds to 127.0.0.1
+    bdweb path/to/file.bd        # canvas pre-loaded with the given diagram
+    bdweb --host 0.0.0.0         # bind to all interfaces (not recommended)
 """
 
 from __future__ import annotations
@@ -106,7 +107,18 @@ def _start_vite(vite_port: int) -> "subprocess.Popen[str] | None":
 def main() -> None:
     # ── Parse arguments ────────────────────────────────────────────────────
     bd_file: str | None = None
-    for arg in sys.argv[1:]:
+    host: str = "127.0.0.1"
+    args = sys.argv[1:]
+    i = 0
+    while i < len(args):
+        arg = args[i]
+        if arg in ("--host", "-h"):
+            if i + 1 >= len(args):
+                print("[bdweb] ERROR: --host requires an address", file=sys.stderr)
+                sys.exit(1)
+            host = args[i + 1]
+            i += 2
+            continue
         p = Path(arg)
         if p.suffix == ".bd":
             if not p.exists():
@@ -115,6 +127,7 @@ def main() -> None:
             bd_file = str(p.expanduser().resolve())
         else:
             print(f"[bdweb] WARNING: ignoring unknown argument '{arg}'", file=sys.stderr)
+        i += 1
 
     # ── Decide: production build or Vite dev server ────────────────────────
     _frontend_build = Path(__file__).parent.parent / "frontend" / "build"
@@ -142,6 +155,14 @@ def main() -> None:
         frontend_url += f"?load={quote(bd_file, safe='')}"
         print(f"[bdweb] Auto-loading: {bd_file}")
 
+    if host != "127.0.0.1":
+        print(
+            f"[bdweb] WARNING: binding to {host}. This exposes the editor "
+            "(which can read, write and run files) on the network. "
+            "Only do this on a trusted network.",
+            file=sys.stderr,
+        )
+
     # ── Start Vite dev server (dev mode only) ─────────────────────────────
     vite_proc = None if use_production else _start_vite(vite_port)
 
@@ -162,7 +183,7 @@ def main() -> None:
     try:
         uvicorn.run(
             "bdweb.backend.server:app",
-            host="0.0.0.0",
+            host=host,
             port=api_port,
             reload=False,
             log_level="warning",  # suppress per-request noise; errors still shown
