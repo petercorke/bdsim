@@ -45,6 +45,12 @@ class NotebookTagsTest(unittest.TestCase):
         self.assertTrue(used, "the index has no tag capsules")
         for tag in used:
             self.assertIn(tag, tags, f"index uses a tag not in gen_tags.TAGS: {tag}")
+        # the width of an image is the width of its file, else it is scaled
+        for tag, width in re.findall(
+            r'tags/([\w-]+)\.svg" alt="[\w-]+" title="[\w-]+" width="(\d+)"', source
+        ):
+            svg = (DOCS / "figs" / "tags" / f"{tag}.svg").read_text()
+            self.assertIn(f'width="{width}" height=', svg, f"index width of {tag}")
         # the alt text of an image says the same as its file name
         for tag, alt in re.findall(r'tags/([\w-]+)\.svg" alt="([\w-]+)"', source):
             self.assertEqual(tag, alt)

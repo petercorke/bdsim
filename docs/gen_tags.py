@@ -6,8 +6,10 @@ Each tag is a small pill-shaped SVG in ``docs/figs/tags/``.  The index refers to
 ``<img>`` tag, because GitHub and VS Code strip the ``style`` attribute from inline HTML, so
 a coloured ``<span>`` cannot be used.
 
-The letters are drawn as outlines, using the DejaVu Sans Bold that ships with Matplotlib, so
-the capsules look the same in every viewer, whatever fonts it has.  The fill colors are from
+The label is ordinary SVG text, in DejaVu Sans Bold or the first sans-serif font the viewer
+has.  The width of a capsule is worked out from the advance widths of the letters in DejaVu
+Sans Bold (``_ADVANCE``), so this script needs no font and no plotting library, and a
+different font only moves the letters a little within the padding.  The fill colors are from
 the Okabe-Ito palette, chosen to be distinguishable with the common forms of color blindness,
 and the text is black or white, whichever has the higher contrast with the fill.
 
@@ -18,22 +20,14 @@ The vocabulary is :data:`TAGS`, a tag and its fill color.  To add a tag, add it 
     python docs/gen_tags.py
 
 ``--check`` writes nothing and exits with status 1 if a committed file is missing, stale or has
-no tag any more.  ``tests/test_notebook_tags.py`` runs it.  The outlines of the letters are not
-compared: Matplotlib versions differ in the last digit of them, and in a curve or two, for the same
-text and font, so a check of the whole file fails on one version for a file made on another.  What
-is checked is everything else, the size, color and label, which come from the vocabulary.
+no tag any more.  ``tests/test_notebook_tags.py`` runs it.
 """
 
 from __future__ import annotations
 
 import argparse
-import re
 import sys
 from pathlib import Path
-
-from matplotlib.font_manager import FontProperties
-from matplotlib.path import Path as MplPath
-from matplotlib.textpath import TextPath
 
 OUT = Path(__file__).parent / "figs" / "tags"
 
@@ -56,7 +50,39 @@ TAGS: dict[str, str] = {
     "discrete-time": "#CC79A7",
 }
 
-_FONT = FontProperties(family="DejaVu Sans", weight="bold")
+FONT_FAMILY = "DejaVu Sans, Verdana, Geneva, sans-serif"
+
+# Advance width of each letter that a tag can use, in em, for DejaVu Sans Bold.  A letter that
+# is not here is given the width of the widest, so add it if a tag needs it.
+_ADVANCE: dict[str, float] = {
+    "-": 0.415,
+    "a": 0.675,
+    "b": 0.716,
+    "c": 0.593,
+    "d": 0.716,
+    "e": 0.678,
+    "f": 0.435,
+    "g": 0.716,
+    "h": 0.712,
+    "i": 0.343,
+    "j": 0.343,
+    "k": 0.665,
+    "l": 0.343,
+    "m": 1.042,
+    "n": 0.712,
+    "o": 0.687,
+    "p": 0.716,
+    "q": 0.716,
+    "r": 0.493,
+    "s": 0.595,
+    "t": 0.478,
+    "u": 0.712,
+    "v": 0.652,
+    "w": 0.924,
+    "x": 0.645,
+    "y": 0.652,
+    "z": 0.582,
+}
 
 
 def _luminance(color: str) -> float:
@@ -72,39 +98,10 @@ def _contrast(a: str, b: str) -> float:
     return (hi + 0.05) / (lo + 0.05)
 
 
-def _outline(text: str, x0: float, baseline: float) -> str:
-    """
-    The SVG path data for the outlines of ``text``.
-
-    :param text: the text
-    :param x0: the x coordinate of the left of the text
-    :param baseline: the y coordinate of the baseline, in SVG coordinates (y down)
-    :return: the ``d`` attribute of a path
-    """
-    path = TextPath((0, 0), text, size=FONT_SIZE, prop=_FONT)
-    letter = {
-        MplPath.MOVETO: "M",
-        MplPath.LINETO: "L",
-        MplPath.CURVE3: "Q",
-        MplPath.CURVE4: "C",
-    }
-    d: list[str] = []
-    for coords, code in path.iter_segments(simplify=False, curves=True):
-        if code == MplPath.CLOSEPOLY:
-            d.append("Z")
-            continue
-        # the coordinates are x1, y1, x2, y2, ...: shift and flip y, since SVG has y down
-        pts = [
-            f"{x0 + coords[i]:.2f} {baseline - coords[i + 1]:.2f}"
-            for i in range(0, len(coords), 2)
-        ]
-        d.append(letter[code] + " ".join(pts))
-    return "".join(d)
-
-
 def _text_width(text: str) -> float:
     """The width of ``text`` in the capsule font, in px."""
-    return float(TextPath((0, 0), text, size=FONT_SIZE, prop=_FONT).get_extents().width)
+    widest = max(_ADVANCE.values())
+    return FONT_SIZE * sum(_ADVANCE.get(c, widest) for c in text)
 
 
 def svg(tag: str, fill: str) -> str:
@@ -115,27 +112,19 @@ def svg(tag: str, fill: str) -> str:
     :param fill: the fill color, ``#rrggbb``
     :return: the text of the SVG file
     """
-    text_w = _text_width(tag)
-    width = round(text_w + 2 * PADDING)
+    width = round(_text_width(tag) + 2 * PADDING)
     ink = max(("#ffffff", "#000000"), key=lambda c: _contrast(fill, c))
-    extents = TextPath((0, 0), tag, size=FONT_SIZE, prop=_FONT).get_extents()
-    # centre the glyphs, using the ink bounds so that the left and right gaps match
-    x0 = (width - extents.width) / 2 - extents.x0
     baseline = HEIGHT / 2 + FONT_SIZE * 0.36
-    d = _outline(tag, x0, baseline)
     return (
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{HEIGHT}" '
         f'role="img" aria-label="{tag}">\n'
         f"<title>{tag}</title>\n"
         f'<rect width="{width}" height="{HEIGHT}" rx="{HEIGHT // 2}" fill="{fill}"/>\n'
-        f'<path d="{d}" fill="{ink}"/>\n'
+        f'<text x="{width / 2:g}" y="{baseline:.2f}" text-anchor="middle" '
+        f'font-family="{FONT_FAMILY}" font-size="{FONT_SIZE}" font-weight="bold" '
+        f'fill="{ink}">{tag}</text>\n'
         "</svg>\n"
     )
-
-
-def _without_outlines(text: str) -> str:
-    """The SVG without the path data of the letters, which varies with Matplotlib."""
-    return re.sub(r' d="[^"]*"', ' d=""', text)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -152,10 +141,7 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.check:
         bad = [
-            p
-            for p, text in expected.items()
-            if not p.exists()
-            or _without_outlines(p.read_text()) != _without_outlines(text)
+            p for p, text in expected.items() if not p.exists() or p.read_text() != text
         ]
         bad += [p for p in OUT.glob("*.svg") if p not in expected]
         for p in sorted(bad):
