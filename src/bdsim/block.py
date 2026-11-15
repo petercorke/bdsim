@@ -248,7 +248,6 @@ class Block(ABC, Port):
 
     # graphical hints
     _pos: tuple[float, float] | None  # position on canvas, eg. (x,y)
-    _shape: str | None  # passed to graphviz, eg. 'box', 'ellipse', 'diamond'
 
     _initd: bool = False
     _bd: BlockDiagram | None = None
@@ -390,7 +389,6 @@ class Block(ABC, Port):
             self._pos = (pos[0], pos[1])
         else:
             self._pos = pos
-        self._shape = "block"  # for box
 
         self._initd = True
         self._clocked = False
@@ -851,10 +849,6 @@ class Block(ABC, Port):
     @property
     def pos(self) -> tuple[float, float] | None:
         return self._pos
-
-    @property
-    def shape(self) -> str | None:
-        return self._shape
 
     @property
     def initd(self) -> bool:
