@@ -45,7 +45,7 @@ Several people (and AI coding agents) often pick up the same issue at about the 
   pytest --capture=no --timeout=50 --timeout_method=thread
   ```
 
-- Target branch is `main`.
+- Target branch is `main`, with one exception: the web block diagram editor, bdweb (`src/bdweb`, issues linked from #118), is developed on the `feat/bdweb` branch. For a bdweb issue, base your branch on `feat/bdweb` and open the pull request against it. A bdweb PR opened against `main` carries the whole editor, thousands of lines, and can't be merged.
 
 ## License
 
