@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Smoke test that executes Jupyter notebooks in docs/notebooks."""
+"""Smoke test that executes Jupyter notebooks in docs/notebooks.
+
+Each notebook is its own test, so a failure or timeout names the notebook, and a slow
+shared CI runner is judged per notebook, not on the total.
+"""
 
 from __future__ import annotations
 
@@ -7,9 +11,9 @@ import importlib.util
 import os
 import subprocess
 import sys
-import tempfile
-import unittest
 from pathlib import Path
+
+import pytest
 
 NOTEBOOKS_DIR = Path(__file__).resolve().parents[1] / "docs" / "notebooks"
 NOTEBOOK_FILES = sorted(path.name for path in NOTEBOOKS_DIR.glob("*.ipynb"))
@@ -28,77 +32,65 @@ SKIP_NOTEBOOKS: dict[str, str] = {
 #   pytest -vv -s tests/test_notebooks_smoke.py
 
 
-class NotebooksSmokeTest(unittest.TestCase):
-    """Execute every notebook in docs/notebooks as a smoke test via nbconvert."""
+# The CI-wide limit is 50 s (``--timeout=50`` in ci.yml), too tight for a kernel
+# start plus a simulation on a loaded shared runner.  This is above the 130 s
+# subprocess limit below, so that limit fires first and says which notebook.
+@pytest.mark.timeout(300, method="thread")
+@pytest.mark.parametrize("notebook", NOTEBOOK_FILES)
+def test_notebook_runs(notebook: str, tmp_path: Path) -> None:
+    """Execute one notebook in docs/notebooks via nbconvert.
 
-    def test_notebooks_run(self):
-        # nbconvert --execute re-runs the notebook in-place (to a temp output)
-        # and returns non-zero if any cell raises an exception.
-        try:
-            import nbconvert  # noqa: F401
-        except ImportError:
-            self.skipTest("nbconvert is not installed; skipping notebook smoke tests")
+    nbconvert --execute returns non-zero if any cell raises an exception.
+    """
+    pytest.importorskip("nbconvert")
 
-        # icra2026 uses robotics-toolbox-python, which is not a bdsim dependency
-        skip = dict(SKIP_NOTEBOOKS)
-        if importlib.util.find_spec("roboticstoolbox") is None:
-            skip["icra2026.ipynb"] = (
-                "needs roboticstoolbox-python, which is not installed"
+    skip = dict(SKIP_NOTEBOOKS)
+    # icra2026 uses robotics-toolbox-python, which is not a bdsim dependency
+    if importlib.util.find_spec("roboticstoolbox") is None:
+        skip["icra2026.ipynb"] = "needs roboticstoolbox-python, which is not installed"
+    if notebook in skip:
+        pytest.skip(skip[notebook])
+
+    env = os.environ.copy()
+    # Force a headless backend so plots do not require an interactive display,
+    # and turn graphics off in bdsim, which is faster: nothing is drawn.
+    env["MPLBACKEND"] = "Agg"
+    env["BDSIM_NO_GRAPHICS"] = "1"
+
+    # nbconvert always writes the executed notebook, so give it a directory to
+    # throw away (it adds .ipynb to the name, so it cannot be os.devnull)
+    try:
+        result = subprocess.run(
+            [
+                sys.executable,
+                "-m",
+                "nbconvert",
+                "--to",
+                "notebook",
+                "--execute",
+                "--ExecutePreprocessor.timeout=120",
+                "--output-dir",
+                str(tmp_path),
+                str(NOTEBOOKS_DIR / notebook),
+            ],
+            cwd=str(NOTEBOOKS_DIR),
+            env=env,
+            text=True,
+            capture_output=True,
+            timeout=130,
+        )
+    except subprocess.TimeoutExpired as exc:
+        pytest.fail(f"{notebook} timed out after {exc.timeout}s")
+
+    if result.returncode != 0:
+        pytest.fail(
+            "\n".join(
+                [
+                    f"{notebook} failed with exit code {result.returncode}",
+                    "stdout:",
+                    result.stdout,
+                    "stderr:",
+                    result.stderr,
+                ]
             )
-
-        env = os.environ.copy()
-        # Force a headless backend so plots do not require an interactive display,
-        # and turn graphics off in bdsim, which is faster: nothing is drawn.
-        env["MPLBACKEND"] = "Agg"
-        env["BDSIM_NO_GRAPHICS"] = "1"
-
-        # nbconvert always writes the executed notebook, and adds .ipynb to the output
-        # name, so it cannot be sent to os.devnull: give it a directory to throw away
-        outdir = tempfile.TemporaryDirectory()
-        self.addCleanup(outdir.cleanup)
-
-        for notebook in NOTEBOOK_FILES:
-            if notebook in skip:
-                continue
-
-            with self.subTest(notebook=notebook):
-                notebook_path = NOTEBOOKS_DIR / notebook
-                try:
-                    result = subprocess.run(
-                        [
-                            sys.executable,
-                            "-m",
-                            "nbconvert",
-                            "--to",
-                            "notebook",
-                            "--execute",
-                            "--ExecutePreprocessor.timeout=120",
-                            "--output-dir",
-                            outdir.name,
-                            str(notebook_path),
-                        ],
-                        cwd=str(NOTEBOOKS_DIR),
-                        env=env,
-                        text=True,
-                        capture_output=True,
-                        timeout=130,
-                    )
-                except subprocess.TimeoutExpired as exc:
-                    self.fail(f"{notebook} timed out after {exc.timeout}s")
-
-                if result.returncode != 0:
-                    self.fail(
-                        "\n".join(
-                            [
-                                f"{notebook} failed with exit code {result.returncode}",
-                                "stdout:",
-                                result.stdout,
-                                "stderr:",
-                                result.stderr,
-                            ]
-                        )
-                    )
-
-
-if __name__ == "__main__":
-    unittest.main()
+        )
