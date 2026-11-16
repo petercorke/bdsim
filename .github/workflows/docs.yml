@@ -74,6 +74,10 @@ jobs:
           cd docs/lite
           jupyter lite build --output-dir ../build/html/lite --contents files --force
 
+      - name: Add the browser capability check to JupyterLite
+        # a banner, before the kernel starts, if the browser has no WebAssembly JSPI
+        run: python docs/lite/inject_jspi_check.py docs/build/html/lite
+
       - name: Validate JupyterLite kernel availability
         run: |
           if ! find docs/build/html/lite -type d -iname '*pyodide*kernel*' | grep -q .; then
