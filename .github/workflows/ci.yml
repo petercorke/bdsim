@@ -54,7 +54,7 @@ jobs:
         env:
           MPLBACKEND: Agg
         run: |
-          pytest --capture=no --timeout=50 --timeout_method=thread
+          pytest --capture=no --timeout=50 --timeout_method=thread --durations=10
 
   lint:
     name: lint (ruff)
