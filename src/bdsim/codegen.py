@@ -750,7 +750,9 @@ class IRSpecializer:
         # the top-level callable's own __globals__, not per-nesting-level,
         # so a helper calling another helper defined in a *different*
         # module still won't resolve -- a known, narrower-than-ideal limit.
-        self.extra_globals: dict[str, Any] = getattr(block_cfg, "extra_globals", None) or {}
+        self.extra_globals: dict[str, Any] = (
+            getattr(block_cfg, "extra_globals", None) or {}
+        )
         self._inline_depth = 0
         self.env: dict[str, Any] = {}
         # Populated properly by specialize_function(); empty default here
@@ -827,9 +829,7 @@ class IRSpecializer:
                 elt_name: IR.Subscript(IR.Name("inputs"), IR.Literal(k)),
             }
             renamer = _IRAlphaRenamer("", subst, set())
-            unrolled.extend(
-                _flatten_list([renamer.rename_stmt(s) for s in stmt.body])
-            )
+            unrolled.extend(_flatten_list([renamer.rename_stmt(s) for s in stmt.body]))
         return unrolled
 
     def _flatten(self, nodes: list[Any]) -> list[Any]:
@@ -918,7 +918,11 @@ class IRSpecializer:
                 # this branch deliberately never calls eval_expr() to fold.
                 return out
             val = self.eval_expr(out)
-            if val is not UNKNOWN and not isinstance(val, VarType) and not callable(val):
+            if (
+                val is not UNKNOWN
+                and not isinstance(val, VarType)
+                and not callable(val)
+            ):
                 # callable(val) excluded: a module-attribute reference
                 # to a *function* (np.array, np.zeros, ...) must stay an
                 # IR.Attribute, not get wrapped in an IR.Literal -- the
@@ -1290,8 +1294,12 @@ class IRSpecializer:
                 # couldn't fold either, and reached the emitter as raw,
                 # uncompilable Python-isinstance/NumPy-attribute text.
                 if expr.op in ("+", "-", "*", "/", "%"):
-                    l_nd = l if isinstance(l, VarType) and l.dtype == "ndarray" else None
-                    r_nd = r if isinstance(r, VarType) and r.dtype == "ndarray" else None
+                    l_nd = (
+                        l if isinstance(l, VarType) and l.dtype == "ndarray" else None
+                    )
+                    r_nd = (
+                        r if isinstance(r, VarType) and r.dtype == "ndarray" else None
+                    )
                     nd = l_nd or r_nd
                     if nd is not None:
                         return VarType._make("ndarray", nd.etype, nd.dims)
@@ -1569,6 +1577,7 @@ _reg("builtins", "max", (), _scalar_minmax_result_vt, "python.max")
 # like everything else.
 _reg("builtins", "abs", (), _abs_result_vt, "python.abs")
 
+
 # math.* functions -- wildcard-registered (sig=()) like min/max/abs above,
 # since these are always plain scalar-in-scalar-out. math.pi/math.e (bare
 # attribute access, not a call) already fold via specialize_expr's
@@ -1591,6 +1600,7 @@ for _math_fn in ("floor", "ceil"):
     _reg("math", _math_fn, (), _math_int_result, f"python.math.{_math_fn}")
 del _math_fn
 
+
 # NumPy scalar-type constructors (np.uint16(x), np.float32(x), ...) called
 # directly -- e.g. inside an ordinary FUNCTION block's Python source doing
 # an explicit cast. The CAST block (bdsim.blocks.functions.Cast) below
@@ -1609,11 +1619,25 @@ def _numpy_cast_result_vt(etype: str):
 
 
 for _cast_etype in (
-    "int8", "int16", "int32", "int64",
-    "uint8", "uint16", "uint32", "uint64",
-    "float32", "float64", "bool",
+    "int8",
+    "int16",
+    "int32",
+    "int64",
+    "uint8",
+    "uint16",
+    "uint32",
+    "uint64",
+    "float32",
+    "float64",
+    "bool",
 ):
-    _reg("numpy", _cast_etype, (), _numpy_cast_result_vt(_cast_etype), f"python.cast.{_cast_etype}")
+    _reg(
+        "numpy",
+        _cast_etype,
+        (),
+        _numpy_cast_result_vt(_cast_etype),
+        f"python.cast.{_cast_etype}",
+    )
 del _cast_etype
 
 
@@ -1861,7 +1885,11 @@ def lower_cast_block(block) -> IR.Function:
     ...)`` above) -- one rendering implementation either way.
     """
     etype = block.dtype
-    result_vt = VarType._make("bool") if etype == "bool" else VarType._make("ndarray", etype, ())
+    result_vt = (
+        VarType._make("bool")
+        if etype == "bool"
+        else VarType._make("ndarray", etype, ())
+    )
     call = IR.IntrinsicCall(
         f"python.cast.{etype}",
         [IR.Subscript(IR.Name("inputs"), IR.Literal(0))],
@@ -1946,7 +1974,9 @@ class _IRAlphaRenamer:
             # a genuine local (e.g. a locally-assigned callable:
             # `g = helper; return g(x)`), left alone if it's a free
             # reference (`abs(u)`, `math.sin(x)`, a sibling top-level def).
-            return IR.Call(self.rename_expr(e.func), [self.rename_expr(a) for a in e.args])
+            return IR.Call(
+                self.rename_expr(e.func), [self.rename_expr(a) for a in e.args]
+            )
         if isinstance(e, IR.IntrinsicCall):
             return IR.IntrinsicCall(
                 e.name, [self.rename_expr(a) for a in e.args], e.result_vt
@@ -2698,7 +2728,9 @@ class CppEmitter(Emitter):
         return f"({self.expr(e.left)} {e.op} {self.expr(e.right)})"
 
     def expr_IfExpr(self, e: IR.IfExpr) -> str:
-        return f"({self.expr(e.condition)} ? {self.expr(e.body)} : {self.expr(e.orelse)})"
+        return (
+            f"({self.expr(e.condition)} ? {self.expr(e.body)} : {self.expr(e.orelse)})"
+        )
 
     def expr_Tuple(self, e: IR.Tuple) -> str:
         return "{" + ", ".join(self.expr(v) for v in e.values) + "}"
@@ -3512,7 +3544,9 @@ class Codegen:
         # no trace of which diagram actually produced this file.
         source = os.path.abspath(sys.argv[0]) if sys.argv[0] else None
         source_line = (
-            f"// Source: {source}\n" if source else "// Source: (interactive session -- no script path)\n"
+            f"// Source: {source}\n"
+            if source
+            else "// Source: (interactive session -- no script path)\n"
         )
         return (
             "//============================================================\n"
@@ -3715,7 +3749,6 @@ class Codegen:
         emitted_blocks: list[str] = []
         self._io_block_decls: list[tuple[str, str, str]] = []
         for block in bd.blocklist:
-
             cfg = self._block_cfg(block)
             # Captured once, before the isinstance() check below narrows
             # the static type of `block` for the rest of this iteration
@@ -3731,7 +3764,9 @@ class Codegen:
                 # generate. An I/O sink (DigitalOut/PWMOut/DeviceOut/...)
                 # still needs a struct + declaration, handled below.
                 continue
-            self._log(f"====================================================== {block_name}")
+            self._log(
+                f"====================================================== {block_name}"
+            )
             self._log(cfg)
 
             if is_io:
@@ -3947,15 +3982,20 @@ class Codegen:
             existing = Path(path).read_text()
             lines = existing.splitlines(keepends=True)
             if lines and lines[-1].startswith(self._MAIN_CPP_HASH_PREFIX):
-                stored = lines[-1][len(self._MAIN_CPP_HASH_PREFIX):].strip()
+                stored = lines[-1][len(self._MAIN_CPP_HASH_PREFIX) :].strip()
                 body = "".join(lines[:-1])
                 if self._content_hash(body) != stored:
                     print(f"{path}: has been edited -- not overwriting")
                     return
             else:
-                print(f"{path}: exists without a bdsim-codegen marker -- not overwriting")
+                print(
+                    f"{path}: exists without a bdsim-codegen marker -- not overwriting"
+                )
                 return
-        final = fresh_content + f"{self._MAIN_CPP_HASH_PREFIX}{self._content_hash(fresh_content)}\n"
+        final = (
+            fresh_content
+            + f"{self._MAIN_CPP_HASH_PREFIX}{self._content_hash(fresh_content)}\n"
+        )
         Path(path).write_text(final)
 
     def _default_project_dir(self) -> str:
@@ -4084,7 +4124,9 @@ class Codegen:
         finally:
             self.output_path = prev_output_path
 
-        Path(os.path.join(project_dir, "platformio.ini")).write_text(self._platformio_ini())
+        Path(os.path.join(project_dir, "platformio.ini")).write_text(
+            self._platformio_ini()
+        )
         if self.arduino_ide_compat:
             ino_path = os.path.join(project_dir, f"{project_name}.ino")
             Path(ino_path).write_text(self._ino_marker(project_name))
@@ -4102,6 +4144,7 @@ class Codegen:
 # - pass appropriate bits of state vector to each function, not the whole x
 #   (moot for sampled blocks now that state lives on self; still applies to
 #   continuous blocks, out of scope for this codegen effort)
+
 
 def ir_coverage_report() -> tuple[str, bool]:
     """Return (report, raw_hit) summarizing which IR node types have been

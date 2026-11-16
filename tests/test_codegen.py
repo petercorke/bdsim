@@ -90,9 +90,18 @@ def _assert_compiles(test: unittest.TestCase, cpp: str) -> None:
         cpp_path = os.path.join(d, "check.cpp")
         Path(cpp_path).write_text(cpp)
         result = subprocess.run(
-            [CLANGXX, "-std=c++17", f"-I{EIGEN_INCLUDE}", "-c", cpp_path,
-             "-o", os.path.join(d, "check.o")],
-            text=True, capture_output=True, timeout=60,
+            [
+                CLANGXX,
+                "-std=c++17",
+                f"-I{EIGEN_INCLUDE}",
+                "-c",
+                cpp_path,
+                "-o",
+                os.path.join(d, "check.o"),
+            ],
+            text=True,
+            capture_output=True,
+            timeout=60,
         )
         test.assertEqual(result.returncode, 0, result.stderr)
 
@@ -375,7 +384,9 @@ class RegressionTests(unittest.TestCase):
         def _walrus_def(u):
             return (v := u * 2.0) + v
 
-        with self.assertRaisesRegex(NotImplementedError, r"raw expression reached emitter"):
+        with self.assertRaisesRegex(
+            NotImplementedError, r"raw expression reached emitter"
+        ):
             _generate(_function_diagram(_walrus_def))
 
     def test_fixname_applied_to_wiring_source_side_too(self):
@@ -506,7 +517,7 @@ class RegressionTests(unittest.TestCase):
         self.assertNotIn("nout", cpp)
         self.assertNotIn("sim_value", cpp)
         self.assertNotIn("nullptr_t", cpp)
-        self.assertIn("std::string device = \"\";", cpp)
+        self.assertIn('std::string device = "";', cpp)
         self.assertIn("float freq = 1000.0;", cpp)
         _assert_compiles(self, cpp)
 
@@ -808,8 +819,10 @@ class ProjectGenerationTests(unittest.TestCase):
         passed project_dir explicitly, never exercising the default at
         all)."""
         bd = _standalone_integrator_s_diagram()
-        with tempfile.TemporaryDirectory() as script_dir, \
-                tempfile.TemporaryDirectory() as cwd_dir:
+        with (
+            tempfile.TemporaryDirectory() as script_dir,
+            tempfile.TemporaryDirectory() as cwd_dir,
+        ):
             old_argv0 = sys.argv[0]
             old_cwd = os.getcwd()
             sys.argv[0] = os.path.join(script_dir, "my_diagram.py")
@@ -841,9 +854,14 @@ class ProjectGenerationTests(unittest.TestCase):
             Codegen().generate_project(bd, project_dir=proj)
             cpp = Path(os.path.join(proj, "src", "codegen.cpp")).read_text()
             self.assertIn("{100, 0, 0, bdsim_tick_clock0}", cpp)  # 10 Hz -> 100 ms
-            self.assertIn("void bdsim_overrun(size_t clock_index, uint32_t overdue_ms);", cpp)
+            self.assertIn(
+                "void bdsim_overrun(size_t clock_index, uint32_t overdue_ms);", cpp
+            )
             main_cpp = Path(os.path.join(proj, "src", "main.cpp")).read_text()
-            self.assertIn("void bdsim_overrun(size_t clock_index, uint32_t overdue_ms) {", main_cpp)
+            self.assertIn(
+                "void bdsim_overrun(size_t clock_index, uint32_t overdue_ms) {",
+                main_cpp,
+            )
             self.assertIn("bdsim_init(millis())", main_cpp)
             self.assertNotIn("millis()", cpp)  # codegen.cpp must stay Arduino-free
 
@@ -882,9 +900,18 @@ class ProjectGenerationTests(unittest.TestCase):
             src = os.path.join(proj, "src")
 
             result = subprocess.run(
-                [CLANGXX, "-std=c++17", f"-I{EIGEN_INCLUDE}", "-c",
-                 os.path.join(src, "codegen.cpp"), "-o", os.path.join(src, "codegen.o")],
-                text=True, capture_output=True, timeout=60,
+                [
+                    CLANGXX,
+                    "-std=c++17",
+                    f"-I{EIGEN_INCLUDE}",
+                    "-c",
+                    os.path.join(src, "codegen.cpp"),
+                    "-o",
+                    os.path.join(src, "codegen.o"),
+                ],
+                text=True,
+                capture_output=True,
+                timeout=60,
             )
             self.assertEqual(result.returncode, 0, result.stderr)
 
@@ -893,9 +920,20 @@ class ProjectGenerationTests(unittest.TestCase):
                 "#pragma once\n#include <cstdint>\ninline uint32_t millis() { return 0; }\n"
             )
             result = subprocess.run(
-                [CLANGXX, "-std=c++17", f"-I{EIGEN_INCLUDE}", "-include", shim_path, "-c",
-                 os.path.join(src, "main.cpp"), "-o", os.path.join(src, "main.o")],
-                text=True, capture_output=True, timeout=60,
+                [
+                    CLANGXX,
+                    "-std=c++17",
+                    f"-I{EIGEN_INCLUDE}",
+                    "-include",
+                    shim_path,
+                    "-c",
+                    os.path.join(src, "main.cpp"),
+                    "-o",
+                    os.path.join(src, "main.o"),
+                ],
+                text=True,
+                capture_output=True,
+                timeout=60,
             )
             self.assertEqual(result.returncode, 0, result.stderr)
 

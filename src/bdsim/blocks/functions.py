@@ -801,8 +801,7 @@ class Cast(FunctionBlock):
         """
         if dtype not in self._NP_TYPE:
             raise ValueError(
-                f"unsupported dtype {dtype!r}; must be one of "
-                f"{sorted(self._NP_TYPE)}"
+                f"unsupported dtype {dtype!r}; must be one of {sorted(self._NP_TYPE)}"
             )
         super().__init__(**blockargs)
         self.dtype = dtype

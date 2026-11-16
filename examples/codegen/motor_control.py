@@ -37,6 +37,7 @@ encoder = bd.CONSTANT(0.0, name="encoder")
 
 pid = bd.PID_S(clock, P=1.0, I=0.5, D=0.0, name="pid")
 
+
 def pwm_and_direction(u):
     return [abs(u), 1.0 if u >= 0 else -1.0]
 

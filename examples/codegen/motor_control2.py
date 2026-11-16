@@ -21,6 +21,7 @@ claude-notes/codegen-embedded-plan.md's "motor_control2.py" section.
 
 Copyright (c) 2021- Peter Corke
 """
+
 CODEGEN_EMBEDDED = True
 
 import bdsim
@@ -37,6 +38,7 @@ def pwm_and_direction(u):
     # to bdsim) -- see docs/codegen-transpilation.md.
     return [abs(u), 1.0 if u >= 0 else -1.0]
 
+
 sim = bdsim.BDSim(animation=False)  # create simulator
 bd = sim.blockdiagram()  # create an empty block diagram
 
@@ -47,7 +49,9 @@ if CODEGEN_EMBEDDED:
     encoder = bd.DEVICEIN(name="encoder")
 else:
     # simulated motor plant -- placeholder for a real plant model
-    motor = bd.INTEGRATOR(x0=0.0, gain=100.0, name="plant")  # placeholder for a real plant model
+    motor = bd.INTEGRATOR(
+        x0=0.0, gain=100.0, name="plant"
+    )  # placeholder for a real plant model
     encoder = motor[0]  # feedback from the plant
 
 # common blocks
@@ -62,7 +66,9 @@ pid[1] = demand  # reference
 clip[0] = pid  # clip the PID output to avoid saturating the motor
 pwm_dir[0] = clip  # pwm magnitude
 
-scope = bd.SCOPE(styles=["k", "r--", "b--"], inputs=[encoder, demand, pid], loc="lower right")
+scope = bd.SCOPE(
+    styles=["k", "r--", "b--"], inputs=[encoder, demand, pid], loc="lower right"
+)
 
 if CODEGEN_EMBEDDED:
     # connect to actual motor

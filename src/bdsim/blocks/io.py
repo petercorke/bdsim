@@ -313,9 +313,7 @@ class DeviceIn(SourceBlock, IOBlockMixin):
         """
         super().__init__(nout=nout, **blockargs)
         self.device = device
-        self.sim_values = (
-            list(sim_values) if sim_values is not None else [0.0] * nout
-        )
+        self.sim_values = list(sim_values) if sim_values is not None else [0.0] * nout
         if len(self.sim_values) != nout:
             raise ValueError(
                 f"sim_values must have {nout} elements, got {len(self.sim_values)}"

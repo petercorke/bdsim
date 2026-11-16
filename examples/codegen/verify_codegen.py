@@ -46,9 +46,7 @@ _, last_idx = np.unique(t_raw[::-1], return_index=True)
 keep = len(t_raw) - 1 - last_idx
 keep.sort()
 t_py = t_raw[keep]
-demand_py, pid_py, pwm_py, dir_py = (
-    np.asarray(scope.ydata[i])[keep] for i in range(4)
-)
+demand_py, pid_py, pwm_py, dir_py = (np.asarray(scope.ydata[i])[keep] for i in range(4))
 print(f"{len(t_raw)} raw samples -> {len(t_py)} after deduplication")
 
 print("\n=== Generating C++ driver over the identical time sequence ===")
@@ -123,8 +121,10 @@ rows = [line.split(",") for line in result.stdout.strip().split("\n")]
 cpp_data = np.array(rows, dtype=float)
 t_cpp, demand_cpp, pid_cpp, pwm_cpp, dir_cpp = cpp_data.T
 
-print(f"{len(t_cpp)} ticks, pure compute time {cpp_us / 1000:.3f} ms "
-      f"(excludes process startup and I/O -- see below for those separately)")
+print(
+    f"{len(t_cpp)} ticks, pure compute time {cpp_us / 1000:.3f} ms "
+    f"(excludes process startup and I/O -- see below for those separately)"
+)
 
 print("\n=== Numerical comparison (Python ground truth vs. compiled C++) ===")
 print("(port types are float in C++ vs double in Python -- expect ~float32")
@@ -149,10 +149,14 @@ max_errs = [
 scale = max(np.abs(demand_py).max(), np.abs(pid_py).max(), np.abs(pwm_py).max())
 tol = 1e-3 + 50 * np.finfo(np.float32).eps * scale
 ok = all(e < tol for e in max_errs)
-print(f"\n{'PASS' if ok else 'FAIL'}: max error {max(max_errs):.3e} (tolerance {tol:.3e})")
+print(
+    f"\n{'PASS' if ok else 'FAIL'}: max error {max(max_errs):.3e} (tolerance {tol:.3e})"
+)
 
 print("\n=== Benchmark: Python vs. compiled C++ for the same tick sequence ===")
-print("(pure evaluate()+next() stepping, bypassing sim.run()'s graphics/event overhead)")
+print(
+    "(pure evaluate()+next() stepping, bypassing sim.run()'s graphics/event overhead)"
+)
 
 bd = ns["bd"]
 state_map = bd.initial_state_map()
@@ -170,6 +174,12 @@ for t in t_py:
 py_elapsed = time.perf_counter() - t0
 py_us = py_elapsed * 1e6
 
-print(f"Python: {len(t_py)} ticks in {py_us / 1000:.3f} ms  ({py_us / len(t_py):.2f} us/tick)")
-print(f"C++:    {len(t_cpp)} ticks in {cpp_us / 1000:.3f} ms  ({cpp_us / len(t_cpp):.2f} us/tick)")
-print(f"Speedup: {py_us / cpp_us:.1f}x (pure compute, both exclude I/O and process startup)")
+print(
+    f"Python: {len(t_py)} ticks in {py_us / 1000:.3f} ms  ({py_us / len(t_py):.2f} us/tick)"
+)
+print(
+    f"C++:    {len(t_cpp)} ticks in {cpp_us / 1000:.3f} ms  ({cpp_us / len(t_cpp):.2f} us/tick)"
+)
+print(
+    f"Speedup: {py_us / cpp_us:.1f}x (pure compute, both exclude I/O and process startup)"
+)
