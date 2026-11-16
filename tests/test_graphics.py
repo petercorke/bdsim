@@ -313,6 +313,26 @@ class CreateFigureTest(unittest.TestCase):
         self.assertNotEqual(f1.number, f2.number)
         plt.close("all")
 
+    def test_create_figure_without_window_manager(self):
+        """A figure with no window manager (canvas.manager is None) must not raise.
+
+        This is what a figure on a backend that does not manage windows looks like.
+        Both the first figure (which also sets up the tiling state) and later ones
+        set a window title.
+        """
+        state = _make_gstate()
+        for _ in range(2):
+            fig = plt.figure()
+            fig.canvas.manager = None
+            with (
+                patch("bdsim.graphics_block.plt.gcf", return_value=fig),
+                patch("bdsim.graphics_block.plt.figure", return_value=fig),
+            ):
+                f = self._make_gb().create_figure(state)
+            self.assertIs(f, fig)
+        self.assertEqual(state.fignum, 2)
+        plt.close("all")
+
     def test_create_figure_2x2_tiles(self):
         """create_figure() with tiles='2x2' exercises different ntiles computation."""
         gb = self._make_gb()
