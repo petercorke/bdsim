@@ -100,6 +100,7 @@ async def ensure_installed(
 
             install = micropip.install
 
+        print(f"Installing {PACKAGE}, this takes a short time...", flush=True)
         for name in JL_NO_DEPS:
             await install(name, deps=False)
         for name in JL_PACKAGES:
@@ -117,7 +118,7 @@ async def ensure_installed(
         except ImportError:
             where, colab = "locally", False
         else:
-            print(f"Installing {PACKAGE}...")
+            print(f"Installing {PACKAGE}, this takes a short time...", flush=True)
             requirement = PACKAGE
             if extras:
                 requirement += "[" + ",".join(extras) + "]"
