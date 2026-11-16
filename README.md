@@ -107,6 +107,6 @@ In contrast to traditional graphical simulation tools, bdsim treats modelling as
 * Scalability: Programmatically generate massive block diagrams or run large-scale batch simulations on headless servers.
 
 ## 📚 Documentation
-Full Documentation: https://petercorke.github.io/bdsim/
+[Full documentation](https://petercorke.github.io/bdsim/)
 
-Wiki: Access the community wiki for deep dives into specific block behaviours and tutorials.
+Access the [community wiki](https://github.com/petercorke/bdsim/wiki) for deep dives into specific block behaviours and tutorials.
