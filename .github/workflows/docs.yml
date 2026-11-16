@@ -35,7 +35,7 @@ jobs:
         # the kernel crashed, and the workaround (enableRunUntilComplete: false)
         # made imports fail intermittently.  Safari 27 ships JSPI, and the old
         # Pyodide then misbehaved there (kernel never finished starting).  A browser
-        # with no JSPI (Firefox outside a flag, Safari before 27) is now rejected
+        # with no JSPI (Safari before 27; Firefox 159 has it) is now rejected
         # with an explanation, not supported by a pin.
         # Installing jupyterlite-core directly rather than the jupyterlite metapackage.
         run: |
