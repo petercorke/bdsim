@@ -19,6 +19,7 @@ import matplotlib
 import matplotlib.figure
 from matplotlib import animation
 import matplotlib.pyplot as plt
+from spatialmath.base import set_window_title
 
 from bdsim.block import SinkBlock
 
@@ -582,7 +583,7 @@ class GraphicsBlock(SinkBlock):
             # Notebook/inline backends have no window manager; skip desktop GUI ops.
             _is_notebook_backend = is_notebook_backend(mpl_backend)
             if not _is_notebook_backend:
-                f.canvas.manager.set_window_title(f"bdsim: Figure {f.number}")  # type: ignore[union-attr]
+                set_window_title(f, f"bdsim: Figure {f.number}")
 
             # save graphics info away in state
             gstate.figsize = figsize
@@ -615,7 +616,7 @@ class GraphicsBlock(SinkBlock):
         if gstate.ntiles is None:
             # Untiled mode: each graphics block gets its own figure.
             if gstate.fignum > 0 and not _notebook:
-                f.canvas.manager.set_window_title(f"bdsim: Figure {f.number}")  # type: ignore[union-attr]
+                set_window_title(f, f"bdsim: Figure {f.number}")
         else:
             # Tiled mode: one shared figure with subplots; each block gets a tile.
             rows, cols = gstate.ntiles
