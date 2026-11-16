@@ -3341,7 +3341,6 @@ class CEmitter(Emitter):
         )
 
 
-from typing import NamedTuple
 from types import SimpleNamespace
 
 
