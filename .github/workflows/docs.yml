@@ -29,33 +29,20 @@ jobs:
           python-version: "3.12"
 
       - name: Install dependencies
-        # jupyterlite-pyodide-kernel is pinned deliberately -- NOT for wasm-ABI
-        # matching (bdsim is pure Python, unlike RTB's compiled-extension pin of
-        # the same version, for a different reason). Newer kernel releases bundle
-        # Pyodide >=0.27.7, which turned WebAssembly JSPI ("stack switching") on
-        # by default for run_until_complete(). Browsers without JSPI support
-        # (Safari has none as of 2026-08; Firefox only behind a flag) used to
-        # hard-crash the kernel outright on this. Passing
-        # loadPyodideOptions.enableRunUntilComplete: false avoids the crash, but
-        # turns run_until_complete into a fire-and-forget no-op instead of a
-        # genuine synchronous wait -- and the kernel's own cell-execution driver
-        # relies on that wait actually completing before running a cell's
-        # auto-detected package/dynamic-library imports. Confirmed live: with
-        # that workaround, `import bdsim` intermittently failed with
-        # ModuleNotFoundError for matplotlib even though the preceding piplite
-        # install cell had already reported success -- the install just hadn't
-        # actually finished landing yet. jupyterlite-pyodide-kernel==0.6.1 bundles
-        # Pyodide 0.27.6, genuinely predating this whole mechanism, restoring
-        # correct (if slower) blocking behaviour -- matches RTB's existing pin.
-        # Installing jupyterlite-core directly rather than the jupyterlite
-        # metapackage: the metapackage requires jupyterlite-core>=0.8.1, which
-        # conflicts with this pin's jupyterlite-core<0.7.0 requirement.
-        # Once Safari (and Firefox out-of-flag) ship JSPI, revisit this pin.
+        # jupyterlite-pyodide-kernel is a floor, not an exact pin.  It was pinned to
+        # 0.6.1 (Pyodide 0.27.6) while Safari had no WebAssembly JSPI ("stack
+        # switching"), which newer Pyodide's run_until_complete() needs: without it
+        # the kernel crashed, and the workaround (enableRunUntilComplete: false)
+        # made imports fail intermittently.  Safari 27 ships JSPI, and the old
+        # Pyodide then misbehaved there (kernel never finished starting).  A browser
+        # with no JSPI (Firefox outside a flag, Safari before 27) is now rejected
+        # with an explanation, not supported by a pin.
+        # Installing jupyterlite-core directly rather than the jupyterlite metapackage.
         run: |
           python -m pip install --upgrade pip
           pip install .[dev,docs]
           pip install build
-          pip install jupyterlite-core "jupyterlite-pyodide-kernel==0.6.1" jupyter-server
+          pip install jupyterlite-core "jupyterlite-pyodide-kernel>=0.8.7" jupyter-server
           sudo apt-get update
           sudo apt-get install -y graphviz
 
