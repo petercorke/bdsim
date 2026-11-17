@@ -484,6 +484,6 @@ def run_diagram(req: RunRequest) -> dict[str, Any]:
 # Serve built SvelteKit app (production only — dev uses Vite)
 # ---------------------------------------------------------------------------
 
-_frontend_build = Path(__file__).parent.parent.parent / "frontend" / "build"
+_frontend_build = Path(__file__).parent.parent / "frontend" / "build"
 if _frontend_build.exists():
     app.mount("/", StaticFiles(directory=str(_frontend_build), html=True), name="static")
