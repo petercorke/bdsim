@@ -101,6 +101,34 @@ def test_blocks_groups_and_serialises_metadata(client: TestClient) -> None:
                 assert "default" in param
 
 
+def test_blocks_excludes_deprecated_types(client: TestClient) -> None:
+    response = client.get("/api/blocks")
+
+    assert response.status_code == 200
+    names = {block["name"] for blocks in response.json().values() for block in blocks}
+    assert "DINTEGRATOR" not in names
+    assert "INTEGRATOR_S" in names
+
+
+@pytest.mark.parametrize("name", ["DINTEGRATOR", "dintegrator"])
+def test_blockinfo_excludes_deprecated_types(client: TestClient, name: str) -> None:
+    response = client.get(f"/api/blockinfo/{name}")
+
+    assert response.status_code == 404
+    assert response.json() == {"detail": f"Block '{name}' not found"}
+
+
+def test_load_preserves_deprecated_block(client: TestClient, tmp_path: Path) -> None:
+    blocks = [{"id": 41, "block_type": "DINTEGRATOR", "parameters": [["x0", 3]]}]
+    path = tmp_path / "legacy.bd"
+    path.write_text(json.dumps({"blocks": blocks, "wires": []}), encoding="utf-8")
+
+    response = client.post("/api/load", json={"path": str(path)})
+
+    assert response.status_code == 200
+    assert response.json()["blocks"] == blocks
+
+
 @pytest.mark.parametrize("name", ["GAIN", "gain", "GaIn"])
 def test_blockinfo_is_case_insensitive(client: TestClient, name: str) -> None:
     response = client.get(f"/api/blockinfo/{name}")
