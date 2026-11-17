@@ -17,6 +17,12 @@ from fastapi.testclient import TestClient
 
 from bdweb.backend import server
 
+def test_frontend_build_path_is_correct() -> None:
+    frontend_dir = server._frontend_build.parent
+
+    assert frontend_dir.name == "frontend"
+    assert (frontend_dir / "package.json").is_file()
+
 
 @pytest.fixture
 def client(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[TestClient]:
