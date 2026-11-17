@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.5.1](https://github.com/petercorke/bdsim/compare/v1.5.0...v1.5.1) (2026-11-17)
+
+
+### Bug Fixes
+
+* a figure with no window manager no longer raises when graphics blocks set the window title ([#266](https://github.com/petercorke/bdsim/issues/266)) ([e8ddf2b](https://github.com/petercorke/bdsim/commit/e8ddf2bae44b73739258335ff0be8f6552af851b)), closes [#114](https://github.com/petercorke/bdsim/issues/114)
+
+
+### Documentation
+
+* explain on the notebooks index how browser files work ([#272](https://github.com/petercorke/bdsim/issues/272)) ([3803874](https://github.com/petercorke/bdsim/commit/38038743c4c7204b147b774eb1d45b44d371a035))
+* let JupyterLite use the current Pyodide kernel, and warn when the browser has no JSPI ([#259](https://github.com/petercorke/bdsim/issues/259)) ([09cb88d](https://github.com/petercorke/bdsim/commit/09cb88d096cff8a7e8a1c3912c6b17344706c712))
+* link the community wiki from the README ([#261](https://github.com/petercorke/bdsim/issues/261)) ([4c5e904](https://github.com/petercorke/bdsim/commit/4c5e904bfac203af2521c33d155d38d2cef1753c))
+* link the community wiki from the README, and end the file with a newline ([4c5e904](https://github.com/petercorke/bdsim/commit/4c5e904bfac203af2521c33d155d38d2cef1753c))
+* say in CONTRIBUTING that bdweb pull requests target feat/bdweb ([#264](https://github.com/petercorke/bdsim/issues/264)) ([f7058b3](https://github.com/petercorke/bdsim/commit/f7058b304cbdadc2ff18703254bc5dd14d41df82))
+* tell the reader to wait while the notebook bootstrap cell installs ([#270](https://github.com/petercorke/bdsim/issues/270)) ([265ecff](https://github.com/petercorke/bdsim/commit/265ecff95febfa41bfbfc3aa0a062624c50127c7))
+
 ## [1.5.0](https://github.com/petercorke/bdsim/compare/v1.4.1...v1.5.0) (2026-11-15)
 
 
