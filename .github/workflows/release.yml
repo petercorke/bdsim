@@ -1,6 +1,9 @@
 # Build and publish to PyPI on GitHub release creation or manual trigger.
 # Uses OIDC trusted publishing — no stored PyPI token required.
 # Pure Python package — a universal wheel suffices; no cibuildwheel needed.
+#
+# A manual run with dry_run ticked builds the sdist and wheel and smoke-tests the
+# wheel, but does not publish to PyPI.  Use it to check the release path.
 
 name: Release
 
@@ -8,6 +11,11 @@ on:
   release:
     types: [created]
   workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run: build and smoke-test, but do not publish to PyPI"
+        type: boolean
+        default: false
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -67,9 +75,16 @@ jobs:
       - name: Smoke test
         run: python -c "import bdsim; print('OK', bdsim.__version__)"
 
+      - name: Note a dry run
+        if: github.event_name == 'workflow_dispatch' && inputs.dry_run
+        run: |
+          echo "Dry run. The wheel built and passed the smoke test; nothing is published to PyPI." >> "$GITHUB_STEP_SUMMARY"
+
   upload_pypi:
     name: Publish to PyPI
     needs: [build, smoke_test]
+    # skipped on a dry run; a release event has no inputs, so it always publishes
+    if: github.event_name != 'workflow_dispatch' || !inputs.dry_run
     runs-on: ubuntu-latest
     environment: pypi
     permissions:
