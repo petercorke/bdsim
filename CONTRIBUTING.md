@@ -23,6 +23,14 @@ Several people (and AI coding agents) often pick up the same issue at about the 
 4. **Flag behaviour changes.** If a change alters numerical results or public behaviour, say so explicitly in the PR description, even if it is a bug fix.
 5. **Reply when we ask.** AI-assisted contributions are welcome when a person is responsible for them, reads the discussion and answers questions. If a maintainer asks you something and there is no reply within a week, we may unassign you and close the pull request.
 
+## Allow edits from maintainers
+
+When you open a pull request from a fork, tick **Allow edits by maintainers** (it is under
+the description box; on an existing PR, it is in the right-hand sidebar).  Without it we
+cannot bring your branch up to date with `main`, which the repository requires before a
+merge, and every small fix of ours has to go through a second PR of our own, with your
+commits rebased into it, instead of being added to yours.
+
 ## Contributing code
 
 - Keep pull requests scoped to a single feature or fix. If you have several unrelated changes, open separate PRs so each can be reviewed and merged independently.
